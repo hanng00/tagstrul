@@ -8,7 +8,6 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider"
 
 const REGION = import.meta.env.VITE_AWS_REGION || "eu-north-1"
-const USER_POOL_ID = import.meta.env.VITE_COGNITO_USER_POOL_ID || ""
 const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || ""
 
 const client = new CognitoIdentityProviderClient({ region: REGION })

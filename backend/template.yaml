@@ -22,7 +22,7 @@ Resources:
           RequireNumbers: false
           RequireSymbols: false
         SignInPolicy:
-          AllowedFirstAuthFactors: [EMAIL_OTP]
+          AllowedFirstAuthFactors: [PASSWORD, EMAIL_OTP]
 
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
