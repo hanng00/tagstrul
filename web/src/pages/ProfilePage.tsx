@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router"
 import { LogOut, Pencil, Check, X, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/components/AuthContext"
 import { api } from "@/lib/api"
 import type { Profile, MovingoCard, MovingoCardType } from "@/types"
 import { MOVINGO_CARD_LABELS } from "@/types"
@@ -32,6 +34,8 @@ function formatDate(iso: string) {
 }
 
 export function ProfilePage() {
+  const navigate = useNavigate()
+  const { signOut } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<Profile | null>(null)
@@ -47,6 +51,11 @@ export function ProfilePage() {
       setLoading(false)
     })
   }, [])
+
+  async function handleSignOut() {
+    await signOut()
+    navigate("/", { replace: true })
+  }
 
   async function handleSave() {
     if (!draft) return
@@ -223,7 +232,7 @@ export function ProfilePage() {
 
         <div className="mt-12">
           <button
-            onClick={() => alert("Utloggad (POC)")}
+            onClick={handleSignOut}
             className="flex w-full items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5"
           >
             <LogOut className="size-4" />

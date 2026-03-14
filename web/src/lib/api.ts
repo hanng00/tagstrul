@@ -1,17 +1,13 @@
 import type { Delay, Route, Claim, Profile, MovingoCard } from "@/types"
+import { getIdToken } from "@/lib/auth"
 
 const API_BASE = import.meta.env.VITE_API_URL || ""
-
-async function getAuthToken(): Promise<string | null> {
-  const token = localStorage.getItem("id_token")
-  return token
-}
 
 async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const token = await getAuthToken()
+  const token = getIdToken()
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
