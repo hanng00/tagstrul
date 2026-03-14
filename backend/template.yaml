@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Tagersattning — parent stack
+
+Resources:
+  # ========== Shared infrastructure ==========
+
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${AWS::StackName}-user-pool"
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes: [email]
+      UserPoolTier: ESSENTIALS
+      Schema:
+        - { Name: email, Required: true, Mutable: true }
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: false
+          RequireUppercase: false
+          RequireNumbers: false
+          RequireSymbols: false
+        SignInPolicy:
+          AllowedFirstAuthFactors: [EMAIL_OTP]
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      ExplicitAuthFlows: [ALLOW_USER_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
+
+  Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - { AttributeName: PK, AttributeType: S }
+        - { AttributeName: SK, AttributeType: S }
+      KeySchema:
+        - { AttributeName: PK, KeyType: HASH }
+        - { AttributeName: SK, KeyType: RANGE }
+      BillingMode: PAY_PER_REQUEST
+
+  # ========== Child stacks ==========
+
+  ApiStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: stacks/api.yaml
+      Parameters:
+        TableName: !Ref Table
+        TableArn: !GetAtt Table.Arn
+        CognitoUserPoolId: !Ref CognitoUserPool
+        CognitoUserPoolArn: !GetAtt CognitoUserPool.Arn
+        CognitoClientId: !Ref CognitoUserPoolClient
+
+  IngestionStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: stacks/ingestion.yaml
+      Parameters:
+        TableName: !Ref Table
+        TableArn: !GetAtt Table.Arn
+
+Outputs:
+  CognitoUserPoolId: { Value: !Ref CognitoUserPool }
+  CognitoUserPoolClientId: { Value: !Ref CognitoUserPoolClient }
+  TableName: { Value: !Ref Table }
+  ApiEndpoint:
+    Value: !GetAtt ApiStack.Outputs.ApiEndpoint

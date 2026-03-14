@@ -1,0 +1,62 @@
+import type { DetectedDelay } from './DelayDetector.ts';
+import { estimateCompensation, isClaimable, type MovingoCard } from './CompensationCalculator.ts';
+
+export interface UserRoute {
+  userId: string;
+  routeId: string;
+  fromStation: string;
+  toStation: string;
+  departureTime?: string;
+}
+
+export interface UserDelayMatch {
+  userId: string;
+  routeId: string;
+  delay: DetectedDelay;
+  estimatedCompensation: number;
+  claimable: boolean;
+}
+
+const DEPARTURE_WINDOW_MINUTES = 60;
+
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number) as [number, number];
+  return h * 60 + m;
+}
+
+function isWithinWindow(scheduled: string, userTime: string): boolean {
+  const diff = Math.abs(timeToMinutes(scheduled) - timeToMinutes(userTime));
+  return diff <= DEPARTURE_WINDOW_MINUTES;
+}
+
+export function matchDelaysToUsers(
+  delays: DetectedDelay[],
+  userRoutes: UserRoute[],
+  activeCards: Map<string, MovingoCard>,
+): UserDelayMatch[] {
+  const matches: UserDelayMatch[] = [];
+
+  for (const delay of delays) {
+    for (const route of userRoutes) {
+      const stationMatch = delay.fromStation === route.fromStation && delay.toStation === route.toStation;
+      if (!stationMatch) continue;
+
+      const timeMatch = !route.departureTime || isWithinWindow(delay.scheduledDeparture, route.departureTime);
+      if (!timeMatch) continue;
+
+      const card = activeCards.get(route.userId);
+      const claimable = isClaimable(delay.delayMinutes, delay.cancelled);
+      const compensation = card && claimable ? estimateCompensation(delay.delayMinutes, delay.cancelled, card) : 0;
+
+      matches.push({
+        userId: route.userId,
+        routeId: route.routeId,
+        delay,
+        estimatedCompensation: compensation,
+        claimable,
+      });
+    }
+  }
+
+  return matches;
+}

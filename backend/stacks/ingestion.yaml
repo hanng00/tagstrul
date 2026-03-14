@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Tagersattning — Ingestion substack
+
+Parameters:
+  TableName:
+    Type: String
+  TableArn:
+    Type: String
+
+Globals:
+  Function:
+    Timeout: 120
+    MemorySize: 512
+    Runtime: nodejs22.x
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref TableName
+
+Resources:
+  PollTrainData:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/ingestion/PollTrainData.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Events:
+        Schedule:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: rate(15 minutes)
+            State: ENABLED
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
