@@ -380,7 +380,8 @@ export function HomePage() {
   )
 }
 
-function addMinutesToTime(time: string, minutes: number): string {
+function addMinutesToTime(time: string | undefined, minutes: number): string {
+  if (!time) return "--:--"
   const [h, m] = time.split(":").map(Number)
   const totalMinutes = h * 60 + m + minutes
   const newH = Math.floor(totalMinutes / 60) % 24

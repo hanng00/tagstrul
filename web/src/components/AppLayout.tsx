@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router"
 import { Home, Route, User } from "lucide-react"
+import { ErrorBoundary } from "@/components/ErrorBoundary"
 
 const tabs = [
   { to: "/app", icon: Home, label: "Hem", end: true },
@@ -11,7 +12,9 @@ export function AppLayout() {
   return (
     <div className="mx-auto flex min-h-svh max-w-lg flex-col bg-background">
       <div className="flex-1 overflow-y-auto pb-20">
-        <Outlet />
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/80 backdrop-blur-xl backdrop-saturate-150">
