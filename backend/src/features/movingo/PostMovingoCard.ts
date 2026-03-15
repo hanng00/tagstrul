@@ -4,6 +4,7 @@ import { putMovingoCard, userId } from '../../repository.ts';
 import { success, badRequest, internalServerError } from '../../utils/response.ts';
 
 const schema = z.object({
+  movingoId: z.string().min(1),
   cardType: z.enum(['movingo-30', 'movingo-90', 'movingo-year', 'movingo-5-30']),
   price: z.number().positive(),
   purchaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

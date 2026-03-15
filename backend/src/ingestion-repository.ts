@@ -1,11 +1,59 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, ScanCommand, PutCommand, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, ScanCommand, PutCommand, BatchWriteCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import type { UserRoute, UserDelayMatch } from './features/ingestion/UserRouteMatcher.ts';
 import type { TrainDeparture } from './adapter/TrainDataPort.ts';
 import type { MovingoCard } from './features/ingestion/CompensationCalculator.ts';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE = process.env.TABLE_NAME!;
+
+export async function getUserRoutes(userId: string): Promise<UserRoute[]> {
+  const result = await client.send(
+    new QueryCommand({
+      TableName: TABLE,
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+      ExpressionAttributeValues: { ':pk': `USER#${userId}`, ':sk': 'ROUTE#' },
+    }),
+  );
+
+  return (result.Items ?? []).map((item) => ({
+    userId,
+    routeId: (item.SK as string).replace('ROUTE#', ''),
+    fromStation: item.fromStation as string,
+    toStation: item.toStation as string,
+    departureTime: item.departureTime as string | undefined,
+  }));
+}
+
+export async function getUserMovingoCard(userId: string): Promise<MovingoCard | null> {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const result = await client.send(
+    new QueryCommand({
+      TableName: TABLE,
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+      ExpressionAttributeValues: { ':pk': `USER#${userId}`, ':sk': 'MOVINGO#' },
+    }),
+  );
+
+  let latestCard: MovingoCard | null = null;
+  for (const item of result.Items ?? []) {
+    const expiry = item.expiryDate as string;
+    if (expiry < today) continue;
+
+    if (!latestCard || expiry > latestCard.expiryDate) {
+      latestCard = {
+        cardId: (item.SK as string).replace('MOVINGO#', ''),
+        cardType: item.cardType as MovingoCard['cardType'],
+        price: item.price as number,
+        purchaseDate: item.purchaseDate as string,
+        expiryDate: expiry,
+      };
+    }
+  }
+
+  return latestCard;
+}
 
 export async function getAllUserRoutes(): Promise<UserRoute[]> {
   const routes: UserRoute[] = [];

@@ -13,6 +13,8 @@ Parameters:
     Type: String
   CognitoClientId:
     Type: String
+  PollUserRoutesArn:
+    Type: String
 
 Globals:
   Function:
@@ -67,9 +69,15 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: src/features/routes/PostRoute.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableName
+          POLL_USER_ROUTES_ARN: !Ref PollUserRoutesArn
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref TableName
+        - LambdaInvokePolicy:
+            FunctionName: !Select [6, !Split [":", !Ref PollUserRoutesArn]]
       Events:
         Api:
           Type: Api

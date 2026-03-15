@@ -3,6 +3,7 @@ import {
   InitiateAuthCommand,
   RespondToAuthChallengeCommand,
   SignUpCommand,
+  ConfirmSignUpCommand,
   GlobalSignOutCommand,
   type AuthenticationResultType,
 } from "@aws-sdk/client-cognito-identity-provider"
@@ -22,6 +23,7 @@ export interface AuthTokens {
 export interface AuthSession {
   session: string
   email: string
+  type: "otp" | "confirm_signup"
 }
 
 const TOKEN_KEY = "auth_tokens"
@@ -74,19 +76,26 @@ export async function signIn(email: string): Promise<AuthSession> {
       return {
         session: response.Session!,
         email,
+        type: "otp",
       }
     }
 
     throw new Error(`Unexpected challenge: ${response.ChallengeName}`)
   } catch (error: unknown) {
-    if (
-      error &&
-      typeof error === "object" &&
-      "name" in error &&
-      error.name === "UserNotFoundException"
-    ) {
-      await signUp(email)
-      return signIn(email)
+    if (error && typeof error === "object" && "name" in error) {
+      if (error.name === "UserNotFoundException") {
+        await signUp(email)
+        // With auto-confirm Lambda, user is now confirmed - retry sign in
+        return signIn(email)
+      }
+      if (error.name === "UserNotConfirmedException") {
+        // Legacy: user signed up before auto-confirm was enabled
+        return {
+          session: "",
+          email,
+          type: "confirm_signup",
+        }
+      }
     }
     throw error
   }
@@ -117,6 +126,21 @@ export async function verifyOtp(
   session: AuthSession,
   otp: string,
 ): Promise<AuthTokens> {
+  if (session.type === "confirm_signup") {
+    const confirmCommand = new ConfirmSignUpCommand({
+      ClientId: CLIENT_ID,
+      Username: session.email,
+      ConfirmationCode: otp,
+    })
+    await client.send(confirmCommand)
+
+    const newSession = await signIn(session.email)
+    if (newSession.type === "otp") {
+      throw new Error("Konto bekräftat! Ange koden vi skickade till din e-post.")
+    }
+    throw new Error("Unexpected state after confirmation")
+  }
+
   const command = new RespondToAuthChallengeCommand({
     ClientId: CLIENT_ID,
     ChallengeName: "EMAIL_OTP",

@@ -73,8 +73,9 @@ graph TB
     end
 
     subgraph IngestionStack["Nested: stacks/ingestion.yaml"]
-        CRON["EventBridge Schedule<br/>every 15 min"]
+        CRON["EventBridge Schedule<br/>every 6 hours"]
         POLL["PollTrainData Lambda"]
+        POLL_USER["PollUserRoutes Lambda"]
         ADAPTER["TrainDataPort<br/><i>interface</i>"]
         DETECT["DelayDetector<br/>≥ 10 min threshold"]
         MATCH["UserRouteMatcher<br/>station + time window"]
@@ -86,7 +87,7 @@ graph TB
         DYNAMO[("DynamoDB<br/>Single Table")]
         GET_DELAYS["GetDelays"]
         GET_ROUTES["GetRoutes"]
-        POST_ROUTE["PostRoute"]
+        POST_ROUTE["PostRoute<br/><i>triggers PollUserRoutes</i>"]
         DEL_ROUTE["DeleteRoute"]
         GET_CLAIMS["GetClaims"]
         POST_CLAIM["PostClaim"]
@@ -313,7 +314,7 @@ Cards are valid for 30/90/365 days. Users cycle through cards regularly. We stor
 
 ```mermaid
 sequenceDiagram
-    participant EB as EventBridge (every 15 min)
+    participant EB as EventBridge (every 6 hours)
     participant Poll as PollTrainData Lambda
     participant Adapter as TrainDataPort
     participant SJ as SJ / Trafikverket
@@ -350,7 +351,8 @@ sequenceDiagram
 | Stack separation | **Two SAM stacks** | Different deployment cadence, failure blast radius, scaling. Ingestion can be redeployed without touching user API. |
 | Cross-stack link | **CloudFormation exports** | Clean, native. Ingestion imports `TableName` + `TableArn` from core stack. |
 | Poll vs. proxy | **Poll on schedule** | SJ only serves ~24h windows. We need historical data for the 30-day claim window. |
-| Poll frequency | **Every 15 min** | Balances freshness vs. cost. Once a train departed late, the fact is stable. |
+| Poll frequency | **Every 6 hours** | Balances freshness vs. cost. Once a train departed late, the fact is stable. |
+| On-demand poll | **PostRoute triggers PollUserRoutes** | Good UX: new users see delays immediately after adding their first route, rather than waiting up to 6 hours. |
 | Raw data storage | **TRAIN# snapshots** | Audit trail. When SJ's model changes or we need to reprocess, we have originals. |
 | Adapter pattern | **Port/adapter interface** | We don't know SJ's shape. Swap implementations without touching business logic. |
 | Delay detection | **In the poller Lambda** | Single responsibility: detect once, write result. User API never computes — only reads. |

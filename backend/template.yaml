@@ -5,6 +5,27 @@ Description: Tagersattning — parent stack
 Resources:
   # ========== Shared infrastructure ==========
 
+  PreSignUpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-pre-signup"
+      Runtime: nodejs20.x
+      Handler: index.handler
+      InlineCode: |
+        exports.handler = async (event) => {
+          event.response.autoConfirmUser = true;
+          event.response.autoVerifyEmail = true;
+          return event;
+        };
+
+  PreSignUpPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref PreSignUpFunction
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !GetAtt CognitoUserPool.Arn
+
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -23,6 +44,8 @@ Resources:
           RequireSymbols: false
         SignInPolicy:
           AllowedFirstAuthFactors: [PASSWORD, EMAIL_OTP]
+      LambdaConfig:
+        PreSignUp: !GetAtt PreSignUpFunction.Arn
 
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
@@ -53,6 +76,7 @@ Resources:
         CognitoUserPoolId: !Ref CognitoUserPool
         CognitoUserPoolArn: !GetAtt CognitoUserPool.Arn
         CognitoClientId: !Ref CognitoUserPoolClient
+        PollUserRoutesArn: !GetAtt IngestionStack.Outputs.PollUserRoutesArn
 
   IngestionStack:
     Type: AWS::Serverless::Application

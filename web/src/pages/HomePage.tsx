@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react"
 import { AlertTriangle, Check, ChevronRight } from "lucide-react"
 import { useNavigate } from "react-router"
-import { api } from "@/lib/api"
+import { useDelays, useClaims } from "@/lib/queries"
 import type { Delay } from "@/types"
 
 function formatDate(iso: string) {
@@ -15,22 +14,15 @@ function daysUntil(iso: string) {
 }
 
 export function HomePage() {
-  const [delays, setDelays] = useState<Delay[]>([])
-  const [loading, setLoading] = useState(true)
-  const [totalRecovered, setTotalRecovered] = useState(0)
+  const { data: delays = [], isLoading: delaysLoading } = useDelays()
+  const { data: claims = [], isLoading: claimsLoading } = useClaims()
   const navigate = useNavigate()
 
-  useEffect(() => {
-    async function load() {
-      const [d, c] = await Promise.all([api.getDelays(), api.getClaims()])
-      setDelays(d)
-      setTotalRecovered(
-        c.reduce((sum, claim) => sum + claim.estimatedCompensation, 0)
-      )
-      setLoading(false)
-    }
-    load()
-  }, [])
+  const loading = delaysLoading || claimsLoading
+  const totalRecovered = claims.reduce(
+    (sum, claim) => sum + claim.estimatedCompensation,
+    0,
+  )
 
   const claimable = delays.filter((d) => d.claimable && !d.claimed)
   const claimed = delays.filter((d) => d.claimed)

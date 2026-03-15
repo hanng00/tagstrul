@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router"
 import { ArrowLeft, ExternalLink, Copy, Check } from "lucide-react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { api } from "@/lib/api"
-import type { Delay } from "@/types"
+import { useDelays } from "@/lib/queries"
 
 const SJ_CLAIM_URL = "https://www.sj.se/sv/kundservice/forseningsersattning.html"
 
@@ -19,18 +18,10 @@ function formatDate(iso: string) {
 export function ClaimPage() {
   const { delayId } = useParams<{ delayId: string }>()
   const navigate = useNavigate()
-  const [delay, setDelay] = useState<Delay | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data: delays = [], isLoading: loading } = useDelays()
   const [copied, setCopied] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function load() {
-      const delays = await api.getDelays()
-      setDelay(delays.find((d) => d.delayId === delayId) ?? null)
-      setLoading(false)
-    }
-    load()
-  }, [delayId])
+  const delay = delays.find((d) => d.delayId === delayId) ?? null
 
   function copyToClipboard(text: string, field: string) {
     navigator.clipboard.writeText(text)

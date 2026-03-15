@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router"
 import { LogOut, Pencil, Check, X, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/AuthContext"
-import { api } from "@/lib/api"
+import {
+  useProfile,
+  useMovingoCards,
+  useUpdateProfile,
+  useAddMovingoCard,
+  useDeleteMovingoCard,
+} from "@/lib/queries"
 import type { Profile, MovingoCard, MovingoCardType } from "@/types"
 import { MOVINGO_CARD_LABELS } from "@/types"
 
@@ -36,46 +42,46 @@ function formatDate(iso: string) {
 export function ProfilePage() {
   const navigate = useNavigate()
   const { signOut } = useAuth()
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const { data: profile, isLoading: profileLoading } = useProfile()
+  const { data: cards = [], isLoading: cardsLoading } = useMovingoCards()
+  const updateProfile = useUpdateProfile()
+  const addMovingoCard = useAddMovingoCard()
+  const deleteMovingoCard = useDeleteMovingoCard()
+
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<Profile | null>(null)
-  const [cards, setCards] = useState<MovingoCard[]>([])
   const [showAddCard, setShowAddCard] = useState(false)
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    Promise.all([api.getProfile(), api.getMovingoCards()]).then(([p, c]) => {
-      setProfile(p)
-      setDraft(p)
-      setCards(c)
-      setLoading(false)
-    })
-  }, [])
+  const loading = profileLoading || cardsLoading
+
+  function startEditing() {
+    setDraft(profile ?? null)
+    setEditing(true)
+  }
 
   async function handleSignOut() {
     await signOut()
     navigate("/", { replace: true })
   }
 
-  async function handleSave() {
+  function handleSave() {
     if (!draft) return
-    const updated = await api.updateProfile(draft)
-    setProfile(updated)
-    setEditing(false)
+    updateProfile.mutate(draft, {
+      onSuccess: () => setEditing(false),
+    })
   }
 
-  async function handleAddCard(card: Omit<MovingoCard, "cardId">) {
-    const newCard = await api.addMovingoCard(card)
-    setCards((prev) => [...prev, newCard])
-    setShowAddCard(false)
+  function handleAddCard(card: Omit<MovingoCard, "cardId">) {
+    addMovingoCard.mutate(card, {
+      onSuccess: () => setShowAddCard(false),
+    })
   }
 
-  async function handleDeleteCard(cardId: string) {
-    await api.deleteMovingoCard(cardId)
-    setCards((prev) => prev.filter((c) => c.cardId !== cardId))
+  function handleDeleteCard(cardId: string) {
+    deleteMovingoCard.mutate(cardId)
   }
 
-  if (loading || !profile || !draft) {
+  if (loading || !profile) {
     return (
       <div className="flex flex-1 items-center justify-center py-20">
         <div className="size-5 animate-spin rounded-full border-2 border-muted-foreground/20 border-t-foreground" />
@@ -83,6 +89,7 @@ export function ProfilePage() {
     )
   }
 
+  const displayProfile = editing && draft ? draft : profile
   const activeCards = cards.filter((c) => !isExpired(c))
   const expiredCards = cards.filter((c) => isExpired(c))
 
@@ -104,7 +111,7 @@ export function ProfilePage() {
           </div>
           {!editing && (
             <button
-              onClick={() => setEditing(true)}
+              onClick={startEditing}
               className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               <Pencil className="size-3" />
@@ -122,7 +129,7 @@ export function ProfilePage() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => {
-                    setDraft(profile)
+                    setDraft(null)
                     setEditing(false)
                   }}
                   className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -147,7 +154,7 @@ export function ProfilePage() {
                 className="flex items-center justify-between px-4 py-3"
               >
                 <span className="text-sm text-muted-foreground">{label}</span>
-                {editing ? (
+                {editing && draft ? (
                   <input
                     value={draft[key] ?? ""}
                     onChange={(e) =>
@@ -157,7 +164,7 @@ export function ProfilePage() {
                   />
                 ) : (
                   <span className="text-sm font-medium text-foreground">
-                    {profile[key] || "—"}
+                    {displayProfile[key] || "—"}
                   </span>
                 )}
               </div>
@@ -287,6 +294,7 @@ function AddMovingoCardForm({
   onAdd: (card: Omit<MovingoCard, "cardId">) => void
   onCancel: () => void
 }) {
+  const [movingoId, setMovingoId] = useState("")
   const [cardType, setCardType] = useState<MovingoCardType>("movingo-30")
   const [price, setPrice] = useState("3600")
   const [purchaseDate, setPurchaseDate] = useState(
@@ -314,6 +322,19 @@ function AddMovingoCardForm({
       </div>
 
       <div className="space-y-4">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            Movingo-nummer
+          </span>
+          <input
+            type="text"
+            value={movingoId}
+            onChange={(e) => setMovingoId(e.target.value)}
+            placeholder="ABCD1E234"
+            className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground"
+          />
+        </label>
+
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">
             Korttyp
@@ -359,13 +380,14 @@ function AddMovingoCardForm({
           className="h-11 w-full rounded-lg bg-foreground text-sm font-semibold text-background hover:bg-foreground/90"
           onClick={() =>
             onAdd({
+              movingoId: movingoId.trim(),
               cardType,
               price: Number(price),
               purchaseDate,
               expiryDate: expiryFromType(cardType, purchaseDate),
             })
           }
-          disabled={!price || !purchaseDate}
+          disabled={!movingoId.trim() || !price || !purchaseDate}
         >
           Spara kort
         </Button>

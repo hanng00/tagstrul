@@ -1,34 +1,25 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Trash2, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { api } from "@/lib/api"
+import { StationInput } from "@/components/StationInput"
+import { useRoutes, useAddRoute, useDeleteRoute } from "@/lib/queries"
 import type { Route } from "@/types"
 
 export function RoutesPage() {
-  const [routes, setRoutes] = useState<Route[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: routes = [], isLoading: loading } = useRoutes()
+  const addRoute = useAddRoute()
+  const deleteRoute = useDeleteRoute()
   const [showForm, setShowForm] = useState(false)
 
-  useEffect(() => {
-    api.getRoutes().then((r) => {
-      setRoutes(r)
-      setLoading(false)
-    })
-  }, [])
-
-  async function handleAdd(from: string, to: string, time: string) {
-    const r = await api.addRoute({
-      fromStation: from,
-      toStation: to,
-      departureTime: time || undefined,
-    })
-    setRoutes((prev) => [...prev, r])
-    setShowForm(false)
+  function handleAdd(from: string, to: string, time: string) {
+    addRoute.mutate(
+      { fromStation: from, toStation: to, departureTime: time || undefined },
+      { onSuccess: () => setShowForm(false) },
+    )
   }
 
-  async function handleDelete(routeId: string) {
-    await api.deleteRoute(routeId)
-    setRoutes((prev) => prev.filter((r) => r.routeId !== routeId))
+  function handleDelete(routeId: string) {
+    deleteRoute.mutate(routeId)
   }
 
   if (loading) {
@@ -139,29 +130,19 @@ function AddRouteForm({
       </div>
 
       <div className="space-y-4">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            Från
-          </span>
-          <input
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            placeholder="Stockholm C"
-            className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground focus:ring-1 focus:ring-foreground"
-          />
-        </label>
+        <StationInput
+          value={from}
+          onChange={setFrom}
+          placeholder="Stockholm C"
+          label="Från"
+        />
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            Till
-          </span>
-          <input
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            placeholder="Uppsala C"
-            className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground focus:ring-1 focus:ring-foreground"
-          />
-        </label>
+        <StationInput
+          value={to}
+          onChange={setTo}
+          placeholder="Uppsala C"
+          label="Till"
+        />
 
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">

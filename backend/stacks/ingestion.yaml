@@ -30,9 +30,25 @@ Resources:
         Schedule:
           Type: ScheduleV2
           Properties:
-            ScheduleExpression: rate(15 minutes)
+            ScheduleExpression: rate(6 hours)
             State: ENABLED
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
         Sourcemap: true
+
+  PollUserRoutes:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/ingestion/PollUserRoutes.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
+Outputs:
+  PollUserRoutesArn:
+    Value: !GetAtt PollUserRoutes.Arn

@@ -9,7 +9,11 @@ function userId(event: { requestContext: { authorizer: { claims: { sub: string }
   return event.requestContext.authorizer.claims.sub;
 }
 
-export { userId };
+function userEmail(event: { requestContext: { authorizer: { claims: { email?: string } } } }): string | undefined {
+  return event.requestContext.authorizer.claims.email;
+}
+
+export { userId, userEmail };
 
 export async function getRoutes(uid: string): Promise<Route[]> {
   const result = await client.send(
@@ -22,7 +26,9 @@ export async function getRoutes(uid: string): Promise<Route[]> {
   return (result.Items ?? []).map((item) => ({
     routeId: item.SK.replace('ROUTE#', ''),
     fromStation: item.fromStation,
+    fromStationUic: item.fromStationUic,
     toStation: item.toStation,
+    toStationUic: item.toStationUic,
     departureTime: item.departureTime,
   }));
 }
@@ -35,7 +41,9 @@ export async function putRoute(uid: string, route: Route): Promise<void> {
         PK: `USER#${uid}`,
         SK: `ROUTE#${route.routeId}`,
         fromStation: route.fromStation,
+        fromStationUic: route.fromStationUic,
         toStation: route.toStation,
+        toStationUic: route.toStationUic,
         departureTime: route.departureTime,
       },
     })
@@ -145,6 +153,7 @@ export async function getProfile(uid: string): Promise<Profile | null> {
     personalNumber: result.Item.personalNumber,
     email: result.Item.email,
     phone: result.Item.phone,
+    onboardingComplete: result.Item.onboardingComplete,
   };
 }
 
@@ -171,6 +180,7 @@ export async function getMovingoCards(uid: string): Promise<MovingoCard[]> {
   );
   return (result.Items ?? []).map((item) => ({
     cardId: item.SK.replace('MOVINGO#', ''),
+    movingoId: item.movingoId,
     cardType: item.cardType,
     price: item.price,
     purchaseDate: item.purchaseDate,
@@ -185,6 +195,7 @@ export async function putMovingoCard(uid: string, card: MovingoCard): Promise<vo
       Item: {
         PK: `USER#${uid}`,
         SK: `MOVINGO#${card.cardId}`,
+        movingoId: card.movingoId,
         cardType: card.cardType,
         price: card.price,
         purchaseDate: card.purchaseDate,

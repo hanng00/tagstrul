@@ -48,8 +48,16 @@ export function LoginPage() {
       await verifyOtp(session, otp.trim())
       navigate("/app", { replace: true })
     } catch (err) {
-      setError("Fel kod. Försök igen.")
-      console.error("OTP verification error:", err)
+      const message = err instanceof Error ? err.message : ""
+      if (message.includes("Konto bekräftat")) {
+        setError("Konto bekräftat! Vi skickade en ny kod till din e-post.")
+        setOtp("")
+        const newSession = await signIn(session.email)
+        setSession(newSession)
+      } else {
+        setError("Fel kod. Försök igen.")
+        console.error("OTP verification error:", err)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -81,12 +89,18 @@ export function LoginPage() {
               <Mail className="size-6 text-foreground" />
             </div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              {step === "email" ? "Logga in" : "Ange kod"}
+              {step === "email"
+                ? "Logga in"
+                : session?.type === "confirm_signup"
+                  ? "Bekräfta e-post"
+                  : "Logga in"}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {step === "email"
                 ? "Vi skickar en engångskod till din e-post"
-                : `Vi skickade en kod till ${email}`}
+                : session?.type === "confirm_signup"
+                  ? `Ange 6-siffrig bekräftelsekod skickad till ${email}`
+                  : `Ange 8-siffrig inloggningskod skickad till ${email}`}
             </p>
           </div>
 
@@ -138,10 +152,10 @@ export function LoginPage() {
                   pattern="[0-9]*"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  placeholder="123456"
+                  placeholder={session?.type === "confirm_signup" ? "123456" : "12345678"}
                   autoComplete="one-time-code"
                   autoFocus
-                  maxLength={6}
+                  maxLength={session?.type === "confirm_signup" ? 6 : 8}
                   className="h-12 rounded-lg border border-input bg-background px-4 text-center text-2xl font-semibold tracking-[0.3em] text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 placeholder:tracking-normal placeholder:text-base focus:border-foreground"
                 />
               </label>
@@ -152,7 +166,7 @@ export function LoginPage() {
 
               <Button
                 type="submit"
-                disabled={otp.length < 6 || isLoading}
+                disabled={(session?.type === "confirm_signup" ? otp.length < 6 : otp.length < 8) || isLoading}
                 className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 disabled:opacity-50"
               >
                 {isLoading ? (

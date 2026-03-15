@@ -1,7 +1,9 @@
 export interface Route {
   routeId: string
   fromStation: string
+  fromStationUic?: string
   toStation: string
+  toStationUic?: string
   departureTime?: string
 }
 
@@ -13,6 +15,7 @@ export type MovingoCardType =
 
 export interface MovingoCard {
   cardId: string
+  movingoId: string
   cardType: MovingoCardType
   price: number
   purchaseDate: string
@@ -51,8 +54,9 @@ export interface Profile {
   firstName?: string
   lastName?: string
   personalNumber?: string
-  email: string
+  email?: string
   phone?: string
+  onboardingComplete?: boolean
 }
 
 export const MOVINGO_CARD_LABELS: Record<MovingoCardType, string> = {
