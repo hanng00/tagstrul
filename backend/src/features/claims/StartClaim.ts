@@ -29,10 +29,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       getMovingoCards(uid),
     ]);
 
-    if (!profile?.firstName || !profile?.lastName) {
-      return badRequest('Profile incomplete: missing name');
-    }
-
     const activeCard = movingoCards.find((c) => c.expiryDate >= new Date().toISOString().slice(0, 10));
     if (!activeCard) {
       return badRequest('No active Movingo card');
@@ -79,10 +75,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         estimatedCompensation: delay.estimatedCompensation,
       },
       contact: {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        email: profile.email ?? '',
-        phone: profile.phone ?? '',
+        firstName: profile?.firstName ?? '',
+        lastName: profile?.lastName ?? '',
+        email: profile?.email ?? '',
+        phone: profile?.phone ?? '',
       },
     });
   } catch (error) {

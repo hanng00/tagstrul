@@ -39,6 +39,7 @@ export function matchDelaysToUsers(
   activeCards: Map<string, MovingoCard>,
 ): UserDelayMatch[] {
   const matches: UserDelayMatch[] = [];
+  const seen = new Set<string>();
 
   for (const delay of delays) {
     for (const route of userRoutes) {
@@ -47,6 +48,11 @@ export function matchDelaysToUsers(
 
       const timeMatch = !route.departureTime || isWithinWindow(delay.scheduledDeparture, route.departureTime);
       if (!timeMatch) continue;
+
+      // Deduplicate: one delay per user per train per direction per day
+      const dedupeKey = `${route.userId}_${delay.date}_${delay.trainId}_${route.fromStationUic}_${route.toStationUic}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
 
       const card = activeCards.get(route.userId);
       const claimable = isClaimable(delay.delayMinutes, delay.cancelled);

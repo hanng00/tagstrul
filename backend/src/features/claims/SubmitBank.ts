@@ -24,13 +24,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     });
 
     const profile = await getProfile(uid);
-    if (profile) {
-      await putProfile(uid, {
-        ...profile,
-        personalNumber,
-        swishPhone,
-      });
-    }
+    await putProfile(uid, {
+      ...profile,
+      personalNumber,
+      swishPhone,
+    });
 
     return success({
       claimToken,

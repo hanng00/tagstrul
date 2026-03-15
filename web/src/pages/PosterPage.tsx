@@ -1,10 +1,10 @@
 import { Logo } from "@/components/Logo"
 import { TrainCrashImage } from "@/components/TrainCrashImage"
 
-const stats = [
-  { label: "20+ min försening", value: "50", unit: "kr" },
-  { label: "Snitt tillbaka/mån", value: "900", unit: "kr", sublabel: "vid 3600kr Movingo" },
-  { label: "Pris", value: "Gratis" },
+const steps = [
+  { number: "1", text: "Koppla ditt SL-kort" },
+  { number: "2", text: "Vi bevakar alla dina resor" },
+  { number: "3", text: "Pengarna kommer automatiskt" },
 ]
 
 export function PosterPage() {
@@ -54,36 +54,37 @@ export function PosterPage() {
             style={{ fontSize: "20px", lineHeight: "1.4" }}
             className="mt-6 text-muted-foreground"
           >
-            Trafikverket håller inte tidtabellen. Vi ser till att du får betalt.
+            Sluta missa ersättningar. Vi bevakar dina resor och ser till att du får tillbaka pengarna — automatiskt.
           </p>
 
-          {/* Stats row - 3 cards */}
+          {/* How it works - 3 steps */}
           <div className="flex gap-4" style={{ marginTop: "36px" }}>
-            {stats.map((stat) => (
+            {steps.map((step) => (
               <div
-                key={stat.label}
-                className="flex-1 rounded-2xl border border-border bg-card"
+                key={step.number}
+                className="flex-1 rounded-2xl border border-border bg-card flex items-center gap-4"
                 style={{ padding: "20px 24px" }}
               >
-                <p style={{ fontSize: "12px" }} className="font-medium text-muted-foreground">
-                  {stat.label}
+                <div 
+                  className="flex items-center justify-center rounded-full bg-foreground text-background font-bold"
+                  style={{ width: "40px", height: "40px", fontSize: "20px", flexShrink: 0 }}
+                >
+                  {step.number}
+                </div>
+                <p style={{ fontSize: "18px", lineHeight: "1.3" }} className="font-medium text-foreground">
+                  {step.text}
                 </p>
-                <p style={{ fontSize: "48px", lineHeight: "1" }} className="mt-2 font-semibold tabular-nums text-foreground">
-                  {stat.value}
-                  {stat.unit && (
-                    <span style={{ fontSize: "24px" }} className="font-medium text-muted-foreground ml-1">
-                      {stat.unit}
-                    </span>
-                  )}
-                </p>
-                {stat.sublabel && (
-                  <p style={{ fontSize: "11px" }} className="mt-2 text-muted-foreground">
-                    {stat.sublabel}
-                  </p>
-                )}
               </div>
             ))}
           </div>
+
+          {/* Value prop */}
+          <p
+            style={{ fontSize: "16px", lineHeight: "1.4", marginTop: "24px" }}
+            className="text-muted-foreground"
+          >
+            <span className="text-foreground font-medium">50 kr</span> per försening över 20 min · Snitt <span className="text-foreground font-medium">900 kr/mån</span> tillbaka · <span className="text-foreground font-medium">Helt gratis</span>
+          </p>
         </div>
 
         {/* Footer CTA */}

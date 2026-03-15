@@ -165,6 +165,23 @@ export const api = {
       body: JSON.stringify(data),
     })
   },
+
+  async updateClaimStatus(
+    claimId: string,
+    status: "approved" | "rejected",
+    actualCompensation?: number,
+  ): Promise<void> {
+    await request(`/claims/${claimId}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ claimId, status, actualCompensation }),
+    })
+  },
+
+  async dismissDelay(delayId: string): Promise<void> {
+    await request(`/delays/${delayId}/dismiss`, {
+      method: "POST",
+    })
+  },
 }
 
 export interface StartClaimResponse {

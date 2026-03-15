@@ -1,6 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, ScanCommand, PutCommand, BatchWriteCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { nanoid } from 'nanoid';
 import type { UserRoute, UserDelayMatch } from './features/ingestion/UserRouteMatcher.ts';
 import type { TrainDeparture } from './adapter/TrainDataPort.ts';
 import type { MovingoCard } from './features/ingestion/CompensationCalculator.ts';
@@ -134,14 +133,26 @@ export function uniqueRoutePairs(routes: UserRoute[]): StationPair[] {
   const seen = new Set<string>();
   const pairs: StationPair[] = [];
   for (const r of routes) {
-    const key = `${r.fromStationUic}|${r.toStationUic}`;
-    if (!seen.has(key)) {
-      seen.add(key);
+    const forwardKey = `${r.fromStationUic}|${r.toStationUic}`;
+    const reverseKey = `${r.toStationUic}|${r.fromStationUic}`;
+
+    if (!seen.has(forwardKey)) {
+      seen.add(forwardKey);
       pairs.push({
         from: r.fromStation,
         fromUic: r.fromStationUic,
         to: r.toStation,
         toUic: r.toStationUic,
+      });
+    }
+
+    if (!seen.has(reverseKey)) {
+      seen.add(reverseKey);
+      pairs.push({
+        from: r.toStation,
+        fromUic: r.toStationUic,
+        to: r.fromStation,
+        toUic: r.fromStationUic,
       });
     }
   }
@@ -182,55 +193,44 @@ export async function writeUserDelays(matches: UserDelayMatch[]): Promise<void> 
   const deadlineStr = claimDeadline.toISOString().slice(0, 10);
 
   for (const m of matches) {
-    const trainKey = `${m.delay.date}_${m.delay.trainId}`;
+    const delayId = `${m.delay.date}_${m.delay.trainId}_${m.fromStationUic}_${m.toStationUic}`;
 
-    const existing = await client.send(
-      new QueryCommand({
-        TableName: TABLE,
-        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
-        FilterExpression: 'trainKey = :tk',
-        ExpressionAttributeValues: {
-          ':pk': `USER#${m.userId}`,
-          ':sk': 'DELAY#',
-          ':tk': trainKey,
-        },
-        Limit: 1,
-      }),
-    );
-
-    if (existing.Items && existing.Items.length > 0) {
-      continue;
+    try {
+      // Only insert if delay doesn't exist yet (idempotent write)
+      await client.send(
+        new PutCommand({
+          TableName: TABLE,
+          Item: {
+            PK: `USER#${m.userId}`,
+            SK: `DELAY#${delayId}`,
+            trainId: m.delay.trainId,
+            routeId: m.routeId,
+            fromStation: m.delay.fromStation,
+            fromStationUic: m.fromStationUic,
+            toStation: m.delay.toStation,
+            toStationUic: m.toStationUic,
+            date: m.delay.date,
+            scheduledDeparture: m.delay.scheduledDeparture,
+            actualDeparture: m.delay.actualDeparture,
+            delayMinutes: m.delay.delayMinutes,
+            cancelled: m.delay.cancelled,
+            estimatedCompensation: m.estimatedCompensation,
+            claimable: m.claimable,
+            claimed: false,
+            claimDeadline: m.claimable ? deadlineStr : undefined,
+            source: m.delay.source,
+            trainDataRef: m.delay.rawRef,
+            detectedAt: now.toISOString(),
+          },
+          ConditionExpression: 'attribute_not_exists(PK)',
+        }),
+      );
+    } catch (err: unknown) {
+      // ConditionalCheckFailedException means delay already exists - skip silently
+      if ((err as { name?: string }).name === 'ConditionalCheckFailedException') {
+        continue;
+      }
+      throw err;
     }
-
-    const delayId = nanoid();
-
-    await client.send(
-      new PutCommand({
-        TableName: TABLE,
-        Item: {
-          PK: `USER#${m.userId}`,
-          SK: `DELAY#${delayId}`,
-          trainKey,
-          trainId: m.delay.trainId,
-          routeId: m.routeId,
-          fromStation: m.delay.fromStation,
-          fromStationUic: m.fromStationUic,
-          toStation: m.delay.toStation,
-          toStationUic: m.toStationUic,
-          date: m.delay.date,
-          scheduledDeparture: m.delay.scheduledDeparture,
-          actualDeparture: m.delay.actualDeparture,
-          delayMinutes: m.delay.delayMinutes,
-          cancelled: m.delay.cancelled,
-          estimatedCompensation: m.estimatedCompensation,
-          claimable: m.claimable,
-          claimed: false,
-          claimDeadline: m.claimable ? deadlineStr : undefined,
-          source: m.delay.source,
-          trainDataRef: m.delay.rawRef,
-          detectedAt: now.toISOString(),
-        },
-      }),
-    );
   }
 }

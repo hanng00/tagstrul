@@ -1,6 +1,8 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, QueryCommand, PutCommand, DeleteCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, QueryCommand, PutCommand, DeleteCommand, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import type { Route, Delay, Claim, Profile, MovingoCard } from './types.ts';
+import { estimateCompensation, isClaimable } from './features/ingestion/CompensationCalculator.ts';
+import { getUserMovingoCard } from './ingestion-repository.ts';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE = process.env.TABLE_NAME!;
@@ -60,37 +62,63 @@ export async function deleteRoute(uid: string, routeId: string): Promise<void> {
 }
 
 export async function getDelays(uid: string): Promise<Delay[]> {
-  const result = await client.send(
-    new QueryCommand({
-      TableName: TABLE,
-      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
-      ExpressionAttributeValues: { ':pk': `USER#${uid}`, ':sk': 'DELAY#' },
-    })
-  );
-  return (result.Items ?? []).map((item) => ({
-    delayId: item.SK.replace('DELAY#', ''),
-    routeId: item.routeId,
-    fromStation: item.fromStation,
-    toStation: item.toStation,
-    date: item.date,
-    scheduledDeparture: item.scheduledDeparture,
-    delayMinutes: item.delayMinutes,
-    cancelled: item.cancelled ?? false,
-    estimatedCompensation: item.estimatedCompensation,
-    claimable: item.claimable ?? false,
-    claimed: item.claimed ?? false,
-    claimDeadline: item.claimDeadline,
-  }));
+  const [result, card] = await Promise.all([
+    client.send(
+      new QueryCommand({
+        TableName: TABLE,
+        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+        ExpressionAttributeValues: { ':pk': `USER#${uid}`, ':sk': 'DELAY#' },
+      })
+    ),
+    getUserMovingoCard(uid),
+  ]);
+
+  return (result.Items ?? []).map((item) => {
+    const delayMinutes = item.delayMinutes as number;
+    const cancelled = (item.cancelled ?? false) as boolean;
+    const claimable = isClaimable(delayMinutes, cancelled);
+    const compensation = card && claimable
+      ? estimateCompensation(delayMinutes, cancelled, card)
+      : 0;
+
+    return {
+      delayId: item.SK.replace('DELAY#', ''),
+      routeId: item.routeId,
+      fromStation: item.fromStation,
+      toStation: item.toStation,
+      date: item.date,
+      scheduledDeparture: item.scheduledDeparture,
+      delayMinutes,
+      cancelled,
+      estimatedCompensation: compensation,
+      claimable,
+      claimed: item.claimed ?? false,
+      claimDeadline: item.claimDeadline,
+      dismissed: item.dismissed ?? false,
+    };
+  });
 }
 
 export async function getDelay(uid: string, delayId: string): Promise<(Delay & { trainId?: string; fromStationUic?: string; toStationUic?: string }) | null> {
-  const result = await client.send(
-    new GetCommand({
-      TableName: TABLE,
-      Key: { PK: `USER#${uid}`, SK: `DELAY#${delayId}` },
-    })
-  );
+  const [result, card] = await Promise.all([
+    client.send(
+      new GetCommand({
+        TableName: TABLE,
+        Key: { PK: `USER#${uid}`, SK: `DELAY#${delayId}` },
+      })
+    ),
+    getUserMovingoCard(uid),
+  ]);
+
   if (!result.Item) return null;
+
+  const delayMinutes = result.Item.delayMinutes as number;
+  const cancelled = (result.Item.cancelled ?? false) as boolean;
+  const claimable = isClaimable(delayMinutes, cancelled);
+  const compensation = card && claimable
+    ? estimateCompensation(delayMinutes, cancelled, card)
+    : 0;
+
   return {
     delayId: result.Item.SK.replace('DELAY#', ''),
     routeId: result.Item.routeId,
@@ -100,10 +128,10 @@ export async function getDelay(uid: string, delayId: string): Promise<(Delay & {
     toStationUic: result.Item.toStationUic,
     date: result.Item.date,
     scheduledDeparture: result.Item.scheduledDeparture,
-    delayMinutes: result.Item.delayMinutes,
-    cancelled: result.Item.cancelled ?? false,
-    estimatedCompensation: result.Item.estimatedCompensation,
-    claimable: result.Item.claimable ?? false,
+    delayMinutes,
+    cancelled,
+    estimatedCompensation: compensation,
+    claimable,
     claimed: result.Item.claimed ?? false,
     claimDeadline: result.Item.claimDeadline,
     trainId: result.Item.trainId,
@@ -142,6 +170,8 @@ export async function getClaims(uid: string): Promise<Claim[]> {
     estimatedCompensation: item.estimatedCompensation,
     status: item.status,
     submittedAt: item.submittedAt,
+    actualCompensation: item.actualCompensation,
+    resolvedAt: item.resolvedAt,
   }));
 }
 
@@ -174,6 +204,43 @@ export async function putClaim(uid: string, claim: Claim): Promise<void> {
         SK: `DELAY#${claim.delayId}`,
         claimed: true,
       },
+      ConditionExpression: 'attribute_exists(PK)',
+    })
+  );
+}
+
+export async function updateClaimStatus(
+  uid: string,
+  claimId: string,
+  status: 'approved' | 'rejected',
+  actualCompensation?: number,
+): Promise<void> {
+  const resolvedAt = new Date().toISOString();
+  
+  await client.send(
+    new UpdateCommand({
+      TableName: TABLE,
+      Key: { PK: `USER#${uid}`, SK: `CLAIM#${claimId}` },
+      UpdateExpression: 'SET #status = :status, resolvedAt = :resolvedAt' + 
+        (actualCompensation !== undefined ? ', actualCompensation = :actualCompensation' : ''),
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: {
+        ':status': status,
+        ':resolvedAt': resolvedAt,
+        ...(actualCompensation !== undefined && { ':actualCompensation': actualCompensation }),
+      },
+      ConditionExpression: 'attribute_exists(PK)',
+    })
+  );
+}
+
+export async function dismissDelay(uid: string, delayId: string): Promise<void> {
+  await client.send(
+    new UpdateCommand({
+      TableName: TABLE,
+      Key: { PK: `USER#${uid}`, SK: `DELAY#${delayId}` },
+      UpdateExpression: 'SET dismissed = :dismissed',
+      ExpressionAttributeValues: { ':dismissed': true },
       ConditionExpression: 'attribute_exists(PK)',
     })
   );

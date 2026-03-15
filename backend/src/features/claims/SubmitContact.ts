@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
-import { userId, getProfile } from '../../repository.ts';
+import { userId, getProfile, putProfile } from '../../repository.ts';
 import { submitContactInfo } from '../../adapter/SJDelayCompensationAdapter.ts';
 import { success, badRequest, internalServerError } from '../../utils/response.ts';
 
@@ -27,6 +27,15 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     });
 
     const profile = await getProfile(uid);
+
+    // Save contact info to profile for future claims
+    await putProfile(uid, {
+      ...profile,
+      firstName,
+      lastName,
+      email,
+      phone,
+    });
 
     return success({
       claimToken: updatedToken,

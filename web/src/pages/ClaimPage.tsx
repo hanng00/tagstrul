@@ -582,7 +582,7 @@ function ConfirmStep({
           Jag bekräftar att uppgifterna stämmer och godkänner att ansökan
           skickas till SJ enligt deras{" "}
           <a
-            href="https://www.sj.se/sv/villkor.html"
+            href="https://www.sj.se/om-sj/regler-och-villkor/rattigheter-vid-forsening#Ers%C3%A4ttning_vid_f%C3%B6rsening"
             target="_blank"
             rel="noopener noreferrer"
             className="underline"

@@ -16,6 +16,7 @@
     "@aws-sdk/lib-dynamodb": "^3.940.0",
     "aws-jwt-verify": "^5.1.1",
     "nanoid": "^5.1.6",
+    "stripe": "^20.4.1",
     "zod": "^4.1.13"
   }
 }

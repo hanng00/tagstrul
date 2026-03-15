@@ -122,6 +122,25 @@ Resources:
       BuildProperties:
         Sourcemap: true
 
+  DismissDelay:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/delays/DismissDelay.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /delays/{delayId}/dismiss
+            Method: POST
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
   # --- Claims ---
 
   GetClaims:
@@ -188,7 +207,7 @@ Resources:
       Handler: src/features/claims/SubmitContact.handler
       Timeout: 60
       Policies:
-        - DynamoDBReadPolicy:
+        - DynamoDBCrudPolicy:
             TableName: !Ref TableName
       Events:
         Api:
@@ -237,6 +256,25 @@ Resources:
             RestApiId: !Ref Api
             Path: /claims/confirm
             Method: POST
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
+  UpdateClaimStatus:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/claims/UpdateClaimStatus.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /claims/{claimId}/status
+            Method: PUT
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -336,6 +374,26 @@ Resources:
             RestApiId: !Ref Api
             Path: /movingo-cards/{cardId}
             Method: DELETE
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
+  # --- Donations (unauthenticated) ---
+
+  CreateDonationCheckout:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/donations/CreateCheckout.handler
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /public/donations/checkout
+            Method: POST
+            Auth:
+              Authorizer: NONE
     Metadata:
       BuildMethod: esbuild
       BuildProperties:

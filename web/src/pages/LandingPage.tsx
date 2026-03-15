@@ -6,19 +6,25 @@ import { api } from "@/lib/api"
 import { searchStations } from "@/lib/stations"
 import { Logo } from "@/components/Logo"
 import { TrainCrashImage } from "@/components/TrainCrashImage"
+import { useAuth } from "@/components/AuthContext"
 
 export function LandingPage() {
   const navigate = useNavigate()
+  const { isAuthenticated, isLoading } = useAuth()
+
+  const handleAuthAction = () => {
+    navigate(isAuthenticated ? "/app" : "/login")
+  }
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
       <header className="flex items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
         <Logo size="small" />
         <button
-          onClick={() => navigate("/login")}
+          onClick={handleAuthAction}
           className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          Logga in
+          {isLoading ? "" : isAuthenticated ? "Till appen" : "Logga in"}
         </button>
       </header>
 
@@ -39,10 +45,10 @@ export function LandingPage() {
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Button
-                  onClick={() => navigate("/login")}
+                  onClick={handleAuthAction}
                   className="h-12 rounded-lg bg-foreground px-6 text-[15px] font-semibold text-background transition-transform hover:bg-foreground/90 active:scale-[0.98]"
                 >
-                  Kom igång gratis
+                  {isAuthenticated ? "Till appen" : "Kom igång gratis"}
                   <ChevronRight className="ml-1 size-4" />
                 </Button>
               </div>
@@ -66,7 +72,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <CalculatorSection onGetStarted={() => navigate("/login")} />
+      <CalculatorSection onGetStarted={handleAuthAction} isAuthenticated={isAuthenticated} />
 
       <section className="border-t border-border bg-card px-5 py-12 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-5xl">
@@ -117,7 +123,7 @@ export function LandingPage() {
   )
 }
 
-function CalculatorSection({ onGetStarted }: { onGetStarted: () => void }) {
+function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: () => void; isAuthenticated: boolean }) {
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
   const [fromSuggestions, setFromSuggestions] = useState<string[]>([])
@@ -305,7 +311,7 @@ function CalculatorSection({ onGetStarted }: { onGetStarted: () => void }) {
                     onClick={onGetStarted}
                     className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
                   >
-                    Börja kräva tillbaka
+                    {isAuthenticated ? "Till appen" : "Börja kräva tillbaka"}
                     <ChevronRight className="ml-1 size-4" />
                   </Button>
                   <button

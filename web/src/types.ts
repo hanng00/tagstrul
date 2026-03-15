@@ -35,6 +35,7 @@ export interface Delay {
   claimable: boolean
   claimed: boolean
   claimDeadline?: string
+  dismissed?: boolean
 }
 
 export interface Claim {
@@ -48,6 +49,8 @@ export interface Claim {
   estimatedCompensation: number
   status: "submitted" | "approved" | "rejected"
   submittedAt: string
+  actualCompensation?: number
+  resolvedAt?: string
 }
 
 export interface Profile {

@@ -2,7 +2,7 @@ import type { DynamoDBStreamEvent } from 'aws-lambda';
 import { createTrainDataAdapter } from '../../adapter/TrainDataPort.ts';
 import { detectDelays } from './DelayDetector.ts';
 import { matchDelaysToUsers } from './UserRouteMatcher.ts';
-import { getUserRoutes, getUserMovingoCard, writeTrainSnapshots, writeUserDelays } from '../../ingestion-repository.ts';
+import { getUserRoutes, getUserMovingoCard, uniqueRoutePairs, writeTrainSnapshots, writeUserDelays } from '../../ingestion-repository.ts';
 
 export const handler = async (event: DynamoDBStreamEvent): Promise<void> => {
   const userIds = new Set<string>();
@@ -44,17 +44,10 @@ export const handler = async (event: DynamoDBStreamEvent): Promise<void> => {
       activeCards.set(userId, movingoCard);
     }
 
-    const routePairs = userRoutes.map((r) => ({
-      from: r.fromStation,
-      fromUic: r.fromStationUic,
-      to: r.toStation,
-      toUic: r.toStationUic,
-    }));
-    const uniquePairs = [...new Map(routePairs.map((p) => [`${p.fromUic}|${p.toUic}`, p])).values()];
+    const routePairs = uniqueRoutePairs(userRoutes);
+    console.log(`[PollUserRoutes] Polling ${routePairs.length} route pairs for user ${userId}`);
 
-    console.log(`[PollUserRoutes] Polling ${uniquePairs.length} route pairs for user ${userId}`);
-
-    const allDepartures = (await Promise.all(uniquePairs.map((pair) => adapter.fetchDepartures(pair, today)))).flat();
+    const allDepartures = (await Promise.all(routePairs.map((pair) => adapter.fetchDepartures(pair, today)))).flat();
     console.log(`[PollUserRoutes] Fetched ${allDepartures.length} departures`);
 
     await writeTrainSnapshots(allDepartures);

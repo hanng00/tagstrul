@@ -11,6 +11,7 @@ import { ClaimPage } from "@/pages/ClaimPage"
 import { RoutesPage } from "@/pages/RoutesPage"
 import { ProfilePage } from "@/pages/ProfilePage"
 import { PosterPage } from "@/pages/PosterPage"
+import { ThankYouPage } from "@/features/donations"
 
 export function App() {
   return (
@@ -20,6 +21,7 @@ export function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/poster" element={<PosterPage />} />
+          <Route path="/tack" element={<ThankYouPage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<OnboardingGuard />}>
               <Route path="/onboarding" element={<OnboardingPage />} />
