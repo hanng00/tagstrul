@@ -83,6 +83,46 @@ export async function getDelays(uid: string): Promise<Delay[]> {
   }));
 }
 
+export async function getDelay(uid: string, delayId: string): Promise<(Delay & { trainId?: string; fromStationUic?: string; toStationUic?: string }) | null> {
+  const result = await client.send(
+    new GetCommand({
+      TableName: TABLE,
+      Key: { PK: `USER#${uid}`, SK: `DELAY#${delayId}` },
+    })
+  );
+  if (!result.Item) return null;
+  return {
+    delayId: result.Item.SK.replace('DELAY#', ''),
+    routeId: result.Item.routeId,
+    fromStation: result.Item.fromStation,
+    toStation: result.Item.toStation,
+    fromStationUic: result.Item.fromStationUic,
+    toStationUic: result.Item.toStationUic,
+    date: result.Item.date,
+    scheduledDeparture: result.Item.scheduledDeparture,
+    delayMinutes: result.Item.delayMinutes,
+    cancelled: result.Item.cancelled ?? false,
+    estimatedCompensation: result.Item.estimatedCompensation,
+    claimable: result.Item.claimable ?? false,
+    claimed: result.Item.claimed ?? false,
+    claimDeadline: result.Item.claimDeadline,
+    trainId: result.Item.trainId,
+  };
+}
+
+export async function markDelayClaimed(uid: string, delayId: string): Promise<void> {
+  await client.send(
+    new PutCommand({
+      TableName: TABLE,
+      Item: {
+        PK: `USER#${uid}`,
+        SK: `DELAY#${delayId}`,
+      },
+      ConditionExpression: 'attribute_exists(PK)',
+    })
+  );
+}
+
 export async function getClaims(uid: string): Promise<Claim[]> {
   const result = await client.send(
     new QueryCommand({
@@ -153,6 +193,7 @@ export async function getProfile(uid: string): Promise<Profile | null> {
     personalNumber: result.Item.personalNumber,
     email: result.Item.email,
     phone: result.Item.phone,
+    swishPhone: result.Item.swishPhone,
     onboardingComplete: result.Item.onboardingComplete,
   };
 }

@@ -63,6 +63,8 @@ Resources:
         - { AttributeName: PK, KeyType: HASH }
         - { AttributeName: SK, KeyType: RANGE }
       BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
 
   # ========== Child stacks ==========
 
@@ -76,7 +78,6 @@ Resources:
         CognitoUserPoolId: !Ref CognitoUserPool
         CognitoUserPoolArn: !GetAtt CognitoUserPool.Arn
         CognitoClientId: !Ref CognitoUserPoolClient
-        PollUserRoutesArn: !GetAtt IngestionStack.Outputs.PollUserRoutesArn
 
   IngestionStack:
     Type: AWS::Serverless::Application
@@ -85,6 +86,7 @@ Resources:
       Parameters:
         TableName: !Ref Table
         TableArn: !GetAtt Table.Arn
+        TableStreamArn: !GetAtt Table.StreamArn
 
 Outputs:
   CognitoUserPoolId: { Value: !Ref CognitoUserPool }

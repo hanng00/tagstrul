@@ -1,12 +1,8 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { z } from 'zod';
 import { putRoute, userId } from '../../repository.ts';
 import { created, badRequest, internalServerError } from '../../utils/response.ts';
-import { getStationByName, normalizeStationName } from '../../data/stations.ts';
-
-const lambda = new LambdaClient({});
-const POLL_USER_ROUTES_ARN = process.env.POLL_USER_ROUTES_ARN;
+import { getStationByName } from '../../data/stations.ts';
 
 const schema = z.object({
   fromStation: z.string().min(1),
@@ -37,19 +33,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     };
 
     await putRoute(uid, route);
-
-    if (POLL_USER_ROUTES_ARN) {
-      lambda
-        .send(
-          new InvokeCommand({
-            FunctionName: POLL_USER_ROUTES_ARN,
-            InvocationType: 'Event',
-            Payload: JSON.stringify({ userId: uid }),
-          }),
-        )
-        .catch((err: Error) => console.error('[PostRoute] Failed to trigger poll:', err));
-    }
-
     return created(route);
   } catch (error) {
     return internalServerError(error);

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <!-- Coin outline -->
+  <circle cx="20" cy="20" r="17" stroke="currentColor" stroke-width="2.5"/>
+  
+  <!-- Inner detail - stylized train front / E shape -->
+  <rect x="12" y="11" width="16" height="3" rx="1.5" fill="currentColor"/>
+  <rect x="12" y="18.5" width="12" height="3" rx="1.5" fill="currentColor"/>
+  <rect x="12" y="26" width="16" height="3" rx="1.5" fill="currentColor"/>
+  <rect x="12" y="11" width="3" height="18" rx="1.5" fill="currentColor"/>
+</svg>

@@ -1,45 +1,11 @@
 import { useState } from "react"
 import { useNavigate } from "react-router"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, Loader2 } from "lucide-react"
-
-const STATIONS = [
-  "Stockholm C",
-  "Uppsala C",
-  "Västerås C",
-  "Eskilstuna C",
-  "Örebro C",
-  "Södertälje Syd",
-  "Arlanda C",
-  "Knivsta",
-  "Märsta",
-  "Enköping",
-  "Strängnäs",
-  "Katrineholm C",
-  "Linköping C",
-]
-
-const MOCK_DELAY_DATA: Record<string, { delays: number; amount: number }> = {
-  "Stockholm C-Uppsala C": { delays: 4, amount: 240 },
-  "Uppsala C-Stockholm C": { delays: 3, amount: 180 },
-  "Stockholm C-Västerås C": { delays: 2, amount: 180 },
-  "Västerås C-Stockholm C": { delays: 3, amount: 270 },
-  "Stockholm C-Eskilstuna C": { delays: 2, amount: 150 },
-  "Eskilstuna C-Stockholm C": { delays: 2, amount: 150 },
-  "Stockholm C-Örebro C": { delays: 3, amount: 360 },
-  "Örebro C-Stockholm C": { delays: 2, amount: 240 },
-  "Uppsala C-Arlanda C": { delays: 1, amount: 60 },
-  "Arlanda C-Uppsala C": { delays: 2, amount: 120 },
-  "Stockholm C-Södertälje Syd": { delays: 2, amount: 90 },
-  "Södertälje Syd-Stockholm C": { delays: 3, amount: 135 },
-}
-
-function getDelayData(from: string, to: string) {
-  const key = `${from}-${to}`
-  if (MOCK_DELAY_DATA[key]) return MOCK_DELAY_DATA[key]
-  const hash = (from.length * to.length) % 5
-  return { delays: hash + 1, amount: (hash + 1) * 60 + hash * 30 }
-}
+import { ChevronRight, ChevronDown, ChevronUp, Loader2 } from "lucide-react"
+import { api } from "@/lib/api"
+import { searchStations } from "@/lib/stations"
+import { Logo } from "@/components/Logo"
+import { TrainCrashImage } from "@/components/TrainCrashImage"
 
 export function LandingPage() {
   const navigate = useNavigate()
@@ -47,9 +13,7 @@ export function LandingPage() {
   return (
     <div className="flex min-h-svh flex-col bg-background">
       <header className="flex items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
-        <span className="text-[15px] font-semibold tracking-tight text-foreground">
-          tågersättning
-        </span>
+        <Logo size="small" />
         <button
           onClick={() => navigate("/login")}
           className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -85,13 +49,7 @@ export function LandingPage() {
             </div>
 
             <div className="animate-fade-up stagger-1 relative">
-              <div className="overflow-hidden rounded-2xl bg-muted">
-                <img
-                  src="/traincrash.webp"
-                  alt="Försenat tåg"
-                  className="aspect-4/3 w-full object-cover"
-                />
-              </div>
+              <TrainCrashImage className="aspect-4/3" />
               <div className="absolute -bottom-4 -left-4 rounded-xl border border-border bg-card px-4 py-3 shadow-lg sm:-bottom-6 sm:-left-6">
                 <p className="text-xs font-medium text-muted-foreground">
                   Senaste veckan
@@ -145,11 +103,11 @@ export function LandingPage() {
         </div>
       </section>
 
+      <FAQSection />
+
       <footer className="border-t border-border px-5 py-6 sm:px-8 lg:px-12">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            tågersättning.se
-          </span>
+          <Logo size="small" />
           <span className="text-xs text-muted-foreground">
             Byggt för Movingo-pendlare i Mälardalen
           </span>
@@ -162,25 +120,57 @@ export function LandingPage() {
 function CalculatorSection({ onGetStarted }: { onGetStarted: () => void }) {
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
+  const [fromSuggestions, setFromSuggestions] = useState<string[]>([])
+  const [toSuggestions, setToSuggestions] = useState<string[]>([])
   const [calculating, setCalculating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{
     delays: number
     amount: number
   } | null>(null)
 
+  function handleFromChange(value: string) {
+    setFrom(value)
+    if (value.length >= 2) {
+      setFromSuggestions(searchStations(value, 5).map((s) => s.name))
+    } else {
+      setFromSuggestions([])
+    }
+  }
+
+  function handleToChange(value: string) {
+    setTo(value)
+    if (value.length >= 2) {
+      setToSuggestions(searchStations(value, 5).map((s) => s.name))
+    } else {
+      setToSuggestions([])
+    }
+  }
+
   async function handleCalculate() {
     if (!from || !to || from === to) return
     setCalculating(true)
     setResult(null)
-    await new Promise((r) => setTimeout(r, 800))
-    setResult(getDelayData(from, to))
-    setCalculating(false)
+    setError(null)
+
+    try {
+      const data = await api.estimateCompensation(from, to)
+      setResult({
+        delays: data.claimableDelays,
+        amount: data.estimatedCompensation,
+      })
+    } catch (e) {
+      setError("Kunde inte hämta data. Försök igen.")
+    } finally {
+      setCalculating(false)
+    }
   }
 
   function handleReset() {
     setFrom("")
     setTo("")
     setResult(null)
+    setError(null)
   }
 
   return (
@@ -204,37 +194,73 @@ function CalculatorSection({ onGetStarted }: { onGetStarted: () => void }) {
                   <span className="text-xs font-medium text-muted-foreground">
                     Från
                   </span>
-                  <select
-                    value={from}
-                    onChange={(e) => setFrom(e.target.value)}
-                    className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground"
-                  >
-                    <option value="">Välj station</option>
-                    {STATIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={from}
+                      onChange={(e) => handleFromChange(e.target.value)}
+                      onBlur={() =>
+                        setTimeout(() => setFromSuggestions([]), 150)
+                      }
+                      placeholder="T.ex. Stockholm Central"
+                      className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground"
+                    />
+                    {fromSuggestions.length > 0 && (
+                      <ul className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-card shadow-lg">
+                        {fromSuggestions.map((s) => (
+                          <li
+                            key={s}
+                            onMouseDown={() => {
+                              setFrom(s)
+                              setFromSuggestions([])
+                            }}
+                            className="cursor-pointer px-3 py-2 text-sm hover:bg-muted"
+                          >
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </label>
 
                 <label className="flex flex-col gap-1.5">
                   <span className="text-xs font-medium text-muted-foreground">
                     Till
                   </span>
-                  <select
-                    value={to}
-                    onChange={(e) => setTo(e.target.value)}
-                    className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground"
-                  >
-                    <option value="">Välj station</option>
-                    {STATIONS.filter((s) => s !== from).map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={to}
+                      onChange={(e) => handleToChange(e.target.value)}
+                      onBlur={() =>
+                        setTimeout(() => setToSuggestions([]), 150)
+                      }
+                      placeholder="T.ex. Uppsala C"
+                      className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground"
+                    />
+                    {toSuggestions.length > 0 && (
+                      <ul className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-card shadow-lg">
+                        {toSuggestions.map((s) => (
+                          <li
+                            key={s}
+                            onMouseDown={() => {
+                              setTo(s)
+                              setToSuggestions([])
+                            }}
+                            className="cursor-pointer px-3 py-2 text-sm hover:bg-muted"
+                          >
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </label>
+
+                {error && (
+                  <p className="text-sm text-destructive">{error}</p>
+                )}
 
                 <Button
                   onClick={handleCalculate}
@@ -244,7 +270,7 @@ function CalculatorSection({ onGetStarted }: { onGetStarted: () => void }) {
                   {calculating ? (
                     <>
                       <Loader2 className="mr-2 size-4 animate-spin" />
-                      Beräknar...
+                      Hämtar data...
                     </>
                   ) : (
                     "Beräkna återkrävning"
@@ -268,7 +294,9 @@ function CalculatorSection({ onGetStarted }: { onGetStarted: () => void }) {
                     </span>
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    från {result.delays} ersättningsbara förseningar
+                    {result.delays > 0
+                      ? `från ${result.delays} ersättningsbara ${result.delays === 1 ? "försening" : "förseningar"}`
+                      : "Inga ersättningsbara förseningar"}
                   </p>
                 </div>
 
@@ -290,6 +318,70 @@ function CalculatorSection({ onGetStarted }: { onGetStarted: () => void }) {
               </div>
             )}
           </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const faqItems = [
+  {
+    question: "Är det här lagligt?",
+    answer:
+      "Ja. EU-förordning 1371/2007 och svenska järnvägstrafiklagen ger dig rätt till ersättning vid förseningar. Vi hjälper dig bara att utnyttja rättigheter du redan har.",
+  },
+  {
+    question: "Hur tjänar ni pengar?",
+    answer:
+      "Just nu är tjänsten gratis medan vi bygger och testar den. I framtiden kan vi ta en liten avgift på utbetalda ersättningar, men du betalar aldrig något i förskott.",
+  },
+  {
+    question: "Varför gör ni det här?",
+    answer:
+      "De flesta resenärer vet inte att de har rätt till ersättning, eller orkar inte fylla i formulären. Vi vill göra det enkelt att få tillbaka pengar du har rätt till.",
+  },
+  {
+    question: "Är mina uppgifter säkra?",
+    answer:
+      "Vi lagrar endast det som krävs för att skicka in ditt krav. Vi säljer aldrig din data och du kan radera ditt konto när som helst.",
+  },
+  {
+    question: "Vad händer om kravet avslås?",
+    answer:
+      "Du förlorar ingenting. Om tågbolaget avslår kravet har du inte betalat något och kan alltid överklaga själv om du vill.",
+  },
+]
+
+function FAQSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+
+  return (
+    <section className="border-t border-border bg-background px-5 py-12 sm:px-8 lg:px-12">
+      <div className="mx-auto max-w-xl">
+        <h2 className="text-lg font-semibold text-foreground">Vanliga frågor</h2>
+        <div className="mt-6 divide-y divide-border">
+          {faqItems.map((item, index) => (
+            <div key={index}>
+              <button
+                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                className="flex w-full items-center justify-between py-4 text-left"
+              >
+                <span className="text-[15px] font-medium text-foreground">
+                  {item.question}
+                </span>
+                {openIndex === index ? (
+                  <ChevronUp className="size-5 shrink-0 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="size-5 shrink-0 text-muted-foreground" />
+                )}
+              </button>
+              {openIndex === index && (
+                <p className="pb-4 text-sm leading-relaxed text-muted-foreground">
+                  {item.answer}
+                </p>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </section>

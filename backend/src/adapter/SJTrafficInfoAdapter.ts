@@ -13,11 +13,13 @@ function getDelayMinutes(conn: DepartureConnection): number {
 export class SJTrafficInfoAdapter implements TrainDataPort {
   async fetchDepartures(route: StationPair, date: string): Promise<TrainDeparture[]> {
     const url = new URL(`${SJ_API_BASE}/filtered-connections`);
-    url.searchParams.set('departure', route.from);
-    url.searchParams.set('arrival', route.to);
+    url.searchParams.set('departure', route.fromUic);
+    url.searchParams.set('arrival', route.toUic);
     url.searchParams.set('date', date);
     url.searchParams.set('allDay', 'true');
     url.searchParams.set('lang', 'sv-SE');
+
+    console.log(`[SJAdapter] Fetching: ${url.toString()}`);
 
     const response = await fetch(url.toString(), {
       method: 'GET',
@@ -28,11 +30,14 @@ export class SJTrafficInfoAdapter implements TrainDataPort {
     });
 
     if (!response.ok) {
-      console.error(`SJ API error: ${response.status} for ${route.from} -> ${route.to} on ${date}`);
+      const body = await response.text();
+      console.error(`[SJAdapter] Error ${response.status} for ${route.from} (${route.fromUic}) -> ${route.to} (${route.toUic}) on ${date}`);
+      console.error(`[SJAdapter] Response body: ${body}`);
       return [];
     }
 
     const data = (await response.json()) as FilteredConnectionsResponse;
+    console.log(`[SJAdapter] Got ${data.departureConnections.length} departures for ${route.from} -> ${route.to}`);
 
     return data.departureConnections.map((conn) => ({
       trainId: conn.trainNumber,

@@ -13,8 +13,6 @@ Parameters:
     Type: String
   CognitoClientId:
     Type: String
-  PollUserRoutesArn:
-    Type: String
 
 Globals:
   Function:
@@ -69,15 +67,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: src/features/routes/PostRoute.handler
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref TableName
-          POLL_USER_ROUTES_ARN: !Ref PollUserRoutesArn
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref TableName
-        - LambdaInvokePolicy:
-            FunctionName: !Select [6, !Split [":", !Ref PollUserRoutesArn]]
       Events:
         Api:
           Type: Api
@@ -164,6 +156,86 @@ Resources:
           Properties:
             RestApiId: !Ref Api
             Path: /claims
+            Method: POST
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
+  StartClaim:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/claims/StartClaim.handler
+      Timeout: 60
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref TableName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /claims/start
+            Method: POST
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
+  SubmitContact:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/claims/SubmitContact.handler
+      Timeout: 60
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref TableName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /claims/contact
+            Method: POST
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
+  SubmitBank:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/claims/SubmitBank.handler
+      Timeout: 60
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /claims/bank
+            Method: POST
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
+  ConfirmClaim:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/claims/ConfirmClaim.handler
+      Timeout: 60
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /claims/confirm
             Method: POST
     Metadata:
       BuildMethod: esbuild
@@ -264,6 +336,27 @@ Resources:
             RestApiId: !Ref Api
             Path: /movingo-cards/{cardId}
             Method: DELETE
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
+  # --- Public (unauthenticated) ---
+
+  EstimateCompensation:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/public/EstimateCompensation.handler
+      Timeout: 60
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /public/estimate
+            Method: POST
+            Auth:
+              Authorizer: NONE
     Metadata:
       BuildMethod: esbuild
       BuildProperties:

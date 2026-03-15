@@ -28,7 +28,45 @@ async function request<T>(
   return response.json()
 }
 
+async function publicRequest<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers as Record<string, string>),
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+export interface EstimateResult {
+  fromStation: string
+  toStation: string
+  days: number
+  totalDelays: number
+  claimableDelays: number
+  estimatedCompensation: number
+}
+
 export const api = {
+  async estimateCompensation(
+    fromStation: string,
+    toStation: string,
+  ): Promise<EstimateResult> {
+    return publicRequest<EstimateResult>("/public/estimate", {
+      method: "POST",
+      body: JSON.stringify({ fromStation, toStation }),
+    })
+  },
+
   async getDelays(): Promise<Delay[]> {
     return request<Delay[]>("/delays")
   },
@@ -98,4 +136,96 @@ export const api = {
   async deleteMovingoCard(cardId: string): Promise<void> {
     await request(`/movingo-cards/${cardId}`, { method: "DELETE" })
   },
+
+  // Claim wizard API
+  async startClaim(delayId: string): Promise<StartClaimResponse> {
+    return request<StartClaimResponse>("/claims/start", {
+      method: "POST",
+      body: JSON.stringify({ delayId }),
+    })
+  },
+
+  async submitClaimContact(data: SubmitContactRequest): Promise<SubmitContactResponse> {
+    return request<SubmitContactResponse>("/claims/contact", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  },
+
+  async submitClaimBank(data: SubmitBankRequest): Promise<SubmitBankResponse> {
+    return request<SubmitBankResponse>("/claims/bank", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  },
+
+  async confirmClaim(data: ConfirmClaimRequest): Promise<ConfirmClaimResponse> {
+    return request<ConfirmClaimResponse>("/claims/confirm", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  },
+}
+
+export interface StartClaimResponse {
+  claimToken: string
+  step: "contact"
+  delay: {
+    delayId: string
+    fromStation: string
+    toStation: string
+    date: string
+    scheduledDeparture: string
+    delayMinutes: number
+    cancelled: boolean
+    estimatedCompensation: number
+  }
+  contact: {
+    firstName: string
+    lastName: string
+    email: string
+    phone: string
+  }
+}
+
+export interface SubmitContactRequest {
+  claimToken: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+}
+
+export interface SubmitContactResponse {
+  claimToken: string
+  step: "bank"
+  bank: {
+    personalNumber: string
+    swishPhone: string
+  }
+}
+
+export interface SubmitBankRequest {
+  claimToken: string
+  personalNumber: string
+  swishPhone: string
+}
+
+export interface SubmitBankResponse {
+  claimToken: string
+  barId: string
+  step: "confirm"
+}
+
+export interface ConfirmClaimRequest {
+  claimToken: string
+  barId: string
+  delayId: string
+}
+
+export interface ConfirmClaimResponse {
+  claimId: string
+  confirmationId: string
+  status: "submitted"
+  submittedAt: string
 }

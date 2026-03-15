@@ -5,7 +5,9 @@ export interface UserRoute {
   userId: string;
   routeId: string;
   fromStation: string;
+  fromStationUic: string;
   toStation: string;
+  toStationUic: string;
   departureTime?: string;
 }
 
@@ -13,6 +15,8 @@ export interface UserDelayMatch {
   userId: string;
   routeId: string;
   delay: DetectedDelay;
+  fromStationUic: string;
+  toStationUic: string;
   estimatedCompensation: number;
   claimable: boolean;
 }
@@ -52,6 +56,8 @@ export function matchDelaysToUsers(
         userId: route.userId,
         routeId: route.routeId,
         delay,
+        fromStationUic: route.fromStationUic,
+        toStationUic: route.toStationUic,
         estimatedCompensation: compensation,
         claimable,
       });

@@ -10,6 +10,7 @@ import { HomePage } from "@/pages/HomePage"
 import { ClaimPage } from "@/pages/ClaimPage"
 import { RoutesPage } from "@/pages/RoutesPage"
 import { ProfilePage } from "@/pages/ProfilePage"
+import { PosterPage } from "@/pages/PosterPage"
 
 export function App() {
   return (
@@ -18,6 +19,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/poster" element={<PosterPage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<OnboardingGuard />}>
               <Route path="/onboarding" element={<OnboardingPage />} />

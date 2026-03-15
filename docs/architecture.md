@@ -79,6 +79,7 @@ graph TB
         ADAPTER["TrainDataPort<br/><i>interface</i>"]
         DETECT["DelayDetector<br/>≥ 10 min threshold"]
         MATCH["UserRouteMatcher<br/>station + time window"]
+        STREAM["DynamoDB Stream<br/><i>ROUTE# inserts</i>"]
     end
 
     subgraph CoreStack["Parent: template.yaml + Nested: stacks/api.yaml"]
@@ -87,7 +88,7 @@ graph TB
         DYNAMO[("DynamoDB<br/>Single Table")]
         GET_DELAYS["GetDelays"]
         GET_ROUTES["GetRoutes"]
-        POST_ROUTE["PostRoute<br/><i>triggers PollUserRoutes</i>"]
+        POST_ROUTE["PostRoute"]
         DEL_ROUTE["DeleteRoute"]
         GET_CLAIMS["GetClaims"]
         POST_CLAIM["PostClaim"]
@@ -109,6 +110,11 @@ graph TB
     MATCH -->|"scan ROUTE# items"| DYNAMO
     MATCH -->|"write DELAY# items"| DYNAMO
     POLL -->|"write TRAIN# snapshots"| DYNAMO
+
+    %% Stream-triggered polling
+    DYNAMO -->|"stream"| STREAM
+    STREAM -->|"trigger"| POLL_USER
+    POLL_USER --> ADAPTER
 
     %% User API flow
     WEB -->|"HTTPS"| APIGW
@@ -352,7 +358,7 @@ sequenceDiagram
 | Cross-stack link | **CloudFormation exports** | Clean, native. Ingestion imports `TableName` + `TableArn` from core stack. |
 | Poll vs. proxy | **Poll on schedule** | SJ only serves ~24h windows. We need historical data for the 30-day claim window. |
 | Poll frequency | **Every 6 hours** | Balances freshness vs. cost. Once a train departed late, the fact is stable. |
-| On-demand poll | **PostRoute triggers PollUserRoutes** | Good UX: new users see delays immediately after adding their first route, rather than waiting up to 6 hours. |
+| On-demand poll | **DynamoDB Streams trigger** | Decoupled: `PostRoute` just writes data, ingestion stack subscribes to ROUTE# inserts. Automatic retries, no cross-stack wiring. |
 | Raw data storage | **TRAIN# snapshots** | Audit trail. When SJ's model changes or we need to reprocess, we have originals. |
 | Adapter pattern | **Port/adapter interface** | We don't know SJ's shape. Swap implementations without touching business logic. |
 | Delay detection | **In the poller Lambda** | Single responsibility: detect once, write result. User API never computes — only reads. |

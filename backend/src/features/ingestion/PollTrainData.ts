@@ -1,5 +1,5 @@
 import type { ScheduledEvent } from 'aws-lambda';
-import { SJTrafficInfoAdapter } from '../../adapter/SJTrafficInfoAdapter.ts';
+import { createTrainDataAdapter } from '../../adapter/TrainDataPort.ts';
 import { detectDelays } from './DelayDetector.ts';
 import { matchDelaysToUsers } from './UserRouteMatcher.ts';
 import {
@@ -11,7 +11,7 @@ import {
 } from '../../ingestion-repository.ts';
 
 export const handler = async (_event: ScheduledEvent): Promise<void> => {
-  const adapter = new SJTrafficInfoAdapter();
+  const adapter = createTrainDataAdapter();
   const today = new Date().toISOString().slice(0, 10);
 
   console.log(`[PollTrainData] Starting poll for ${today}`);

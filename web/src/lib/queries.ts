@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "./api"
-import type { Delay, Route, Claim, Profile, MovingoCard } from "@/types"
+import type { Delay, Route, Profile, MovingoCard } from "@/types"
 
 export const queryKeys = {
   delays: ["delays"] as const,
@@ -15,6 +15,12 @@ export function useDelays() {
     queryKey: queryKeys.delays,
     queryFn: api.getDelays,
   })
+}
+
+export function useDelay(delayId: string | undefined) {
+  const { data: delays = [], isLoading } = useDelays()
+  const delay = delayId ? delays.find((d) => d.delayId === delayId) : undefined
+  return { delay, isLoading }
 }
 
 export function useClaims() {

@@ -3,7 +3,6 @@ import { Trash2, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StationInput } from "@/components/StationInput"
 import { useRoutes, useAddRoute, useDeleteRoute } from "@/lib/queries"
-import type { Route } from "@/types"
 
 export function RoutesPage() {
   const { data: routes = [], isLoading: loading } = useRoutes()
@@ -62,7 +61,8 @@ export function RoutesPage() {
                 </div>
                 <button
                   onClick={() => handleDelete(route.routeId)}
-                  className="flex size-8 items-center justify-center rounded-lg text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  disabled={deleteRoute.isPending}
+                  className="flex size-8 items-center justify-center rounded-lg text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
                 >
                   <Trash2 className="size-4" />
                 </button>
@@ -87,6 +87,7 @@ export function RoutesPage() {
             onAdd={handleAdd}
             onCancel={() => setShowForm(false)}
             isFirst={routes.length === 0}
+            isPending={addRoute.isPending}
           />
         ) : (
           <button
@@ -106,10 +107,12 @@ function AddRouteForm({
   onAdd,
   onCancel,
   isFirst,
+  isPending,
 }: {
   onAdd: (from: string, to: string, time: string) => void
   onCancel: () => void
   isFirst: boolean
+  isPending: boolean
 }) {
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
@@ -123,7 +126,8 @@ function AddRouteForm({
         <h2 className="text-base font-semibold text-foreground">Ny pendling</h2>
         <button
           onClick={onCancel}
-          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          disabled={isPending}
+          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
         >
           <X className="size-4" />
         </button>
@@ -135,6 +139,7 @@ function AddRouteForm({
           onChange={setFrom}
           placeholder="Stockholm C"
           label="Från"
+          disabled={isPending}
         />
 
         <StationInput
@@ -142,6 +147,7 @@ function AddRouteForm({
           onChange={setTo}
           placeholder="Uppsala C"
           label="Till"
+          disabled={isPending}
         />
 
         <label className="flex flex-col gap-1.5">
@@ -153,16 +159,21 @@ function AddRouteForm({
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground focus:ring-1 focus:ring-foreground"
+            disabled={isPending}
+            className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground focus:ring-1 focus:ring-foreground disabled:opacity-50"
           />
         </label>
 
         <Button
-          className="h-11 w-full rounded-lg bg-foreground text-sm font-semibold text-background hover:bg-foreground/90"
+          className="h-11 w-full rounded-lg bg-foreground text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-50"
           onClick={() => onAdd(from, to, time)}
-          disabled={!from || !to}
+          disabled={!from || !to || isPending}
         >
-          Spara pendling
+          {isPending ? (
+            <div className="size-4 animate-spin rounded-full border-2 border-background/20 border-t-background" />
+          ) : (
+            "Spara pendling"
+          )}
         </Button>
       </div>
     </div>

@@ -7,6 +7,7 @@ interface StationInputProps {
   placeholder?: string
   autoFocus?: boolean
   label?: string
+  disabled?: boolean
 }
 
 export function StationInput({
@@ -15,6 +16,7 @@ export function StationInput({
   placeholder = "Sök station...",
   autoFocus = false,
   label,
+  disabled = false,
 }: StationInputProps) {
   const [query, setQuery] = useState(value)
   const [results, setResults] = useState<Station[]>([])
@@ -107,7 +109,8 @@ export function StationInput({
         placeholder={placeholder}
         autoFocus={autoFocus}
         autoComplete="off"
-        className="h-12 w-full rounded-xl border border-input bg-background px-4 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground"
+        disabled={disabled}
+        className="h-12 w-full rounded-xl border border-input bg-background px-4 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground disabled:opacity-50"
       />
 
       {isOpen && results.length > 0 && (

@@ -8,6 +8,7 @@ const schema = z.object({
   lastName: z.string().optional(),
   personalNumber: z.string().optional(),
   phone: z.string().optional(),
+  swishPhone: z.string().optional(),
   onboardingComplete: z.boolean().optional(),
 });
 

@@ -1,5 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, ScanCommand, PutCommand, BatchWriteCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { nanoid } from 'nanoid';
 import type { UserRoute, UserDelayMatch } from './features/ingestion/UserRouteMatcher.ts';
 import type { TrainDeparture } from './adapter/TrainDataPort.ts';
 import type { MovingoCard } from './features/ingestion/CompensationCalculator.ts';
@@ -20,7 +21,9 @@ export async function getUserRoutes(userId: string): Promise<UserRoute[]> {
     userId,
     routeId: (item.SK as string).replace('ROUTE#', ''),
     fromStation: item.fromStation as string,
+    fromStationUic: item.fromStationUic as string,
     toStation: item.toStation as string,
+    toStationUic: item.toStationUic as string,
     departureTime: item.departureTime as string | undefined,
   }));
 }
@@ -74,7 +77,9 @@ export async function getAllUserRoutes(): Promise<UserRoute[]> {
         userId: (item.PK as string).replace('USER#', ''),
         routeId: (item.SK as string).replace('ROUTE#', ''),
         fromStation: item.fromStation as string,
+        fromStationUic: item.fromStationUic as string,
         toStation: item.toStation as string,
+        toStationUic: item.toStationUic as string,
         departureTime: item.departureTime as string | undefined,
       });
     }
@@ -125,19 +130,19 @@ export async function getActiveMovingoCards(): Promise<Map<string, MovingoCard>>
 
 import type { StationPair } from './adapter/TrainDataPort.ts';
 
-export interface RoutePair {
-  from: string;
-  to: string;
-}
-
-export function uniqueRoutePairs(routes: UserRoute[]): RoutePair[] {
+export function uniqueRoutePairs(routes: UserRoute[]): StationPair[] {
   const seen = new Set<string>();
-  const pairs: RoutePair[] = [];
+  const pairs: StationPair[] = [];
   for (const r of routes) {
-    const key = `${r.fromStation}|${r.toStation}`;
+    const key = `${r.fromStationUic}|${r.toStationUic}`;
     if (!seen.has(key)) {
       seen.add(key);
-      pairs.push({ from: r.fromStation, to: r.toStation });
+      pairs.push({
+        from: r.fromStation,
+        fromUic: r.fromStationUic,
+        to: r.toStation,
+        toUic: r.toStationUic,
+      });
     }
   }
   return pairs;
@@ -177,17 +182,41 @@ export async function writeUserDelays(matches: UserDelayMatch[]): Promise<void> 
   const deadlineStr = claimDeadline.toISOString().slice(0, 10);
 
   for (const m of matches) {
-    const sk = `DELAY#${m.delay.date}#${m.delay.trainId}`;
+    const trainKey = `${m.delay.date}_${m.delay.trainId}`;
+
+    const existing = await client.send(
+      new QueryCommand({
+        TableName: TABLE,
+        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+        FilterExpression: 'trainKey = :tk',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${m.userId}`,
+          ':sk': 'DELAY#',
+          ':tk': trainKey,
+        },
+        Limit: 1,
+      }),
+    );
+
+    if (existing.Items && existing.Items.length > 0) {
+      continue;
+    }
+
+    const delayId = nanoid();
 
     await client.send(
       new PutCommand({
         TableName: TABLE,
         Item: {
           PK: `USER#${m.userId}`,
-          SK: sk,
+          SK: `DELAY#${delayId}`,
+          trainKey,
+          trainId: m.delay.trainId,
           routeId: m.routeId,
           fromStation: m.delay.fromStation,
+          fromStationUic: m.fromStationUic,
           toStation: m.delay.toStation,
+          toStationUic: m.toStationUic,
           date: m.delay.date,
           scheduledDeparture: m.delay.scheduledDeparture,
           actualDeparture: m.delay.actualDeparture,
@@ -201,11 +230,7 @@ export async function writeUserDelays(matches: UserDelayMatch[]): Promise<void> 
           trainDataRef: m.delay.rawRef,
           detectedAt: now.toISOString(),
         },
-        ConditionExpression: 'attribute_not_exists(PK)',
       }),
-    ).catch((err: Error) => {
-      if (err.name === 'ConditionalCheckFailedException') return;
-      throw err;
-    });
+    );
   }
 }

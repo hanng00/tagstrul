@@ -56,6 +56,7 @@ export interface Profile {
   personalNumber?: string
   email?: string
   phone?: string
+  swishPhone?: string
   onboardingComplete?: boolean
 }
 

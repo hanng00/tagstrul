@@ -1,10 +1,11 @@
 import { useState } from "react"
 import { useNavigate } from "react-router"
-import { ArrowRight, Train, Bell, Sparkles, Check, CreditCard, SkipForward, User } from "lucide-react"
+import { ArrowRight, Bell, Sparkles, Check, CreditCard, SkipForward, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StationInput } from "@/components/StationInput"
 import { useAddRoute, useUpdateProfile, useAddMovingoCard } from "@/lib/queries"
 import { MOVINGO_CARD_LABELS, type MovingoCardType, type MovingoCard } from "@/types"
+import { Logo } from "@/components/Logo"
 
 type Step = "welcome" | "name" | "route" | "movingo" | "done"
 
@@ -152,12 +153,12 @@ export function OnboardingPage() {
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
     <div className="animate-fade-up text-center">
-      <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-foreground">
-        <Train className="size-8 text-background" />
+      <div className="mx-auto mb-6 flex justify-center">
+        <Logo size="large" />
       </div>
 
       <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-        Välkommen till Tågersättning
+        Välkommen
       </h1>
 
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
