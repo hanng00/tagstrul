@@ -1,5 +1,7 @@
 const moneyPopups = [
-  { amount: "+50 kr", top: "40%", left: undefined, right: "20%", bottom: undefined, size: "24px", rotate: "3deg" },
+  { amount: "+50 kr", top: "25%", left: "15%", rotate: "-3deg", size: "22px" },
+  { amount: "+50 kr", top: "45%", right: "12%", rotate: "4deg", size: "26px" },
+  { amount: "+50 kr", bottom: "30%", left: "25%", rotate: "2deg", size: "20px" },
 ]
 
 export function TrainCrashImage({ 
@@ -9,7 +11,7 @@ export function TrainCrashImage({
 }: { 
   className?: string
   style?: React.CSSProperties
-  showDisclaimer?: boolean 
+  showDisclaimer?: boolean
 }) {
   return (
     <div className={`relative overflow-hidden rounded-2xl bg-muted ${className}`} style={style}>
@@ -23,13 +25,13 @@ export function TrainCrashImage({
       {moneyPopups.map((popup, i) => (
         <div
           key={i}
-          className="absolute rounded-lg bg-emerald-500/80 backdrop-blur-sm text-white font-bold shadow-lg border border-emerald-400/50"
+          className="absolute rounded-lg bg-emerald-500/70 backdrop-blur-sm text-white font-bold shadow-lg"
           style={{
             top: popup.top,
             left: popup.left,
             right: popup.right,
             bottom: popup.bottom,
-            padding: popup.size === "26px" ? "12px 18px" : popup.size === "22px" ? "10px 16px" : "8px 14px",
+            padding: "10px 16px",
             fontSize: popup.size,
             transform: `rotate(${popup.rotate})`,
           }}

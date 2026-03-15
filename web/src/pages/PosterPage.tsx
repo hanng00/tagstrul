@@ -4,7 +4,7 @@ import { TrainCrashImage } from "@/components/TrainCrashImage"
 const stats = [
   { label: "20+ min försening", value: "50", unit: "kr" },
   { label: "Snitt tillbaka/mån", value: "900", unit: "kr", sublabel: "vid 3600kr Movingo" },
-  { label: "Pris", value: "Gratis", sublabel: "donationer uppskattas" },
+  { label: "Pris", value: "Gratis" },
 ]
 
 export function PosterPage() {
@@ -97,16 +97,12 @@ export function PosterPage() {
             </p>
           </div>
 
-          <div
-            className="flex items-center justify-center rounded-xl border-2 border-foreground bg-background"
+          <img
+            src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=https://ersattningsverket.se&format=svg"
+            alt="QR-kod till ersattningsverket.se"
+            className="rounded-xl"
             style={{ width: "110px", height: "110px" }}
-          >
-            <span style={{ fontSize: "10px" }} className="text-muted-foreground text-center">
-              QR
-              <br />
-              CODE
-            </span>
-          </div>
+          />
         </div>
       </div>
     </div>
