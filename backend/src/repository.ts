@@ -95,6 +95,10 @@ export async function getDelays(uid: string): Promise<Delay[]> {
       claimed: item.claimed ?? false,
       claimDeadline: item.claimDeadline,
       dismissed: item.dismissed ?? false,
+      announcedAt: item.announcedAt,
+      firstSeenAt: item.firstSeenAt,
+      disruptionReason: item.disruptionReason,
+      likelyScheduledChange: item.likelyScheduledChange ?? false,
     };
   });
 }
@@ -135,6 +139,10 @@ export async function getDelay(uid: string, delayId: string): Promise<(Delay & {
     claimed: result.Item.claimed ?? false,
     claimDeadline: result.Item.claimDeadline,
     trainId: result.Item.trainId,
+    announcedAt: result.Item.announcedAt,
+    firstSeenAt: result.Item.firstSeenAt,
+    disruptionReason: result.Item.disruptionReason,
+    likelyScheduledChange: result.Item.likelyScheduledChange ?? false,
   };
 }
 

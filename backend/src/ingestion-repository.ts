@@ -191,6 +191,7 @@ export async function writeUserDelays(matches: UserDelayMatch[]): Promise<void> 
   const claimDeadline = new Date(now);
   claimDeadline.setDate(claimDeadline.getDate() + 30);
   const deadlineStr = claimDeadline.toISOString().slice(0, 10);
+  const firstSeenAt = now.toISOString();
 
   for (const m of matches) {
     const delayId = `${m.delay.date}_${m.delay.trainId}_${m.fromStationUic}_${m.toStationUic}`;
@@ -221,6 +222,11 @@ export async function writeUserDelays(matches: UserDelayMatch[]): Promise<void> 
             source: m.delay.source,
             trainDataRef: m.delay.rawRef,
             detectedAt: now.toISOString(),
+            // New fields for 72-hour rule
+            announcedAt: m.delay.announcedAt,
+            disruptionReason: m.delay.disruptionReason,
+            likelyScheduledChange: m.likelyScheduledChange,
+            firstSeenAt,
           },
           ConditionExpression: 'attribute_not_exists(PK)',
         }),

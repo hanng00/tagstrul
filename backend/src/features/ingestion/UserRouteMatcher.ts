@@ -1,5 +1,5 @@
 import type { DetectedDelay } from './DelayDetector.ts';
-import { estimateCompensation, isClaimable, type MovingoCard } from './CompensationCalculator.ts';
+import { estimateCompensation, isClaimable, isLikelyScheduledChange, buildDepartureDateTime, type MovingoCard } from './CompensationCalculator.ts';
 
 export interface UserRoute {
   userId: string;
@@ -19,6 +19,8 @@ export interface UserDelayMatch {
   toStationUic: string;
   estimatedCompensation: number;
   claimable: boolean;
+  /** True if announced >72h before departure — likely a scheduled change, not eligible for delay compensation */
+  likelyScheduledChange: boolean;
 }
 
 const DEPARTURE_WINDOW_MINUTES = 60;
@@ -57,6 +59,9 @@ export function matchDelaysToUsers(
       const card = activeCards.get(route.userId);
       const claimable = isClaimable(delay.delayMinutes, delay.cancelled);
       const compensation = card && claimable ? estimateCompensation(delay.delayMinutes, delay.cancelled, card) : 0;
+      
+      const departureDateTime = buildDepartureDateTime(delay.date, delay.scheduledDeparture);
+      const likelyScheduledChange = isLikelyScheduledChange(delay.announcedAt, departureDateTime);
 
       matches.push({
         userId: route.userId,
@@ -66,6 +71,7 @@ export function matchDelaysToUsers(
         toStationUic: route.toStationUic,
         estimatedCompensation: compensation,
         claimable,
+        likelyScheduledChange,
       });
     }
   }

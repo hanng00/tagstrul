@@ -11,6 +11,10 @@ export interface DetectedDelay {
   cancelled: boolean;
   source: string;
   rawRef?: string;
+  /** ISO timestamp when the delay/cancellation was announced (from SJ's xodRemarks.editedDate) */
+  announcedAt?: string;
+  /** Header/reason for the disruption */
+  disruptionReason?: string;
 }
 
 /**
@@ -33,5 +37,7 @@ export function detectDelays(departures: TrainDeparture[]): DetectedDelay[] {
       cancelled: d.cancelled,
       source: d.source,
       rawRef: d.rawRef,
+      announcedAt: d.announcedAt,
+      disruptionReason: d.disruptionReason,
     }));
 }

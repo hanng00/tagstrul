@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router"
-import { ArrowLeft, Check, Loader2, AlertCircle } from "lucide-react"
+import { ArrowLeft, Check, Loader2, AlertCircle, Info } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -267,6 +267,25 @@ function TravelStep({
 }) {
   return (
     <>
+      {/* Warning for likely scheduled changes */}
+      {delay.likelyScheduledChange && (
+        <div className="animate-fade-up mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+          <Info className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div className="text-sm">
+            <p className="font-medium text-amber-800 dark:text-amber-200">
+              Troligen planerad tidtabellsändring
+            </p>
+            <p className="mt-1 text-amber-700 dark:text-amber-300">
+              {delay.disruptionReason ? `"${delay.disruptionReason}" — ` : ""}
+              Denna ändring meddelades mer än 72 timmar i förväg, vilket enligt SJ:s regler räknas som en tidtabellsändring snarare än en akut försening.
+            </p>
+            <p className="mt-2 text-amber-700 dark:text-amber-300">
+              Du kan fortfarande skicka in ansökan — SJ avgör slutgiltigt. Vid avslag har du rätt till återbetalning av biljetten.
+            </p>
+          </div>
+        </div>
+      )}
+      
       <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           Steg 1: Bekräfta reseuppgifter

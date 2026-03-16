@@ -10,6 +10,18 @@ function getDelayMinutes(conn: DepartureConnection): number {
   return Math.round((current.getTime() - original.getTime()) / 60000);
 }
 
+/**
+ * Parse xodRemarks editedDate format "2026-03-06 09:11" to ISO string.
+ * This represents when SJ last edited the disruption notice — we use it
+ * as a proxy for announcement time (with caveats: it's "last edited", not "first created").
+ */
+function parseEditedDateToISO(editedDate: string): string | undefined {
+  if (!editedDate) return undefined;
+  const [datePart, timePart] = editedDate.split(' ');
+  if (!datePart || !timePart) return undefined;
+  return `${datePart}T${timePart}:00`;
+}
+
 export class SJTrafficInfoAdapter implements TrainDataPort {
   async fetchDepartures(route: StationPair, date: string): Promise<TrainDeparture[]> {
     const url = new URL(`${SJ_API_BASE}/filtered-connections`);
@@ -39,22 +51,28 @@ export class SJTrafficInfoAdapter implements TrainDataPort {
     const data = (await response.json()) as FilteredConnectionsResponse;
     console.log(`[SJAdapter] Got ${data.departureConnections.length} departures for ${route.from} -> ${route.to}`);
 
-    return data.departureConnections.map((conn) => ({
-      trainId: conn.trainNumber,
-      fromStation: route.from,
-      toStation: route.to,
-      date: conn.departureDate,
-      scheduledDeparture: conn.originalDateTime.slice(11, 16),
-      actualDeparture: conn.currentDateTime.slice(11, 16),
-      delayMinutes: getDelayMinutes(conn),
-      cancelled: conn.cancelled,
-      source: 'sj',
-      rawRef: JSON.stringify({
-        trainNumber: conn.trainNumber,
-        originalDateTime: conn.originalDateTime,
-        currentDateTime: conn.currentDateTime,
-        operator: conn.operator,
-      }),
-    }));
+    return data.departureConnections.map((conn) => {
+      const xodRemark = conn.xodRemarks?.[0];
+      
+      return {
+        trainId: conn.trainNumber,
+        fromStation: route.from,
+        toStation: route.to,
+        date: conn.departureDate,
+        scheduledDeparture: conn.originalDateTime.slice(11, 16),
+        actualDeparture: conn.currentDateTime.slice(11, 16),
+        delayMinutes: getDelayMinutes(conn),
+        cancelled: conn.cancelled,
+        source: 'sj',
+        rawRef: JSON.stringify({
+          trainNumber: conn.trainNumber,
+          originalDateTime: conn.originalDateTime,
+          currentDateTime: conn.currentDateTime,
+          operator: conn.operator,
+        }),
+        announcedAt: xodRemark ? parseEditedDateToISO(xodRemark.editedDate) : undefined,
+        disruptionReason: xodRemark?.header,
+      };
+    });
   }
 }

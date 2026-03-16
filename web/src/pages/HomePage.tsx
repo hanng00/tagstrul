@@ -10,6 +10,7 @@ import {
   Calendar,
   Banknote,
   X,
+  Info,
 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router"
@@ -429,6 +430,19 @@ function ClaimableCard({
       style={style}
       className="animate-fade-up rounded-xl border border-border bg-card text-left transition-all"
     >
+      {/* Warning banner for likely scheduled changes */}
+      {delay.likelyScheduledChange && (
+        <div className="flex items-start gap-2 border-b border-border bg-amber-50 px-4 py-2.5 dark:bg-amber-950/30">
+          <Info className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div className="text-xs text-amber-800 dark:text-amber-200">
+            <p className="font-medium">Troligen planerad tidtabellsändring</p>
+            <p className="mt-0.5 text-amber-700 dark:text-amber-300">
+              {delay.disruptionReason || "Meddelades i förväg"} — du kan fortfarande begära ersättning, men SJ kan neka förseningsersättning för planerade ändringar.
+            </p>
+          </div>
+        </div>
+      )}
+      
       <button
         onClick={onClick}
         className="group flex w-full flex-col p-4 transition-all hover:bg-muted/30 active:scale-[0.995]"

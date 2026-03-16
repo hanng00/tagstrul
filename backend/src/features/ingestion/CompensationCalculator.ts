@@ -62,6 +62,44 @@ export function isClaimable(delayMinutes: number, cancelled: boolean): boolean {
   return cancelled || delayMinutes >= 20;
 }
 
+/**
+ * The 72-hour rule: If a delay/cancellation was announced more than 72 hours
+ * before the scheduled departure, it's considered a "timetable change" rather
+ * than an acute delay, and standard delay compensation does not apply.
+ * 
+ * Note: We use SJ's xodRemarks.editedDate as a proxy for announcement time.
+ * This is "last edited", not "first created", so it's a conservative estimate.
+ * We show this as a warning, not a hard block — SJ is the final arbiter.
+ * 
+ * @param announcedAt ISO timestamp when the disruption was announced (from xodRemarks.editedDate)
+ * @param departureDateTime ISO timestamp of the scheduled departure
+ * @returns true if announced >72h before departure (likely scheduled change)
+ */
+export function isLikelyScheduledChange(
+  announcedAt: string | undefined,
+  departureDateTime: string,
+): boolean {
+  if (!announcedAt) {
+    // No announcement timestamp = real-time delay, not a scheduled change
+    return false;
+  }
+  
+  const announced = new Date(announcedAt);
+  const departure = new Date(departureDateTime);
+  const hoursBeforeDeparture = (departure.getTime() - announced.getTime()) / (1000 * 60 * 60);
+  
+  return hoursBeforeDeparture > 72;
+}
+
+/**
+ * Build a full departure datetime from date and time strings.
+ * @param date Date in YYYY-MM-DD format
+ * @param time Time in HH:MM format
+ */
+export function buildDepartureDateTime(date: string, time: string): string {
+  return `${date}T${time}:00`;
+}
+
 export function compensationLabel(delayMinutes: number, cancelled: boolean): string {
   if (cancelled) return 'Inställt — 100%';
   if (delayMinutes >= 60) return `${delayMinutes} min — 100%`;

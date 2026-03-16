@@ -9,6 +9,10 @@ export interface TrainDeparture {
   cancelled: boolean;
   source: string;
   rawRef?: string;
+  /** ISO timestamp when the delay/cancellation was announced (from xodRemarks.editedDate) */
+  announcedAt?: string;
+  /** Header/reason for the disruption (from xodRemarks.header) */
+  disruptionReason?: string;
 }
 
 export interface StationPair {

@@ -32,6 +32,14 @@ export interface Delay {
   claimed: boolean;
   claimDeadline?: string;
   dismissed?: boolean;
+  /** ISO timestamp when SJ announced the delay (from xodRemarks.editedDate) */
+  announcedAt?: string;
+  /** ISO timestamp when we first detected this delay */
+  firstSeenAt?: string;
+  /** Header/reason for the disruption from SJ */
+  disruptionReason?: string;
+  /** True if announced >72h before departure — likely a scheduled change, not eligible for delay compensation */
+  likelyScheduledChange?: boolean;
 }
 
 export interface Claim {
