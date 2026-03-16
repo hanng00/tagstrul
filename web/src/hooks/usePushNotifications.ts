@@ -89,11 +89,19 @@ export function usePushNotifications() {
 
   const sendTestNotification = useCallback(async () => {
     try {
+      // Request permission if not already granted
+      if (Notification.permission === "default") {
+        const result = await Notification.requestPermission()
+        setPermission(result as PushPermission)
+        if (result !== "granted") return false
+      } else if (Notification.permission !== "granted") {
+        return false
+      }
+
       const registration = await navigator.serviceWorker.ready
       await registration.showNotification("🚂 Testnotis från Tågstrul", {
         body: "Så här ser det ut när ditt tåg är försenat!",
-        icon: "/icon-192.png",
-        badge: "/icon-192.png",
+        icon: "/favicon.svg",
         tag: "test-notification",
       })
       return true

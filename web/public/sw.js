@@ -1,5 +1,5 @@
 const CACHE_NAME = "tagstrul-v1"
-const STATIC_ASSETS = ["/", "/manifest.json", "/favicon.svg", "/icon-192.png", "/icon-512.png"]
+const STATIC_ASSETS = ["/", "/manifest.json", "/favicon.svg", "/icon-192.svg", "/icon-512.svg"]
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -42,8 +42,8 @@ self.addEventListener("push", (event) => {
 
   const options = {
     body,
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
+    icon: "/favicon.svg",
+    badge: "/favicon.svg",
     tag: notificationData?.delayId || "delay-notification",
     renotify: true,
     data: notificationData,
