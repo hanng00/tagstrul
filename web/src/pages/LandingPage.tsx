@@ -56,13 +56,13 @@ export function LandingPage() {
 
             <div className="animate-fade-up stagger-1 relative">
               <TrainCrashImage className="aspect-4/3" />
-              <div className="absolute -bottom-4 -left-4 rounded-xl border border-border bg-card px-4 py-3 shadow-lg sm:-bottom-6 sm:-left-6">
-                <p className="text-xs font-medium text-muted-foreground">
+              <div className="absolute -bottom-3 left-0 sm:-bottom-6 sm:-left-6 rounded-xl border border-border bg-card px-3 py-2 sm:px-4 sm:py-3 shadow-lg">
+                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">
                   Senaste veckan
                 </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums text-foreground">
+                <p className="mt-0.5 text-base sm:text-xl font-semibold tabular-nums text-foreground">
                   312{" "}
-                  <span className="text-sm font-medium text-muted-foreground">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">
                     förseningar
                   </span>
                 </p>

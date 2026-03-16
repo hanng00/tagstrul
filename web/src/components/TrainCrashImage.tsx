@@ -1,7 +1,7 @@
 const moneyPopups = [
-  { amount: "+50 kr", top: "25%", left: "15%", rotate: "-3deg", size: "22px" },
-  { amount: "+50 kr", top: "45%", right: "12%", rotate: "4deg", size: "26px" },
-  { amount: "+50 kr", bottom: "30%", left: "25%", rotate: "2deg", size: "20px" },
+  { amount: "+50 kr", top: "25%", left: "15%", rotate: "-3deg" },
+  { amount: "+50 kr", top: "45%", right: "12%", rotate: "4deg" },
+  { amount: "+50 kr", bottom: "30%", left: "25%", rotate: "2deg" },
 ]
 
 export function TrainCrashImage({ 
@@ -25,14 +25,12 @@ export function TrainCrashImage({
       {moneyPopups.map((popup, i) => (
         <div
           key={i}
-          className="absolute rounded-lg bg-emerald-500/70 backdrop-blur-sm text-white font-bold shadow-lg"
+          className="absolute rounded-md sm:rounded-lg bg-emerald-500/70 backdrop-blur-sm text-white font-bold shadow-lg px-2 py-1 sm:px-4 sm:py-2.5 text-xs sm:text-base"
           style={{
             top: popup.top,
             left: popup.left,
             right: popup.right,
             bottom: popup.bottom,
-            padding: "10px 16px",
-            fontSize: popup.size,
             transform: `rotate(${popup.rotate})`,
           }}
         >
@@ -42,10 +40,7 @@ export function TrainCrashImage({
 
       {/* Disclaimer */}
       {showDisclaimer && (
-        <div 
-          className="absolute bottom-3 right-3 rounded-lg bg-black/60 backdrop-blur-sm text-white/80 text-center"
-          style={{ padding: "6px 12px", fontSize: "10px" }}
-        >
+        <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 rounded-md sm:rounded-lg bg-black/60 backdrop-blur-sm text-white/80 text-center px-2 py-1 sm:px-3 sm:py-1.5 text-[8px] sm:text-[10px] max-w-[140px] sm:max-w-none">
           Urspårning vid ovädret Hans, augusti 2023. Ingen kom till skada.
         </div>
       )}
