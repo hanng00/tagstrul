@@ -1,0 +1,12 @@
+# https://tagstrul.se/robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://tagstrul.se/sitemap.xml
+
+# Disallow app routes (require auth)
+Disallow: /app
+Disallow: /app/
+Disallow: /onboarding
+Disallow: /login
