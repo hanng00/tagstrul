@@ -113,7 +113,7 @@ export function DonationModal({ open, onOpenChange }: DonationModalProps) {
                 Bjud på en fika
               </DialogTitle>
               <DialogDescription>
-                Ersättningsverket är gratis att använda. Om du vill stötta
+                Tågstrul är gratis att använda. Om du vill stötta
                 utvecklingen kan du bjuda på en fika!
               </DialogDescription>
             </DialogHeader>

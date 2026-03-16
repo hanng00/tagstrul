@@ -91,16 +91,16 @@ export function PosterPage() {
         <div className="flex items-center justify-between" style={{ marginTop: "32px" }}>
           <div>
             <p style={{ fontSize: "32px" }} className="font-semibold tracking-tight text-foreground">
-              ersattningsverket.se
+              tagstrul.se
             </p>
             <p style={{ fontSize: "15px" }} className="mt-1 text-muted-foreground">
-              Det enda verket som ger dig något tillbaka
+              Få tillbaka pengarna när tåget strular
             </p>
           </div>
 
           <img
-            src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=https://ersattningsverket.se&format=svg"
-            alt="QR-kod till ersattningsverket.se"
+            src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=https://tagstrul.se&format=svg"
+            alt="QR-kod till tagstrul.se"
             className="rounded-xl"
             style={{ width: "110px", height: "110px" }}
           />

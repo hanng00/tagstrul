@@ -23,7 +23,7 @@ export function ThankYouPage() {
           </h1>
 
           <p className="mx-auto mt-3 max-w-sm text-muted-foreground">
-            Din donation hjälper oss att fortsätta bygga Ersättningsverket och göra
+            Din donation hjälper oss att fortsätta bygga Tågstrul och göra
             det enklare för pendlare att få tillbaka sina pengar.
           </p>
 

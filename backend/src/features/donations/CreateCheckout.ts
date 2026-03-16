@@ -38,7 +38,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             currency: 'sek',
             product_data: {
               name: getFikaName(amount),
-              description: 'Tack för att du stöttar Ersättningsverket!',
+              description: 'Tack för att du stöttar Tågstrul!',
             },
             unit_amount: amount * 100,
           },

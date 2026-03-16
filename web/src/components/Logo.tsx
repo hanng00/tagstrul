@@ -19,14 +19,14 @@ export function Logo({ size = "default" }: { size?: "small" | "default" | "large
         strokeLinejoin="round"
         style={{ width: s.icon, height: s.icon }}
       >
-        <circle cx="12" cy="12" r="10" />
-        <path d="M8 8h6M8 12h4M8 16h6" />
+        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+        <line x1="4" x2="4" y1="22" y2="15" />
       </svg>
       <span
         className="font-semibold tracking-tight"
         style={{ fontSize: s.text }}
       >
-        ersättningsverket
+        tågstrul
       </span>
     </div>
   )
