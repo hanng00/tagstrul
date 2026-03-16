@@ -17,14 +17,12 @@ confirm_changeset = true
 resolve_s3 = true
 s3_prefix = "tagersattning"
 region = "eu-north-1"
-parameter_overrides = "VapidPublicKey=BBIzQGbT5xiHErvmHNAPNWl7M3JhF2iPwc-rCCAoEUbuJOHsKkXVRMvPmg9GGqv0_Xmuyz6zZ9dJ3Fz4YNis9lo VapidPrivateKey=zg1-43GFet3GXQSJbhC40IFDogt7i4Nxk_MV9THMV1M"
 
 [default.package.parameters]
 resolve_s3 = true
 
 [default.sync.parameters]
 watch = true
-parameter_overrides = "VapidPublicKey=BBIzQGbT5xiHErvmHNAPNWl7M3JhF2iPwc-rCCAoEUbuJOHsKkXVRMvPmg9GGqv0_Xmuyz6zZ9dJ3Fz4YNis9lo VapidPrivateKey=zg1-43GFet3GXQSJbhC40IFDogt7i4Nxk_MV9THMV1M"
 
 [default.local_start_api.parameters]
 warm_containers = "EAGER"

@@ -13,9 +13,6 @@ Parameters:
     Type: String
   CognitoClientId:
     Type: String
-  VapidPublicKey:
-    Type: String
-    Default: ""
 
 Globals:
   Function:
@@ -28,7 +25,7 @@ Globals:
         TABLE_NAME: !Ref TableName
         COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
         COGNITO_CLIENT_ID: !Ref CognitoClientId
-        VAPID_PUBLIC_KEY: !Ref VapidPublicKey
+        VAPID_PUBLIC_KEY: "BBIzQGbT5xiHErvmHNAPNWl7M3JhF2iPwc-rCCAoEUbuJOHsKkXVRMvPmg9GGqv0_Xmuyz6zZ9dJ3Fz4YNis9lo"
 
 Resources:
   Api:

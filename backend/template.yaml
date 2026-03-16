@@ -2,15 +2,6 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: Tagersattning — parent stack
 
-Parameters:
-  VapidPublicKey:
-    Type: String
-    Description: VAPID public key for web push notifications
-  VapidPrivateKey:
-    Type: String
-    Description: VAPID private key for web push notifications
-    NoEcho: true
-
 Resources:
   # ========== Shared infrastructure ==========
 
@@ -87,7 +78,6 @@ Resources:
         CognitoUserPoolId: !Ref CognitoUserPool
         CognitoUserPoolArn: !GetAtt CognitoUserPool.Arn
         CognitoClientId: !Ref CognitoUserPoolClient
-        VapidPublicKey: !Ref VapidPublicKey
 
   IngestionStack:
     Type: AWS::Serverless::Application
@@ -97,8 +87,6 @@ Resources:
         TableName: !Ref Table
         TableArn: !GetAtt Table.Arn
         TableStreamArn: !GetAtt Table.StreamArn
-        VapidPublicKey: !Ref VapidPublicKey
-        VapidPrivateKey: !Ref VapidPrivateKey
 
 Outputs:
   CognitoUserPoolId: { Value: !Ref CognitoUserPool }
