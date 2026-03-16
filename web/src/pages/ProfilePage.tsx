@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router"
-import { LogOut, Pencil, Check, X, Plus, Trash2 } from "lucide-react"
+import { LogOut, Pencil, Check, X, Plus, Trash2, Bell, BellOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/AuthContext"
 import {
@@ -10,6 +10,7 @@ import {
   useAddMovingoCard,
   useDeleteMovingoCard,
 } from "@/lib/queries"
+import { usePushNotifications } from "@/hooks/usePushNotifications"
 import type { Profile, MovingoCard, MovingoCardType } from "@/types"
 import { MOVINGO_CARD_LABELS } from "@/types"
 
@@ -47,6 +48,15 @@ export function ProfilePage() {
   const updateProfile = useUpdateProfile()
   const addMovingoCard = useAddMovingoCard()
   const deleteMovingoCard = useDeleteMovingoCard()
+  const {
+    permission,
+    isSubscribed,
+    isLoading: pushLoading,
+    canSubscribe,
+    subscribe,
+    unsubscribe,
+    sendTestNotification,
+  } = usePushNotifications()
 
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<Profile | null>(null)
@@ -235,6 +245,79 @@ export function ProfilePage() {
               </div>
             </div>
           )}
+        </section>
+
+        <section className="animate-fade-up stagger-2 mt-8">
+          <h2 className="text-sm font-semibold text-foreground">Notiser</h2>
+          <div className="mt-3 rounded-xl border border-border bg-card">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                {isSubscribed ? (
+                  <Bell className="size-4 text-foreground" />
+                ) : (
+                  <BellOff className="size-4 text-muted-foreground" />
+                )}
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Förseningsnotiser
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {permission === "unsupported"
+                      ? "Stöds ej i denna webbläsare"
+                      : permission === "denied"
+                        ? "Blockerade i webbläsaren"
+                        : isSubscribed
+                          ? "Aktiva — du får notiser vid förseningar"
+                          : "Få notis när ditt tåg är försenat"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {isSubscribed && (
+                  <button
+                    onClick={sendTestNotification}
+                    className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    Testa
+                  </button>
+                )}
+                {canSubscribe && (
+                  <button
+                    onClick={isSubscribed ? unsubscribe : subscribe}
+                    disabled={pushLoading}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isSubscribed
+                        ? "bg-muted text-muted-foreground hover:bg-muted/80"
+                        : "bg-foreground text-background hover:bg-foreground/90"
+                    } disabled:opacity-50`}
+                  >
+                    {pushLoading
+                      ? "..."
+                      : isSubscribed
+                        ? "Stäng av"
+                        : "Aktivera"}
+                  </button>
+                )}
+              </div>
+            </div>
+            {!isSubscribed && canSubscribe && (
+              <div className="border-t border-border px-4 py-3">
+                <button
+                  onClick={async () => {
+                    const success = await subscribe()
+                    if (success) {
+                      sendTestNotification()
+                    }
+                  }}
+                  disabled={pushLoading}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-foreground/5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/10 disabled:opacity-50"
+                >
+                  <Bell className="size-4" />
+                  Prova en testnotis
+                </button>
+              </div>
+            )}
+          </div>
         </section>
 
         <div className="mt-12">

@@ -41,6 +41,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setTokens(stored)
         }
+      } else {
+        // Tokens expired or near-expiry - try to refresh using refresh token
+        const refreshed = await refreshSession()
+        if (refreshed) {
+          setTokens(refreshed)
+        }
       }
       setIsLoading(false)
     }

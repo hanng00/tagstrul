@@ -66,3 +66,11 @@ export interface Profile {
   swishPhone?: string;
   onboardingComplete?: boolean;
 }
+
+export interface PushSubscription {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+}

@@ -13,6 +13,9 @@ Parameters:
     Type: String
   CognitoClientId:
     Type: String
+  VapidPublicKey:
+    Type: String
+    Default: ""
 
 Globals:
   Function:
@@ -25,6 +28,7 @@ Globals:
         TABLE_NAME: !Ref TableName
         COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
         COGNITO_CLIENT_ID: !Ref CognitoClientId
+        VAPID_PUBLIC_KEY: !Ref VapidPublicKey
 
 Resources:
   Api:
@@ -415,6 +419,62 @@ Resources:
             Method: POST
             Auth:
               Authorizer: NONE
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
+  # --- Push Notifications ---
+
+  GetVapidKey:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/push/GetVapidKey.handler
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /push/vapid-key
+            Method: GET
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
+  SubscribePush:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/push/SubscribePush.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /push/subscribe
+            Method: POST
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
+  UnsubscribePush:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/push/UnsubscribePush.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /push/unsubscribe
+            Method: POST
     Metadata:
       BuildMethod: esbuild
       BuildProperties:

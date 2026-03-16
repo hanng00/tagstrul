@@ -3,6 +3,7 @@ import { AuthProvider } from "@/components/AuthContext"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { OnboardingGuard } from "@/components/OnboardingGuard"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
+import { PWAInstallBanner } from "@/components/PWAInstallBanner"
 import { LandingPage } from "@/pages/LandingPage"
 import { LoginPage } from "@/pages/LoginPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
@@ -36,6 +37,7 @@ export function App() {
               </Route>
             </Route>
           </Routes>
+          <PWAInstallBanner />
         </BrowserRouter>
       </AuthProvider>
     </ErrorBoundary>

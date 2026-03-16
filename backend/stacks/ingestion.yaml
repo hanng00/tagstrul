@@ -9,6 +9,11 @@ Parameters:
     Type: String
   TableStreamArn:
     Type: String
+  VapidPublicKey:
+    Type: String
+  VapidPrivateKey:
+    Type: String
+    NoEcho: true
 
 Globals:
   Function:
@@ -19,6 +24,8 @@ Globals:
     Environment:
       Variables:
         TABLE_NAME: !Ref TableName
+        VAPID_PUBLIC_KEY: !Ref VapidPublicKey
+        VAPID_PRIVATE_KEY: !Ref VapidPrivateKey
 
 Resources:
   PollTrainData:

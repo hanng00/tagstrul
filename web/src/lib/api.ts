@@ -182,6 +182,25 @@ export const api = {
       method: "POST",
     })
   },
+
+  // Push notifications
+  async getVapidKey(): Promise<{ publicKey: string }> {
+    return request<{ publicKey: string }>("/push/vapid-key")
+  },
+
+  async subscribePush(subscription: PushSubscriptionJSON): Promise<void> {
+    await request("/push/subscribe", {
+      method: "POST",
+      body: JSON.stringify(subscription),
+    })
+  },
+
+  async unsubscribePush(endpoint: string): Promise<void> {
+    await request("/push/unsubscribe", {
+      method: "POST",
+      body: JSON.stringify({ endpoint }),
+    })
+  },
 }
 
 export interface StartClaimResponse {

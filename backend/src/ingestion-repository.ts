@@ -3,6 +3,7 @@ import { DynamoDBDocumentClient, ScanCommand, PutCommand, BatchWriteCommand, Que
 import type { UserRoute, UserDelayMatch } from './features/ingestion/UserRouteMatcher.ts';
 import type { TrainDeparture } from './adapter/TrainDataPort.ts';
 import type { MovingoCard } from './features/ingestion/CompensationCalculator.ts';
+import type { PushSubscription } from './types.ts';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE = process.env.TABLE_NAME!;
@@ -239,4 +240,22 @@ export async function writeUserDelays(matches: UserDelayMatch[]): Promise<void> 
       throw err;
     }
   }
+}
+
+export async function getUserPushSubscriptions(userId: string): Promise<PushSubscription[]> {
+  const result = await client.send(
+    new QueryCommand({
+      TableName: TABLE,
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+      ExpressionAttributeValues: { ':pk': `USER#${userId}`, ':sk': 'PUSH#' },
+    }),
+  );
+
+  return (result.Items ?? []).map((item) => ({
+    endpoint: item.endpoint as string,
+    keys: {
+      p256dh: item.p256dh as string,
+      auth: item.auth as string,
+    },
+  }));
 }

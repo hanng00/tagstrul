@@ -329,3 +329,51 @@ export async function deleteMovingoCard(uid: string, cardId: string): Promise<vo
     })
   );
 }
+
+// --- Push Subscriptions ---
+
+import type { PushSubscription } from './types.ts';
+
+export async function getPushSubscriptions(uid: string): Promise<PushSubscription[]> {
+  const result = await client.send(
+    new QueryCommand({
+      TableName: TABLE,
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+      ExpressionAttributeValues: { ':pk': `USER#${uid}`, ':sk': 'PUSH#' },
+    })
+  );
+  return (result.Items ?? []).map((item) => ({
+    endpoint: item.endpoint,
+    keys: {
+      p256dh: item.p256dh,
+      auth: item.auth,
+    },
+  }));
+}
+
+export async function putPushSubscription(uid: string, subscription: PushSubscription): Promise<void> {
+  const subscriptionId = Buffer.from(subscription.endpoint).toString('base64url').slice(-40);
+  await client.send(
+    new PutCommand({
+      TableName: TABLE,
+      Item: {
+        PK: `USER#${uid}`,
+        SK: `PUSH#${subscriptionId}`,
+        endpoint: subscription.endpoint,
+        p256dh: subscription.keys.p256dh,
+        auth: subscription.keys.auth,
+        createdAt: new Date().toISOString(),
+      },
+    })
+  );
+}
+
+export async function deletePushSubscription(uid: string, endpoint: string): Promise<void> {
+  const subscriptionId = Buffer.from(endpoint).toString('base64url').slice(-40);
+  await client.send(
+    new DeleteCommand({
+      TableName: TABLE,
+      Key: { PK: `USER#${uid}`, SK: `PUSH#${subscriptionId}` },
+    })
+  );
+}

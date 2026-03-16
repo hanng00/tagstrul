@@ -8,6 +8,7 @@ import {
   uniqueRoutePairs,
   writeTrainSnapshots,
   writeUserDelays,
+  getUserPushSubscriptions,
 } from '../../ingestion-repository.ts';
 
 export const handler = async (_event: ScheduledEvent): Promise<void> => {
@@ -45,5 +46,51 @@ export const handler = async (_event: ScheduledEvent): Promise<void> => {
   if (matches.length === 0) return;
 
   await writeUserDelays(matches);
-  console.log(`[PollTrainData] Done. Wrote ${matches.length} user delay records.`);
+  console.log(`[PollTrainData] Wrote ${matches.length} user delay records.`);
+
+  // Send push notifications for claimable delays (if configured)
+  const claimableMatches = matches.filter((m) => m.claimable && !m.likelyScheduledChange);
+  if (claimableMatches.length > 0 && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    console.log(`[PollTrainData] Sending push notifications for ${claimableMatches.length} claimable delays`);
+    
+    // Dynamic import to avoid build errors when web-push isn't installed
+    const { sendPushNotification, formatDelayNotification } = await import('../push/PushSender.ts');
+    
+    const userIds = [...new Set(claimableMatches.map((m) => m.userId))];
+    const subscriptionsByUser = new Map<string, Awaited<ReturnType<typeof getUserPushSubscriptions>>>();
+    
+    await Promise.all(
+      userIds.map(async (userId) => {
+        const subs = await getUserPushSubscriptions(userId);
+        if (subs.length > 0) {
+          subscriptionsByUser.set(userId, subs);
+        }
+      }),
+    );
+
+    let sentCount = 0;
+    for (const match of claimableMatches) {
+      const subscriptions = subscriptionsByUser.get(match.userId);
+      if (!subscriptions || subscriptions.length === 0) continue;
+
+      const delayId = `${match.delay.date}_${match.delay.trainId}_${match.fromStationUic}_${match.toStationUic}`;
+      const notification = formatDelayNotification({
+        delayId,
+        fromStation: match.delay.fromStation,
+        toStation: match.delay.toStation,
+        delayMinutes: match.delay.delayMinutes,
+        cancelled: match.delay.cancelled,
+        estimatedCompensation: match.estimatedCompensation,
+      });
+
+      for (const sub of subscriptions) {
+        const sent = await sendPushNotification(sub, notification);
+        if (sent) sentCount++;
+      }
+    }
+
+    console.log(`[PollTrainData] Sent ${sentCount} push notifications`);
+  }
+
+  console.log(`[PollTrainData] Done.`);
 };
