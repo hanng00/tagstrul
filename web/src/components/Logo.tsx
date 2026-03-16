@@ -11,16 +11,17 @@ export function Logo({ size = "default" }: { size?: "small" | "default" | "large
     <div className="flex items-center text-foreground" style={{ gap: s.gap }}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
+        viewBox="0 0 32 32"
         fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
         style={{ width: s.icon, height: s.icon }}
       >
-        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-        <line x1="4" x2="4" y1="22" y2="15" />
+        <g transform="rotate(-12 16 16)">
+          <rect x="8" y="11" width="16" height="10" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+          <line x1="12" y1="11" x2="12" y2="21" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="20" y1="11" x2="20" y2="21" stroke="currentColor" strokeWidth="1.5"/>
+          <circle cx="11" cy="23" r="2" fill="currentColor"/>
+          <circle cx="21" cy="23" r="2" fill="currentColor"/>
+        </g>
       </svg>
       <span
         className="font-semibold tracking-tight"
