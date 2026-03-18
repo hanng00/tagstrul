@@ -10,3 +10,32 @@ Disallow: /app
 Disallow: /app/
 Disallow: /onboarding
 Disallow: /login
+
+# Disallow utility pages
+Disallow: /design-system
+Disallow: /tack
+
+# Crawl-delay for politeness (optional)
+Crawl-delay: 1
+
+# Specific bot rules
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /

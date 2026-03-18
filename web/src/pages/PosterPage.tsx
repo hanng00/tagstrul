@@ -1,5 +1,6 @@
 import { Logo } from "@/components/Logo"
 import { TrainCrashImage } from "@/components/TrainCrashImage"
+import { SEO } from "@/components/SEO"
 
 const steps = [
   { number: "1", text: "Lägg till din pendling" },
@@ -10,6 +11,11 @@ const steps = [
 export function PosterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted p-4 print:p-0 print:bg-white">
+      <SEO
+        title="Affisch"
+        description="Ladda ner och skriv ut en affisch för Tågstrul. Hjälp andra pendlare att få ersättning för försenade tåg."
+        canonical="/poster"
+      />
       <style>{`
         @media print {
           @page {

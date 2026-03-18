@@ -7,6 +7,14 @@ import { searchStations } from "@/lib/stations"
 import { Logo } from "@/components/Logo"
 import { TrainCrashImage } from "@/components/TrainCrashImage"
 import { useAuth } from "@/components/AuthContext"
+import { SEO } from "@/components/SEO"
+import {
+  OrganizationSchema,
+  WebSiteSchema,
+  FAQSchema,
+  SoftwareApplicationSchema,
+  HowToSchema,
+} from "@/components/StructuredData"
 
 export function LandingPage() {
   const navigate = useNavigate()
@@ -18,9 +26,16 @@ export function LandingPage() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
+      <SEO canonical="/" />
+      <OrganizationSchema />
+      <WebSiteSchema />
+      <SoftwareApplicationSchema />
+      <HowToSchema />
+      <FAQSchema items={faqItems} />
+
       <header className="flex items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
         <Logo size="small" />
-        <div className="flex items-center gap-2">
+        <nav aria-label="Huvudnavigering" className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -35,14 +50,15 @@ export function LandingPage() {
           >
             {isLoading ? "" : isAuthenticated ? "Till appen" : "Logga in"}
           </Button>
-        </div>
+        </nav>
       </header>
 
-      <section className="flex flex-1 flex-col px-5 pb-12 pt-8 sm:px-8 sm:pt-12 lg:px-12">
+      <main>
+        <section aria-labelledby="hero-heading" className="flex flex-1 flex-col px-5 pb-12 pt-8 sm:px-8 sm:pt-12 lg:px-12">
         <div className="mx-auto w-full max-w-5xl">
           <div className="grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
             <div className="animate-fade-up">
-              <h1 className="text-[clamp(2rem,6vw,3rem)] font-semibold leading-[1.1] tracking-tight text-foreground">
+              <h1 id="hero-heading" className="text-[clamp(2rem,6vw,3rem)] font-semibold leading-[1.1] tracking-tight text-foreground">
                 Tåget var sent.
                 <br />
                 Du har pengar att hämta.
@@ -84,42 +100,43 @@ export function LandingPage() {
 
       <CalculatorSection onGetStarted={handleAuthAction} isAuthenticated={isAuthenticated} />
 
-      <section className="border-t border-border bg-card px-5 py-12 sm:px-8 lg:px-12">
+      <section aria-labelledby="how-it-works-heading" className="border-t border-border bg-card px-5 py-12 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-5xl">
-          <h2 className="text-lg font-semibold text-foreground">
+          <h2 id="how-it-works-heading" className="text-lg font-semibold text-foreground">
             Så funkar det
           </h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-3">
-            <div>
-              <p className="text-base font-medium text-foreground">
+          <ol className="mt-6 grid gap-6 sm:grid-cols-3" role="list">
+            <li>
+              <h3 className="text-base font-medium text-foreground">
                 Lägg in din pendling
-              </p>
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Vilka stationer och vilken tid du brukar åka. Tar tio sekunder.
               </p>
-            </div>
-            <div>
-              <p className="text-base font-medium text-foreground">
+            </li>
+            <li>
+              <h3 className="text-base font-medium text-foreground">
                 Vi hittar förseningar
-              </p>
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Varje dag kollar vi Mälartågs data mot dina resor. Du behöver
                 inte göra något.
               </p>
-            </div>
-            <div>
-              <p className="text-base font-medium text-foreground">
+            </li>
+            <li>
+              <h3 className="text-base font-medium text-foreground">
                 Kräv ersättning direkt
-              </p>
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Vi fyller i ansökan. Du trycker skicka. Klart på 30 sekunder.
               </p>
-            </div>
-          </div>
+            </li>
+          </ol>
         </div>
       </section>
 
       <FAQSection />
+      </main>
 
       <footer className="border-t border-border px-5 py-6 sm:px-8 lg:px-12">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
@@ -380,33 +397,37 @@ function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
-    <section className="border-t border-border bg-background px-5 py-12 sm:px-8 lg:px-12">
+    <section aria-labelledby="faq-heading" className="border-t border-border bg-background px-5 py-12 sm:px-8 lg:px-12">
       <div className="mx-auto max-w-xl">
-        <h2 className="text-lg font-semibold text-foreground">Vanliga frågor</h2>
-        <div className="mt-6 divide-y divide-border">
+        <h2 id="faq-heading" className="text-lg font-semibold text-foreground">Vanliga frågor</h2>
+        <dl className="mt-6 divide-y divide-border">
           {faqItems.map((item, index) => (
-            <div key={index}>
-              <button
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="flex w-full items-center justify-between py-4 text-left"
-              >
-                <span className="text-[15px] font-medium text-foreground">
-                  {item.question}
-                </span>
-                {openIndex === index ? (
-                  <ChevronUp className="size-5 shrink-0 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="size-5 shrink-0 text-muted-foreground" />
-                )}
-              </button>
+            <div key={index} className="py-4">
+              <dt>
+                <button
+                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                  aria-expanded={openIndex === index}
+                  aria-controls={`faq-answer-${index}`}
+                  className="flex w-full items-center justify-between text-left"
+                >
+                  <span className="text-[15px] font-medium text-foreground">
+                    {item.question}
+                  </span>
+                  {openIndex === index ? (
+                    <ChevronUp className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  ) : (
+                    <ChevronDown className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  )}
+                </button>
+              </dt>
               {openIndex === index && (
-                <p className="pb-4 text-sm leading-relaxed text-muted-foreground">
+                <dd id={`faq-answer-${index}`} className="pt-2 text-sm leading-relaxed text-muted-foreground">
                   {item.answer}
-                </p>
+                </dd>
               )}
             </div>
           ))}
-        </div>
+        </dl>
       </div>
     </section>
   )

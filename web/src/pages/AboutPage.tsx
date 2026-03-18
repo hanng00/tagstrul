@@ -4,6 +4,8 @@ import { useNavigate } from "react-router"
 import { Logo } from "@/components/Logo"
 import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api"
+import { SEO } from "@/components/SEO"
+import { BreadcrumbSchema } from "@/components/StructuredData"
 
 export function AboutPage() {
   const navigate = useNavigate()
@@ -37,6 +39,18 @@ export function AboutPage() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
+      <SEO
+        title="Om oss"
+        description="Tågstrul byggdes av en frustrerad Mälartåg-pendlare som tröttnade på att missa ersättningar för försenade tåg. Gratis tjänst för att kräva tillbaka pengar."
+        canonical="/om"
+      />
+      <BreadcrumbSchema
+        items={[
+          { name: "Hem", url: "/" },
+          { name: "Om oss", url: "/om" },
+        ]}
+      />
+
       <header className="flex items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
         <button
           onClick={() => navigate(-1)}
