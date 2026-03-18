@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import "./index.css"
 import App from "./App.tsx"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
+import { PostHogProvider } from "@/components/PostHogProvider.tsx"
 
 // Register service worker for PWA
 if ("serviceWorker" in navigator) {
@@ -24,10 +25,12 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light">
-        <App />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <PostHogProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="light">
+          <App />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </PostHogProvider>
   </StrictMode>,
 )

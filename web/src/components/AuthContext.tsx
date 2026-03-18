@@ -15,6 +15,7 @@ import {
   type AuthTokens,
   type AuthSession,
 } from "@/lib/auth"
+import { identifyUser, resetUser } from "@/lib/posthog"
 
 interface AuthContextValue {
   isAuthenticated: boolean
@@ -27,6 +28,32 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+function parseJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const base64Url = token.split(".")[1]
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/")
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(""),
+    )
+    return JSON.parse(jsonPayload)
+  } catch {
+    return null
+  }
+}
+
+function identifyFromTokens(tokens: AuthTokens | null) {
+  if (!tokens) return
+  const payload = parseJwtPayload(tokens.idToken)
+  if (payload?.sub && typeof payload.sub === "string") {
+    identifyUser(payload.sub, {
+      email: payload.email as string | undefined,
+    })
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [tokens, setTokens] = useState<AuthTokens | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -38,14 +65,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (stored.expiresAt < Date.now() + 5 * 60 * 1000) {
           const refreshed = await refreshSession()
           setTokens(refreshed)
+          identifyFromTokens(refreshed)
         } else {
           setTokens(stored)
+          identifyFromTokens(stored)
         }
       } else {
-        // Tokens expired or near-expiry - try to refresh using refresh token
         const refreshed = await refreshSession()
         if (refreshed) {
           setTokens(refreshed)
+          identifyFromTokens(refreshed)
         }
       }
       setIsLoading(false)
@@ -74,11 +103,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const verifyOtp = useCallback(async (session: AuthSession, otp: string) => {
     const newTokens = await authVerifyOtp(session, otp)
     setTokens(newTokens)
+    identifyFromTokens(newTokens)
   }, [])
 
   const signOut = useCallback(async () => {
     await authSignOut()
     setTokens(null)
+    resetUser()
   }, [])
 
   return (

@@ -4,6 +4,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { OnboardingGuard } from "@/components/OnboardingGuard"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { PWAInstallBanner } from "@/components/PWAInstallBanner"
+import { PostHogPageTracker } from "@/components/PostHogProvider"
 import { LandingPage } from "@/pages/LandingPage"
 import { LoginPage } from "@/pages/LoginPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
@@ -20,6 +21,7 @@ export function App() {
     <ErrorBoundary>
       <AuthProvider>
         <BrowserRouter>
+          <PostHogPageTracker />
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />

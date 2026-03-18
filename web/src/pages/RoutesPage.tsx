@@ -3,6 +3,7 @@ import { Trash2, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StationInput } from "@/components/StationInput"
 import { useRoutes, useAddRoute, useDeleteRoute } from "@/lib/queries"
+import { events } from "@/lib/posthog"
 
 export function RoutesPage() {
   const { data: routes = [], isLoading: loading } = useRoutes()
@@ -13,12 +14,25 @@ export function RoutesPage() {
   function handleAdd(from: string, to: string, time: string) {
     addRoute.mutate(
       { fromStation: from, toStation: to, departureTime: time || undefined },
-      { onSuccess: () => setShowForm(false) },
+      {
+        onSuccess: () => {
+          setShowForm(false)
+          events.routeAdded({
+            fromStation: from,
+            toStation: to,
+            hasDepartureTime: !!time,
+          })
+        },
+      },
     )
   }
 
   function handleDelete(routeId: string) {
-    deleteRoute.mutate(routeId)
+    deleteRoute.mutate(routeId, {
+      onSuccess: () => {
+        events.routeDeleted({ routeId })
+      },
+    })
   }
 
   if (loading) {

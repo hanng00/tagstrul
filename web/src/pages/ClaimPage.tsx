@@ -11,6 +11,7 @@ import {
   type SubmitBankResponse,
   type ConfirmClaimResponse,
 } from "@/lib/api"
+import { events } from "@/lib/posthog"
 
 type Step = "loading" | "travel" | "contact" | "bank" | "confirm" | "success" | "error"
 
@@ -55,6 +56,13 @@ export function ClaimPage() {
     setLoading(true)
     setError(null)
 
+    events.claimStarted({
+      delayId,
+      delayMinutes: delay?.delayMinutes,
+      cancelled: delay?.cancelled,
+      estimatedCompensation: delay?.estimatedCompensation,
+    })
+
     try {
       const res: StartClaimResponse = await api.startClaim(delayId)
       setClaimToken(res.claimToken)
@@ -68,6 +76,7 @@ export function ClaimPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Något gick fel")
       setStep("error")
+      events.claimError({ delayId, step: "start" })
     } finally {
       setLoading(false)
     }
@@ -129,9 +138,17 @@ export function ClaimPage() {
       })
       setResult(res)
       setStep("success")
+      events.claimSubmitted({
+        delayId,
+        confirmationId: res.confirmationId,
+        delayMinutes: delay?.delayMinutes,
+        cancelled: delay?.cancelled,
+        estimatedCompensation: delay?.estimatedCompensation,
+      })
     } catch (e) {
       setError(e instanceof Error ? e.message : "Något gick fel")
       setStep("error")
+      events.claimError({ delayId, step: "confirm" })
     } finally {
       setLoading(false)
     }

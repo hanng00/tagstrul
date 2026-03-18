@@ -6,6 +6,7 @@ import { StationInput } from "@/components/StationInput"
 import { useAddRoute, useUpdateProfile, useAddMovingoCard } from "@/lib/queries"
 import { MOVINGO_CARD_LABELS, type MovingoCardType, type MovingoCard } from "@/types"
 import { Logo } from "@/components/Logo"
+import { events } from "@/lib/posthog"
 
 type Step = "welcome" | "name" | "route" | "movingo" | "done"
 
@@ -80,14 +81,15 @@ export function OnboardingPage() {
     }
   }
 
-  async function handleSkipMovingo() {
+  async function handleSkipOnboarding() {
     setIsSubmitting(true)
     setError(null)
     try {
       await updateProfile.mutateAsync({ onboardingComplete: true })
-      setStep("done")
+      events.onboardingCompleted()
+      navigate("/app", { replace: true })
     } catch (err) {
-      console.error("Failed to update profile:", err)
+      console.error("Failed to skip onboarding:", err)
       setError("Något gick fel. Försök igen.")
     } finally {
       setIsSubmitting(false)
@@ -95,6 +97,7 @@ export function OnboardingPage() {
   }
 
   function handleFinish() {
+    events.onboardingCompleted()
     navigate("/app", { replace: true })
   }
 
@@ -133,7 +136,6 @@ export function OnboardingPage() {
           {step === "movingo" && (
             <MovingoStep
               onAdd={handleAddMovingo}
-              onSkip={handleSkipMovingo}
               isSubmitting={isSubmitting}
               error={error}
             />
@@ -146,6 +148,19 @@ export function OnboardingPage() {
       </div>
 
       <StepIndicator current={step} />
+
+      {step !== "welcome" && step !== "done" && (
+        <div className="pb-6 text-center">
+          <button
+            onClick={handleSkipOnboarding}
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+          >
+            <SkipForward className="size-3.5" />
+            Hoppa över
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -391,12 +406,10 @@ function DoneStep({ firstName, onFinish }: { firstName: string; onFinish: () => 
 
 function MovingoStep({
   onAdd,
-  onSkip,
   isSubmitting,
   error,
 }: {
   onAdd: (card: Omit<MovingoCard, "cardId">) => void
-  onSkip: () => void
   isSubmitting: boolean
   error: string | null
 }) {
@@ -534,15 +547,6 @@ function MovingoStep({
           </>
         )}
       </Button>
-
-      <button
-        onClick={onSkip}
-        disabled={isSubmitting}
-        className="mt-3 flex w-full items-center justify-center gap-2 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-      >
-        <SkipForward className="size-4" />
-        Hoppa över
-      </button>
     </div>
   )
 }
