@@ -421,6 +421,27 @@ Resources:
       BuildProperties:
         Sourcemap: true
 
+  SubmitFeedback:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/public/SubmitFeedback.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /public/feedback
+            Method: POST
+            Auth:
+              Authorizer: NONE
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
   # --- Push Notifications ---
 
   GetVapidKey:

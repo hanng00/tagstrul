@@ -4,7 +4,7 @@ import { TrainCrashImage } from "@/components/TrainCrashImage"
 const steps = [
   { number: "1", text: "Lägg till din pendling" },
   { number: "2", text: "Vi hittar förseningar" },
-  { number: "3", text: "Kräv ersättning enkelt" },
+  { number: "3", text: "Kräv ersättning" },
 ]
 
 export function PosterPage() {

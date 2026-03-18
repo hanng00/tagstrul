@@ -67,6 +67,17 @@ export const api = {
     })
   },
 
+  async submitFeedback(data: {
+    message: string
+    email?: string
+    source?: string
+  }): Promise<{ success: boolean; feedbackId: string }> {
+    return publicRequest("/public/feedback", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  },
+
   async getDelays(): Promise<Delay[]> {
     return request<Delay[]>("/delays")
   },

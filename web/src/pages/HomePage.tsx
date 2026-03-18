@@ -170,8 +170,8 @@ export function HomePage() {
 
       <div className="flex-1 px-5 pb-6">
         {/* Hero: Total Received */}
-        <div className="rounded-xl bg-emerald-50 p-5 dark:bg-emerald-950/20">
-          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+        <div className="rounded-xl border border-money/20 bg-money-surface p-5">
+          <p className="text-sm font-medium text-money">
             Fått tillbaka totalt
           </p>
           <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-foreground">
