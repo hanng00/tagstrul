@@ -5,6 +5,7 @@ import { OnboardingGuard } from "@/components/OnboardingGuard"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { PWAInstallBanner } from "@/components/PWAInstallBanner"
 import { PostHogPageTracker } from "@/components/PostHogProvider"
+import { Toaster } from "@/components/ui/sonner"
 import { LandingPage } from "@/pages/LandingPage"
 import { LoginPage } from "@/pages/LoginPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
@@ -44,6 +45,7 @@ export function App() {
             </Route>
           </Routes>
           <PWAInstallBanner />
+          <Toaster position="bottom-center" />
         </BrowserRouter>
       </AuthProvider>
     </ErrorBoundary>

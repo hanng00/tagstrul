@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router"
+import { toast } from "sonner"
 import { useDelays, useClaims } from "@/lib/queries"
 import { api } from "@/lib/api"
 import type { Delay, Claim } from "@/types"
@@ -21,6 +22,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { TrainLoader } from "@/components/ui/train-loader"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 function formatDateFull(date: Date) {
   const today = new Date()
@@ -69,6 +72,7 @@ export function HomePage() {
   const navigate = useNavigate()
   const [showSmallDelays, setShowSmallDelays] = useState(false)
   const [showPending, setShowPending] = useState(false)
+  const [showDismissed, setShowDismissed] = useState(false)
 
   const loading = delaysLoading || claimsLoading
   const refreshing = delaysFetching || claimsFetching
@@ -127,6 +131,9 @@ export function HomePage() {
     0,
   )
 
+  // Dismissed delays
+  const dismissedDelays = delays.filter((d) => d.dismissed)
+
   // Claims summary
   const pendingClaims = claims.filter((c) => c.status === "submitted")
   const approvedClaims = claims.filter((c) => c.status === "approved")
@@ -170,93 +177,78 @@ export function HomePage() {
       </header>
 
       <div className="flex-1 px-5 pb-6">
-        {/* Hero: Total Received */}
-        <div className="rounded-xl border border-money/20 bg-money-surface p-5">
-          <p className="text-sm font-medium text-money">
-            Fått tillbaka totalt
-          </p>
+        {/* Hero: Total Received with Pending */}
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="flex items-start justify-between">
+            <p className="text-sm font-medium text-muted-foreground">
+              Fått tillbaka totalt
+            </p>
+            {totalReceived === 0 && pendingClaims.length === 0 && (
+              <button
+                className="group relative"
+                onClick={(e) => {
+                  const tooltip = e.currentTarget.querySelector('[data-tooltip]')
+                  tooltip?.classList.toggle('hidden')
+                }}
+              >
+                <Info className="size-4 text-muted-foreground/60 hover:text-muted-foreground" />
+                <div
+                  data-tooltip
+                  className="absolute right-0 top-6 z-10 hidden w-56 rounded-lg border border-border bg-popover p-3 text-left text-xs text-muted-foreground shadow-lg"
+                >
+                  Kräv ersättning för försenade resor så visas summan här
+                </div>
+              </button>
+            )}
+          </div>
           <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-foreground">
             {totalReceived}
             <span className="ml-1 text-lg font-medium text-muted-foreground">
               kr
             </span>
           </p>
-          {totalReceived === 0 && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Kräv ersättning för försenade resor så visas summan här
-            </p>
-          )}
-        </div>
 
-        {/* Pending Claims - collapsible */}
-        {pendingClaims.length > 0 && (
-          <section className="mt-4 overflow-hidden rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20">
-            <button
-              onClick={() => setShowPending(!showPending)}
-              className="flex w-full flex-col px-4 py-3 text-left"
+          {/* Pending claims row */}
+          {pendingClaims.length > 0 && (
+            <Collapsible
+              open={showPending}
+              onOpenChange={setShowPending}
+              className="mt-4 border-t border-border pt-4"
             >
-              <div className="flex w-full items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-                    <Clock className="size-4 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Väntar på svar
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {pendingClaims.length} {pendingClaims.length === 1 ? "krav" : "krav"} skickade
-                    </p>
-                  </div>
+              <CollapsibleTrigger className="flex w-full items-center justify-between text-left">
+                <div className="flex items-center gap-2">
+                  <Clock className="size-3.5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Väntar på svar
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold tabular-nums text-foreground">
+                  <span className="text-sm font-medium tabular-nums text-foreground">
                     ~{totalPending} kr
                   </span>
-                  {showPending ? (
-                    <ChevronUp className="size-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="size-4 text-muted-foreground" />
-                  )}
+                  <ChevronDown className={cn(
+                    "size-4 text-muted-foreground transition-transform",
+                    showPending && "rotate-180"
+                  )} />
                 </div>
-              </div>
-              
-              {/* Route preview when collapsed */}
-              {!showPending && (
-                <div className="mt-2 flex flex-wrap gap-1.5 pl-11">
-                  {pendingClaims.slice(0, 3).map((claim) => (
-                    <span
-                      key={claim.claimId}
-                      className="rounded-full bg-amber-100/80 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
-                    >
-                      {claim.fromStation} → {claim.toStation}
-                    </span>
-                  ))}
-                  {pendingClaims.length > 3 && (
-                    <span className="rounded-full bg-amber-100/80 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                      +{pendingClaims.length - 3} till
-                    </span>
-                  )}
-                </div>
-              )}
-            </button>
+              </CollapsibleTrigger>
 
-            {/* Expanded claims - inside the amber container */}
-            {showPending && (
-              <div className="max-h-64 overflow-y-auto border-t border-amber-200 bg-white/50 px-4 py-3 dark:border-amber-900/50 dark:bg-black/10">
-                <div className="space-y-2">
-                  {pendingClaims.map((claim) => (
-                    <PendingClaimCard
-                      key={claim.claimId}
-                      claim={claim}
-                      onResolved={() => refetchClaims()}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-        )}
+              <CollapsibleContent>
+                <ScrollArea className="mt-3 max-h-48">
+                  <div className="space-y-2 pr-3">
+                    {pendingClaims.map((claim) => (
+                      <PendingClaimCard
+                        key={claim.claimId}
+                        claim={claim}
+                        onResolved={() => refetchClaims()}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+        </div>
 
         {/* Claimable Routes */}
         <section className="mt-6">
@@ -350,6 +342,39 @@ export function HomePage() {
           </section>
         )}
 
+        {/* Dismissed delays - show hidden trips */}
+        {dismissedDelays.length > 0 && (
+          <section className="mt-6">
+            <button
+              onClick={() => setShowDismissed(!showDismissed)}
+              className="flex w-full items-center justify-between py-2 text-left"
+            >
+              <div className="flex items-center gap-2">
+                <X className="size-3.5 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  {dismissedDelays.length} dolda resor
+                </span>
+              </div>
+              {showDismissed ? (
+                <ChevronUp className="size-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="size-4 text-muted-foreground" />
+              )}
+            </button>
+            {showDismissed && (
+              <div className="mt-2 space-y-2">
+                {dismissedDelays.map((delay) => (
+                  <DismissedDelayRow
+                    key={delay.delayId}
+                    delay={delay}
+                    onRestore={() => refetchDelays()}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
         {/* Date picker - at the bottom */}
         {availableDates.length > 1 && (
           <div className="mt-6 flex items-center justify-between rounded-lg bg-muted/30 px-4 py-3">
@@ -419,8 +444,24 @@ function ClaimableCard({
     try {
       await api.dismissDelay(delay.delayId)
       onDismiss()
+      toast(`${delay.fromStation} → ${delay.toStation} dold`, {
+        action: {
+          label: "Ångra",
+          onClick: async () => {
+            try {
+              await api.undismissDelay(delay.delayId)
+              onDismiss()
+            } catch (err) {
+              console.error(err)
+              toast.error("Kunde inte ångra")
+            }
+          },
+        },
+        duration: 5000,
+      })
     } catch (err) {
       console.error(err)
+      toast.error("Kunde inte dölja resan")
     } finally {
       setDismissing(false)
     }
@@ -548,6 +589,52 @@ function SmallDelayRow({ delay }: { delay: Delay }) {
         <span className="text-xs">{delay.scheduledDeparture}</span>
         <span className="text-destructive/70">+{delay.delayMinutes} min</span>
       </div>
+    </div>
+  )
+}
+
+function DismissedDelayRow({
+  delay,
+  onRestore,
+}: {
+  delay: Delay
+  onRestore: () => void
+}) {
+  const [restoring, setRestoring] = useState(false)
+
+  async function handleRestore() {
+    setRestoring(true)
+    try {
+      await api.undismissDelay(delay.delayId)
+      onRestore()
+      toast.success("Resan återställd")
+    } catch (err) {
+      console.error(err)
+      toast.error("Kunde inte återställa resan")
+    } finally {
+      setRestoring(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+      <div className="flex flex-col gap-0.5">
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <span>{delay.fromStation}</span>
+          <span>→</span>
+          <span>{delay.toStation}</span>
+        </div>
+        <span className="text-xs text-muted-foreground/70">
+          {delay.date} · {delay.scheduledDeparture}
+        </span>
+      </div>
+      <button
+        onClick={handleRestore}
+        disabled={restoring}
+        className="rounded-md px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+      >
+        {restoring ? "..." : "Återställ"}
+      </button>
     </div>
   )
 }

@@ -15,13 +15,14 @@ import { PersonnummerInput, formatPersonnummer, validatePersonnummer } from "@/c
 import { PhoneInput, getPhoneDigits, formatPhone } from "@/components/ui-extended/phone-input"
 import { TrainLoader } from "@/components/ui/train-loader"
 import { useDelay, useProfile } from "@/lib/queries"
-import { ApiError, type ConfirmClaimResponse } from "@/lib/api"
+import { ApiError } from "@/lib/api-client"
 import {
   useStartClaim,
   useSubmitContact,
   useSubmitBank,
   useConfirmClaim,
-} from "@/features/claims/mutations"
+  type ConfirmClaimResponse,
+} from "@/features/claims"
 import { events } from "@/lib/posthog"
 
 type Step =

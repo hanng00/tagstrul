@@ -254,6 +254,18 @@ export async function dismissDelay(uid: string, delayId: string): Promise<void> 
   );
 }
 
+export async function undismissDelay(uid: string, delayId: string): Promise<void> {
+  await client.send(
+    new UpdateCommand({
+      TableName: TABLE,
+      Key: { PK: `USER#${uid}`, SK: `DELAY#${delayId}` },
+      UpdateExpression: 'SET dismissed = :dismissed',
+      ExpressionAttributeValues: { ':dismissed': false },
+      ConditionExpression: 'attribute_exists(PK)',
+    })
+  );
+}
+
 export async function getProfile(uid: string): Promise<Profile | null> {
   const result = await client.send(
     new GetCommand({

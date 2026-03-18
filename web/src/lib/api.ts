@@ -1,102 +1,7 @@
 import type { Delay, Route, Claim, Profile, MovingoCard } from "@/types"
-import { getIdToken } from "@/lib/auth"
+import { request, publicRequest } from "@/lib/api-client"
 
-const API_BASE = import.meta.env.VITE_API_URL || ""
-
-export interface StructuredError {
-  code: string
-  message: string
-  field?: string
-  retryable: boolean
-}
-
-export class ApiError extends Error {
-  public readonly code: string
-  public readonly field?: string
-  public readonly retryable: boolean
-  public readonly statusCode: number
-
-  constructor(
-    message: string,
-    code: string,
-    retryable: boolean,
-    statusCode: number,
-    field?: string
-  ) {
-    super(message)
-    this.name = "ApiError"
-    this.code = code
-    this.retryable = retryable
-    this.statusCode = statusCode
-    this.field = field
-  }
-}
-
-async function parseErrorResponse(response: Response): Promise<ApiError> {
-  try {
-    const body = await response.json()
-    if (body.error && typeof body.error === "object") {
-      const err = body.error as StructuredError
-      return new ApiError(
-        err.message || `API error: ${response.status}`,
-        err.code || "UNKNOWN",
-        err.retryable ?? false,
-        response.status,
-        err.field
-      )
-    }
-    if (body.error && typeof body.error === "string") {
-      return new ApiError(body.error, "UNKNOWN", false, response.status)
-    }
-  } catch {
-    // Failed to parse JSON
-  }
-  return new ApiError(`API error: ${response.status}`, "UNKNOWN", false, response.status)
-}
-
-async function request<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
-  const token = getIdToken()
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string>),
-  }
-  if (token) {
-    headers["Authorization"] = token
-  }
-
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  })
-
-  if (!response.ok) {
-    throw await parseErrorResponse(response)
-  }
-
-  return response.json()
-}
-
-async function publicRequest<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers as Record<string, string>),
-    },
-  })
-
-  if (!response.ok) {
-    throw await parseErrorResponse(response)
-  }
-
-  return response.json()
-}
+export { ApiError } from "@/lib/api-client"
 
 export interface EstimateResult {
   fromStation: string
@@ -199,35 +104,6 @@ export const api = {
     await request(`/movingo-cards/${cardId}`, { method: "DELETE" })
   },
 
-  // Claim wizard API
-  async startClaim(delayId: string): Promise<StartClaimResponse> {
-    return request<StartClaimResponse>("/claims/start", {
-      method: "POST",
-      body: JSON.stringify({ delayId }),
-    })
-  },
-
-  async submitClaimContact(data: SubmitContactRequest): Promise<SubmitContactResponse> {
-    return request<SubmitContactResponse>("/claims/contact", {
-      method: "POST",
-      body: JSON.stringify(data),
-    })
-  },
-
-  async submitClaimBank(data: SubmitBankRequest): Promise<SubmitBankResponse> {
-    return request<SubmitBankResponse>("/claims/bank", {
-      method: "POST",
-      body: JSON.stringify(data),
-    })
-  },
-
-  async confirmClaim(data: ConfirmClaimRequest): Promise<ConfirmClaimResponse> {
-    return request<ConfirmClaimResponse>("/claims/confirm", {
-      method: "POST",
-      body: JSON.stringify(data),
-    })
-  },
-
   async updateClaimStatus(
     claimId: string,
     status: "approved" | "rejected",
@@ -245,7 +121,12 @@ export const api = {
     })
   },
 
-  // Push notifications
+  async undismissDelay(delayId: string): Promise<void> {
+    await request(`/delays/${delayId}/undismiss`, {
+      method: "POST",
+    })
+  },
+
   async getVapidKey(): Promise<{ publicKey: string }> {
     return request<{ publicKey: string }>("/push/vapid-key")
   },
@@ -263,67 +144,4 @@ export const api = {
       body: JSON.stringify({ endpoint }),
     })
   },
-}
-
-export interface StartClaimResponse {
-  claimToken: string
-  step: "contact"
-  delay: {
-    delayId: string
-    fromStation: string
-    toStation: string
-    date: string
-    scheduledDeparture: string
-    delayMinutes: number
-    cancelled: boolean
-    estimatedCompensation: number
-  }
-  contact: {
-    firstName: string
-    lastName: string
-    email: string
-    phone: string
-  }
-}
-
-export interface SubmitContactRequest {
-  claimToken: string
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-}
-
-export interface SubmitContactResponse {
-  claimToken: string
-  step: "bank"
-  bank: {
-    personalNumber: string
-    swishPhone: string
-  }
-}
-
-export interface SubmitBankRequest {
-  claimToken: string
-  personalNumber: string
-  swishPhone: string
-}
-
-export interface SubmitBankResponse {
-  claimToken: string
-  barId: string
-  step: "confirm"
-}
-
-export interface ConfirmClaimRequest {
-  claimToken: string
-  barId: string
-  delayId: string
-}
-
-export interface ConfirmClaimResponse {
-  claimId: string
-  confirmationId: string
-  status: "submitted"
-  submittedAt: string
 }

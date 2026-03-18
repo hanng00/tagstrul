@@ -121,12 +121,14 @@
     --color-surface-raised: oklch(0.995 0.006 35);
     --color-warn: oklch(0.78 0.16 75);
     --color-warn-surface: oklch(0.96 0.04 80);
-    --color-money: oklch(0.55 0.12 75);
-    --color-money-surface: oklch(0.96 0.04 75);
+    --color-money: oklch(0.55 0.14 145);
+    --color-money-surface: oklch(0.97 0.02 145);
     --color-success: oklch(0.55 0.12 75);
     --color-success-surface: oklch(0.96 0.04 75);
     --color-urgent: oklch(0.50 0.16 25);
     --color-urgent-surface: oklch(0.96 0.04 25);
+    --color-pending: oklch(0.42 0.12 25);
+    --color-pending-surface: oklch(0.97 0.02 25);
 }
 
 @layer base {

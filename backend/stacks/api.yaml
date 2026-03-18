@@ -142,6 +142,25 @@ Resources:
       BuildProperties:
         Sourcemap: true
 
+  UndismissDelay:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/delays/UndismissDelay.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /delays/{delayId}/undismiss
+            Method: POST
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
   # --- Claims ---
 
   GetClaims:
