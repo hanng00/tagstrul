@@ -2,7 +2,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
 import { userId, getProfile, putProfile } from '../../repository.ts';
 import { submitContactInfo } from '../../adapter/SJDelayCompensationAdapter.ts';
-import { success, badRequest, internalServerError } from '../../utils/response.ts';
+import { success, badRequest, structuredError } from '../../utils/response.ts';
 
 const schema = z.object({
   claimToken: z.string().min(1),
@@ -47,6 +47,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     });
   } catch (error) {
     console.error('[SubmitContact] Error:', error);
-    return internalServerError(error);
+    return structuredError(error);
   }
 };

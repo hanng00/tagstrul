@@ -19,5 +19,22 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/features/*/mutations', '@/features/*/queries', '@/features/*/types'],
+              message: 'Import from feature index instead: @/features/featureName',
+            },
+            {
+              group: ['../lib/mutations', '../lib/queries'],
+              message: 'Feature-specific hooks should be in @/features/, not @/lib/',
+            },
+          ],
+        },
+      ],
+    },
   },
 ])

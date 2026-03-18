@@ -2,7 +2,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
 import { userId, putProfile, getProfile } from '../../repository.ts';
 import { submitBankDetails } from '../../adapter/SJDelayCompensationAdapter.ts';
-import { success, badRequest, internalServerError } from '../../utils/response.ts';
+import { success, badRequest, structuredError } from '../../utils/response.ts';
 
 const schema = z.object({
   claimToken: z.string().min(1),
@@ -49,6 +49,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     });
   } catch (error) {
     console.error('[SubmitBank] Error:', error);
-    return internalServerError(error);
+    return structuredError(error);
   }
 };

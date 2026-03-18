@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router"
 import { useProfile } from "@/lib/queries"
-import { Loader2 } from "lucide-react"
+import { TrainLoader } from "@/components/ui/train-loader"
 
 export function OnboardingGuard() {
   const location = useLocation()
@@ -11,7 +11,7 @@ export function OnboardingGuard() {
   if (isLoading) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        <TrainLoader size="lg" />
       </div>
     )
   }

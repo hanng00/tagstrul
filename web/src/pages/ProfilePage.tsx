@@ -3,6 +3,7 @@ import { useNavigate } from "react-router"
 import { LogOut, Pencil, Check, X, Plus, Trash2, Bell, BellOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/AuthContext"
+import { TrainLoader } from "@/components/ui/train-loader"
 import {
   useProfile,
   useMovingoCards,
@@ -13,6 +14,8 @@ import {
 import { usePushNotifications } from "@/hooks/usePushNotifications"
 import type { Profile, MovingoCard, MovingoCardType } from "@/types"
 import { MOVINGO_CARD_LABELS } from "@/types"
+import { PersonnummerInput } from "@/components/ui-extended/personnummer-input"
+import { PhoneInput, formatPhone, getPhoneDigits } from "@/components/ui-extended/phone-input"
 
 const profileFields = [
   { key: "firstName" as const, label: "Förnamn" },
@@ -65,7 +68,12 @@ export function ProfilePage() {
   const loading = profileLoading || cardsLoading
 
   function startEditing() {
-    setDraft(profile ?? null)
+    if (profile) {
+      setDraft({
+        ...profile,
+        phone: formatPhone(profile.phone ?? ""),
+      })
+    }
     setEditing(true)
   }
 
@@ -76,9 +84,15 @@ export function ProfilePage() {
 
   function handleSave() {
     if (!draft) return
-    updateProfile.mutate(draft, {
-      onSuccess: () => setEditing(false),
-    })
+    updateProfile.mutate(
+      {
+        ...draft,
+        phone: getPhoneDigits(draft.phone ?? ""),
+      },
+      {
+        onSuccess: () => setEditing(false),
+      }
+    )
   }
 
   function handleAddCard(card: Omit<MovingoCard, "cardId">) {
@@ -93,8 +107,8 @@ export function ProfilePage() {
 
   if (loading || !profile) {
     return (
-      <div className="flex flex-1 items-center justify-center py-20">
-        <div className="size-5 animate-spin rounded-full border-2 border-muted-foreground/20 border-t-foreground" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <TrainLoader size="md" />
       </div>
     )
   }
@@ -165,13 +179,27 @@ export function ProfilePage() {
               >
                 <span className="text-sm text-muted-foreground">{label}</span>
                 {editing && draft ? (
-                  <input
-                    value={draft[key] ?? ""}
-                    onChange={(e) =>
-                      setDraft({ ...draft, [key]: e.target.value })
-                    }
-                    className="w-1/2 rounded-md border border-input bg-background px-2.5 py-1.5 text-right text-sm text-foreground outline-none transition-colors focus:border-foreground"
-                  />
+                  key === "phone" ? (
+                    <PhoneInput
+                      value={draft[key] ?? ""}
+                      onChange={(value) => setDraft({ ...draft, [key]: value })}
+                      className="w-1/2 text-right text-sm"
+                    />
+                  ) : key === "personalNumber" ? (
+                    <PersonnummerInput
+                      value={draft[key] ?? ""}
+                      onChange={(value) => setDraft({ ...draft, [key]: value })}
+                      className="w-1/2 text-right text-sm"
+                    />
+                  ) : (
+                    <input
+                      value={draft[key] ?? ""}
+                      onChange={(e) =>
+                        setDraft({ ...draft, [key]: e.target.value })
+                      }
+                      className="w-1/2 rounded-md border border-input bg-background px-2.5 py-1.5 text-right text-sm text-foreground outline-none transition-colors focus:border-foreground"
+                    />
+                  )
                 ) : (
                   <span className="text-sm font-medium text-foreground">
                     {displayProfile[key] || "—"}

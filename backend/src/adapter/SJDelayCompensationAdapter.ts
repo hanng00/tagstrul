@@ -1,23 +1,21 @@
+import { SJApiError, parseSJErrorResponse, createNetworkError } from '../features/claims/errors.ts';
+
 const BASE_URL = 'https://prod-api.adp.sj.se/public/delay-compensation/v1';
 const OCP_API_KEY = '78e7aad0e7b042b685d70e0131d897ca';
 
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY_MS = 1000;
+
 const USER_AGENTS = [
-  // Chrome on Windows
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
-  // Chrome on Mac
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
-  // Chrome on Android
   'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36',
   'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36',
-  // Safari on Mac
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15',
-  // Safari on iPhone
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1',
-  // Firefox on Windows
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0',
-  // Edge on Windows
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0',
 ];
 
@@ -67,6 +65,89 @@ function getBrowserHeaders(): Record<string, string> {
     'x-client-name': 'sjse-delay-compensation-client',
     'x-client-version': 'PLACEHOLDER_VERSION',
   };
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function parseResponseBody(response: Response): Promise<unknown> {
+  try {
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { rawText: text };
+    }
+  } catch {
+    return null;
+  }
+}
+
+interface FetchOptions {
+  method: string;
+  headers: Record<string, string>;
+  body?: string;
+}
+
+async function fetchWithRetry<T>(
+  endpoint: string,
+  options: FetchOptions,
+  payload?: unknown
+): Promise<T> {
+  let lastError: SJApiError | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt - 1);
+        console.log(`[SJ API] Retry attempt ${attempt}/${MAX_RETRIES} after ${delay}ms`);
+        await sleep(delay);
+      }
+
+      const response = await fetch(endpoint, options);
+
+      if (response.ok) {
+        return (await response.json()) as T;
+      }
+
+      const responseBody = await parseResponseBody(response);
+      const error = parseSJErrorResponse(response.status, responseBody, endpoint);
+
+      console.error(`[SJ API] Error on attempt ${attempt + 1}:`, {
+        endpoint,
+        status: response.status,
+        code: error.code,
+        message: error.message,
+        retryable: error.isRetryable,
+        payload: payload ? JSON.stringify(payload) : undefined,
+      });
+
+      if (!error.isRetryable || attempt === MAX_RETRIES) {
+        throw error;
+      }
+
+      lastError = error;
+    } catch (error) {
+      if (error instanceof SJApiError) {
+        throw error;
+      }
+
+      const networkError = createNetworkError(error);
+      console.error(`[SJ API] Network error on attempt ${attempt + 1}:`, {
+        endpoint,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      if (attempt === MAX_RETRIES) {
+        throw networkError;
+      }
+
+      lastError = networkError;
+    }
+  }
+
+  throw lastError ?? createNetworkError(new Error('Max retries exceeded'));
 }
 
 export interface SJLocation {
@@ -124,23 +205,6 @@ interface ConfirmationResponse {
   expenseServiceRequestCreationFailed: boolean;
 }
 
-async function handleApiError(response: Response, endpoint: string, payload?: unknown): Promise<never> {
-  let errorDetails = '';
-  try {
-    const text = await response.text();
-    try {
-      const json = JSON.parse(text);
-      errorDetails = ` | Response: ${JSON.stringify(json)}`;
-    } catch {
-      errorDetails = ` | Response: ${text}`;
-    }
-  } catch {
-    // ignore
-  }
-  const payloadInfo = payload ? ` | Payload: ${JSON.stringify(payload)}` : '';
-  throw new Error(`SJ API Error: ${response.status} ${response.statusText} | Endpoint: ${endpoint}${payloadInfo}${errorDetails}`);
-}
-
 export async function getDelayCompensationToken(
   movingoId: string,
   cardType: string,
@@ -153,17 +217,16 @@ export async function getDelayCompensationToken(
     commuterCardNumber: movingoId,
   };
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: getBrowserHeaders(),
-    body: JSON.stringify(body),
-  });
+  const data = await fetchWithRetry<TokenResponse>(
+    endpoint,
+    {
+      method: 'POST',
+      headers: getBrowserHeaders(),
+      body: JSON.stringify(body),
+    },
+    body
+  );
 
-  if (!response.ok) {
-    await handleApiError(response, endpoint, body);
-  }
-
-  const data = (await response.json()) as TokenResponse;
   return data.delayCompensationToken;
 }
 
@@ -176,7 +239,6 @@ export async function submitTravelDetails(
   const boundaryId = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
   const boundary = `----WebKitFormBoundary${boundaryId}`;
   
-  // Match exact browser format with 6 dashes prefix and proper line endings
   const body = 
     `------WebKitFormBoundary${boundaryId}\r\n` +
     `Content-Disposition: form-data; name="data"; filename="blob"\r\n` +
@@ -188,17 +250,12 @@ export async function submitTravelDetails(
   const headers = getBrowserHeaders();
   headers['content-type'] = `multipart/form-data; boundary=${boundary}`;
 
-  const response = await fetch(endpoint, {
-    method: 'PUT',
-    headers,
-    body,
-  });
+  const data = await fetchWithRetry<TravelDetailsResponse>(
+    endpoint,
+    { method: 'PUT', headers, body },
+    details
+  );
 
-  if (!response.ok) {
-    await handleApiError(response, endpoint, details);
-  }
-
-  const data = (await response.json()) as TravelDetailsResponse;
   return {
     token: data.delayCompensationToken,
     ticketCompensation: data.bankAccountInfoRequirement.ticketCompensation,
@@ -211,17 +268,16 @@ export async function submitContactInfo(
 ): Promise<string> {
   const endpoint = `${BASE_URL}/compensation/${token}/contactinformation`;
 
-  const response = await fetch(endpoint, {
-    method: 'PUT',
-    headers: getBrowserHeaders(),
-    body: JSON.stringify(contact),
-  });
+  const data = await fetchWithRetry<{ delayCompensationToken: string }>(
+    endpoint,
+    {
+      method: 'PUT',
+      headers: getBrowserHeaders(),
+      body: JSON.stringify(contact),
+    },
+    contact
+  );
 
-  if (!response.ok) {
-    await handleApiError(response, endpoint, contact);
-  }
-
-  const data = (await response.json()) as { delayCompensationToken: string };
   return data.delayCompensationToken;
 }
 
@@ -231,17 +287,16 @@ export async function submitBankDetails(
 ): Promise<string> {
   const endpoint = `${BASE_URL}/compensation/bankaccountrecords`;
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: getBrowserHeaders(),
-    body: JSON.stringify(bank),
-  });
+  const data = await fetchWithRetry<BankDetailsResponse>(
+    endpoint,
+    {
+      method: 'POST',
+      headers: getBrowserHeaders(),
+      body: JSON.stringify(bank),
+    },
+    bank
+  );
 
-  if (!response.ok) {
-    await handleApiError(response, endpoint, bank);
-  }
-
-  const data = (await response.json()) as BankDetailsResponse;
   return data.barId;
 }
 
@@ -256,17 +311,16 @@ export async function confirmClaim(
     },
   };
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: getBrowserHeaders(),
-    body: JSON.stringify(payload),
-  });
+  const data = await fetchWithRetry<ConfirmationResponse>(
+    endpoint,
+    {
+      method: 'POST',
+      headers: getBrowserHeaders(),
+      body: JSON.stringify(payload),
+    },
+    payload
+  );
 
-  if (!response.ok) {
-    await handleApiError(response, endpoint, payload);
-  }
-
-  const data = (await response.json()) as ConfirmationResponse;
   return data.ticketCompensationServiceRequests[0] ?? '';
 }
 

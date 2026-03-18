@@ -6,30 +6,23 @@ import {
   AlertCircle,
   Info,
   ChevronDown,
+  ExternalLink,
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PersonnummerInput, formatPersonnummer, validatePersonnummer } from "@/components/ui-extended/personnummer-input"
+import { PhoneInput, getPhoneDigits, formatPhone } from "@/components/ui-extended/phone-input"
+import { TrainLoader } from "@/components/ui/train-loader"
 import { useDelay, useProfile } from "@/lib/queries"
+import { ApiError, type ConfirmClaimResponse } from "@/lib/api"
 import {
-  api,
-  type StartClaimResponse,
-  type SubmitContactResponse,
-  type SubmitBankResponse,
-  type ConfirmClaimResponse,
-} from "@/lib/api"
+  useStartClaim,
+  useSubmitContact,
+  useSubmitBank,
+  useConfirmClaim,
+} from "@/features/claims/mutations"
 import { events } from "@/lib/posthog"
-
-function formatPersonnummer(input: string): string {
-  const digits = input.replace(/\D/g, "")
-  if (digits.length === 12) {
-    return `${digits.slice(0, 8)}-${digits.slice(8)}`
-  }
-  if (digits.length === 10) {
-    return `${digits.slice(0, 6)}-${digits.slice(6)}`
-  }
-  return input
-}
 
 type Step =
   | "loading"
@@ -56,11 +49,9 @@ export function ClaimPage() {
   useProfile()
 
   const [step, setStep] = useState<Step>("travel")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
   const [claimToken, setClaimToken] = useState("")
   const [barId, setBarId] = useState("")
+  const [failedStep, setFailedStep] = useState<Step | null>(null)
 
   const [contact, setContact] = useState({
     firstName: "",
@@ -76,10 +67,24 @@ export function ClaimPage() {
 
   const [result, setResult] = useState<ConfirmClaimResponse | null>(null)
 
-  async function handleStartClaim() {
+  const startClaim = useStartClaim()
+  const submitContact = useSubmitContact()
+  const submitBank = useSubmitBank()
+  const confirmClaim = useConfirmClaim()
+
+  const currentError =
+    startClaim.error || submitContact.error || submitBank.error || confirmClaim.error
+  const isLoading =
+    startClaim.isPending || submitContact.isPending || submitBank.isPending || confirmClaim.isPending
+
+  useEffect(() => {
+    if (currentError) {
+      setStep("error")
+    }
+  }, [currentError])
+
+  function handleStartClaim() {
     if (!delayId) return
-    setLoading(true)
-    setError(null)
 
     events.claimStarted({
       delayId,
@@ -88,102 +93,101 @@ export function ClaimPage() {
       estimatedCompensation: delay?.estimatedCompensation,
     })
 
-    try {
-      const res: StartClaimResponse = await api.startClaim(delayId)
-      setClaimToken(res.claimToken)
-      setContact({
-        firstName: res.contact.firstName,
-        lastName: res.contact.lastName,
-        email: res.contact.email,
-        phone: res.contact.phone,
-      })
-      setStep("contact")
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Något gick fel")
-      setStep("error")
-      events.claimError({ delayId, step: "start" })
-    } finally {
-      setLoading(false)
-    }
+    startClaim.mutate(delayId, {
+      onSuccess: (res) => {
+        setClaimToken(res.claimToken)
+        setContact({
+          firstName: res.contact.firstName,
+          lastName: res.contact.lastName,
+          email: res.contact.email,
+          phone: formatPhone(res.contact.phone),
+        })
+        setStep("contact")
+      },
+      onError: () => {
+        setFailedStep("travel")
+        events.claimError({ delayId, step: "start" })
+      },
+    })
   }
 
-  async function handleSubmitContact() {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const res: SubmitContactResponse = await api.submitClaimContact({
-        claimToken,
-        ...contact,
-      })
-      setClaimToken(res.claimToken)
-      setBank({
-        personalNumber: res.bank.personalNumber,
-        swishPhone: res.bank.swishPhone,
-      })
-      setStep("bank")
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Något gick fel")
-      setStep("error")
-    } finally {
-      setLoading(false)
-    }
+  function handleSubmitContact() {
+    submitContact.mutate(
+      { claimToken, ...contact, phone: getPhoneDigits(contact.phone) },
+      {
+        onSuccess: (res) => {
+          setClaimToken(res.claimToken)
+          setBank({
+            personalNumber: res.bank.personalNumber,
+            swishPhone: formatPhone(res.bank.swishPhone),
+          })
+          setStep("bank")
+        },
+        onError: () => {
+          setFailedStep("contact")
+        },
+      }
+    )
   }
 
-  async function handleSubmitBank() {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const res: SubmitBankResponse = await api.submitClaimBank({
+  function handleSubmitBank() {
+    submitBank.mutate(
+      {
         claimToken,
         personalNumber: formatPersonnummer(bank.personalNumber),
-        swishPhone: bank.swishPhone,
-      })
-      setClaimToken(res.claimToken)
-      setBarId(res.barId)
-      setStep("confirm")
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Något gick fel")
-      setStep("error")
-    } finally {
-      setLoading(false)
-    }
+        swishPhone: getPhoneDigits(bank.swishPhone),
+      },
+      {
+        onSuccess: (res) => {
+          setClaimToken(res.claimToken)
+          setBarId(res.barId)
+          setStep("confirm")
+        },
+        onError: () => {
+          setFailedStep("bank")
+        },
+      }
+    )
   }
 
-  async function handleConfirm() {
+  function handleConfirm() {
     if (!delayId) return
-    setLoading(true)
-    setError(null)
 
-    try {
-      const res: ConfirmClaimResponse = await api.confirmClaim({
-        claimToken,
-        barId,
-        delayId,
-      })
-      setResult(res)
-      setStep("success")
-      events.claimSubmitted({
-        delayId,
-        confirmationId: res.confirmationId,
-        delayMinutes: delay?.delayMinutes,
-        cancelled: delay?.cancelled,
-        estimatedCompensation: delay?.estimatedCompensation,
-      })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Något gick fel")
-      setStep("error")
-      events.claimError({ delayId, step: "confirm" })
-    } finally {
-      setLoading(false)
-    }
+    confirmClaim.mutate(
+      { claimToken, barId, delayId },
+      {
+        onSuccess: (res) => {
+          setResult(res)
+          setStep("success")
+          events.claimSubmitted({
+            delayId,
+            confirmationId: res.confirmationId,
+            delayMinutes: delay?.delayMinutes,
+            cancelled: delay?.cancelled,
+            estimatedCompensation: delay?.estimatedCompensation,
+          })
+        },
+        onError: () => {
+          setFailedStep("confirm")
+          events.claimError({ delayId, step: "confirm" })
+        },
+      }
+    )
+  }
+
+  function handleRetry() {
+    startClaim.reset()
+    submitContact.reset()
+    submitBank.reset()
+    confirmClaim.reset()
+    setStep(failedStep ?? "travel")
+    setFailedStep(null)
   }
 
   if (delayLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center py-20">
-        <div className="size-5 animate-spin rounded-full border-2 border-muted-foreground/20 border-t-foreground" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <TrainLoader size="md" />
       </div>
     )
   }
@@ -221,7 +225,7 @@ export function ClaimPage() {
         {step === "travel" && (
           <TravelStep
             delay={delay}
-            loading={loading}
+            loading={isLoading}
             onContinue={handleStartClaim}
           />
         )}
@@ -230,7 +234,7 @@ export function ClaimPage() {
           <ContactStep
             contact={contact}
             setContact={setContact}
-            loading={loading}
+            loading={isLoading}
             onContinue={handleSubmitContact}
             onBack={() => setStep("travel")}
           />
@@ -240,9 +244,10 @@ export function ClaimPage() {
           <BankStep
             bank={bank}
             setBank={setBank}
-            loading={loading}
+            loading={isLoading}
             onContinue={handleSubmitBank}
             onBack={() => setStep("contact")}
+            fieldError={submitBank.error?.field === "personalNumber" || submitBank.error?.field === "swishPhone" ? submitBank.error : undefined}
           />
         )}
 
@@ -251,7 +256,7 @@ export function ClaimPage() {
             delay={delay}
             contact={contact}
             bank={bank}
-            loading={loading}
+            loading={isLoading}
             onConfirm={handleConfirm}
             onBack={() => setStep("bank")}
           />
@@ -267,8 +272,9 @@ export function ClaimPage() {
 
         {step === "error" && (
           <ErrorStep
-            error={error}
-            onRetry={() => setStep("travel")}
+            error={currentError}
+            delay={delay}
+            onRetry={handleRetry}
             onBack={() => navigate("/app")}
           />
         )}
@@ -425,11 +431,12 @@ function ContactStep({
   onContinue: () => void
   onBack: () => void
 }) {
+  const phoneDigits = contact.phone.replace(/\D/g, "")
   const isValid =
     contact.firstName.length > 0 &&
     contact.lastName.length > 0 &&
     contact.email.includes("@") &&
-    contact.phone.length >= 10
+    phoneDigits.length >= 10
 
   return (
     <>
@@ -476,11 +483,10 @@ function ContactStep({
 
           <div>
             <label className="text-xs text-muted-foreground">Telefon</label>
-            <Input
-              type="tel"
+            <PhoneInput
               value={contact.phone}
-              onChange={(e) =>
-                setContact({ ...contact, phone: e.target.value })
+              onChange={(value) =>
+                setContact({ ...contact, phone: value })
               }
               className="mt-1"
             />
@@ -521,15 +527,26 @@ function BankStep({
   loading,
   onContinue,
   onBack,
+  fieldError,
 }: {
   bank: { personalNumber: string; swishPhone: string }
   setBank: (b: typeof bank) => void
   loading: boolean
   onContinue: () => void
   onBack: () => void
+  fieldError?: ApiError
 }) {
+  const personalNumberDigits = bank.personalNumber.replace(/\D/g, "")
+  const swishPhoneDigits = bank.swishPhone.replace(/\D/g, "")
+  
+  const personnummerValidation = validatePersonnummer(bank.personalNumber)
   const isValid =
-    bank.personalNumber.length >= 10 && bank.swishPhone.length >= 10
+    personnummerValidation.valid && swishPhoneDigits.length >= 10
+
+  const personalNumberError = fieldError?.field === "personalNumber" 
+    ? fieldError.message 
+    : (personalNumberDigits.length >= 10 ? personnummerValidation.error : undefined)
+  const swishPhoneError = fieldError?.field === "swishPhone" ? fieldError.message : undefined
 
   return (
     <>
@@ -543,27 +560,30 @@ function BankStep({
             <label className="text-xs text-muted-foreground">
               Personnummer
             </label>
-            <Input
+            <PersonnummerInput
               value={bank.personalNumber}
-              onChange={(e) =>
-                setBank({ ...bank, personalNumber: e.target.value })
+              onChange={(value) =>
+                setBank({ ...bank, personalNumber: value })
               }
-              placeholder="ÅÅÅÅMMDD-XXXX"
-              className="mt-1"
+              className={`mt-1 ${personalNumberError ? "border-destructive" : ""}`}
             />
+            {personalNumberError && (
+              <p className="mt-1 text-xs text-destructive">{personalNumberError}</p>
+            )}
           </div>
 
           <div>
             <label className="text-xs text-muted-foreground">
               Swish-nummer (för utbetalning)
             </label>
-            <Input
-              type="tel"
+            <PhoneInput
               value={bank.swishPhone}
-              onChange={(e) => setBank({ ...bank, swishPhone: e.target.value })}
-              placeholder="07XXXXXXXX"
-              className="mt-1"
+              onChange={(value) => setBank({ ...bank, swishPhone: value })}
+              className={`mt-1 ${swishPhoneError ? "border-destructive" : ""}`}
             />
+            {swishPhoneError && (
+              <p className="mt-1 text-xs text-destructive">{swishPhoneError}</p>
+            )}
           </div>
         </div>
       </div>
@@ -717,8 +737,8 @@ function SuccessStep({
 }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
-      <div className="flex size-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-        <Check className="size-8 text-green-600 dark:text-green-400" />
+      <div className="flex size-16 items-center justify-center rounded-full bg-success-surface">
+        <Check className="size-8 text-success" />
       </div>
 
       <h2 className="mt-6 text-xl font-semibold text-foreground">
@@ -761,13 +781,18 @@ function SuccessStep({
 
 function ErrorStep({
   error,
+  delay,
   onRetry,
   onBack,
 }: {
-  error: string | null
+  error: ApiError | null
+  delay?: NonNullable<ReturnType<typeof useDelay>["delay"]>
   onRetry: () => void
   onBack: () => void
 }) {
+  const isRetryable = error?.retryable ?? true
+  const showManualFallback = !isRetryable || error?.code === "SERVICE_UNAVAILABLE"
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       <div className="flex size-16 items-center justify-center rounded-full bg-destructive/10">
@@ -779,8 +804,34 @@ function ErrorStep({
       </h2>
 
       <p className="mt-2 text-sm text-muted-foreground">
-        {error || "Ett oväntat fel uppstod. Försök igen."}
+        {error?.message || "Ett oväntat fel uppstod. Försök igen."}
       </p>
+
+      {showManualFallback && delay && (
+        <div className="mt-6 w-full rounded-xl border border-border bg-card p-4 text-left">
+          <p className="text-sm font-medium text-foreground">
+            Ansök manuellt på SJ.se
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Om problemet kvarstår kan du ansöka direkt hos SJ med dessa uppgifter:
+          </p>
+          <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+            <p><span className="font-medium">Resa:</span> {delay.fromStation} → {delay.toStation}</p>
+            <p><span className="font-medium">Datum:</span> {delay.date}</p>
+            <p><span className="font-medium">Avgång:</span> {delay.scheduledDeparture}</p>
+            <p><span className="font-medium">Försening:</span> {delay.cancelled ? "Inställt" : `${delay.delayMinutes} min`}</p>
+          </div>
+          <a
+            href="https://www.sj.se/kundservice/forseningsersattning"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-foreground underline"
+          >
+            Öppna SJ.se
+            <ExternalLink className="size-3" />
+          </a>
+        </div>
+      )}
 
       <div className="mt-8 flex w-full gap-3">
         <Button
@@ -790,12 +841,14 @@ function ErrorStep({
         >
           Avbryt
         </Button>
-        <Button
-          className="h-12 flex-1 rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
-          onClick={onRetry}
-        >
-          Försök igen
-        </Button>
+        {isRetryable && (
+          <Button
+            className="h-12 flex-1 rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
+            onClick={onRetry}
+          >
+            Försök igen
+          </Button>
+        )}
       </div>
     </div>
   )

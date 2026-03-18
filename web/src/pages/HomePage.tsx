@@ -20,6 +20,7 @@ import type { Delay, Claim } from "@/types"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { TrainLoader } from "@/components/ui/train-loader"
 
 function formatDateFull(date: Date) {
   const today = new Date()
@@ -140,8 +141,8 @@ export function HomePage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center py-20">
-        <div className="size-5 animate-spin rounded-full border-2 border-muted-foreground/20 border-t-foreground" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <TrainLoader size="md" />
       </div>
     )
   }
@@ -264,7 +265,7 @@ export function HomePage() {
               Att kräva ersättning
             </h2>
             {allTotalClaimable > 0 && (
-              <span className="text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+              <span className="text-sm font-semibold tabular-nums text-money">
                 {allTotalClaimable} kr
               </span>
             )}
@@ -339,7 +340,7 @@ export function HomePage() {
                   Förseningar under 20 min ger inte rätt till ersättning enligt
                   SJ:s regler.
                 </p>
-                <div className="space-y-1">
+                <div className="max-h-48 space-y-1 overflow-y-auto">
                   {notClaimable.map((delay) => (
                     <SmallDelayRow key={delay.delayId} delay={delay} />
                   ))}

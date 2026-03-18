@@ -380,8 +380,8 @@ function RouteStep({
 function DoneStep({ firstName, onFinish }: { firstName: string; onFinish: () => void }) {
   return (
     <div className="animate-fade-up text-center">
-      <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-green-500/10">
-        <Check className="size-8 text-green-500" />
+      <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-success-surface">
+        <Check className="size-8 text-success" />
       </div>
 
       <h1 className="text-2xl font-semibold tracking-tight text-foreground">

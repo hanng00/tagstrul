@@ -12,19 +12,19 @@
     --card-foreground: oklch(0.12 0.04 30);
     --popover: oklch(0.995 0.006 35);
     --popover-foreground: oklch(0.12 0.04 30);
-    --primary: oklch(0.25 0.08 25);
-    --primary-foreground: oklch(0.98 0.01 50);
+    --primary: oklch(0.40 0.14 25);
+    --primary-foreground: oklch(0.98 0.01 35);
     --secondary: oklch(0.94 0.015 35);
     --secondary-foreground: oklch(0.30 0.05 30);
     --muted: oklch(0.94 0.012 35);
     --muted-foreground: oklch(0.50 0.03 30);
     --accent: oklch(0.78 0.16 75);
     --accent-foreground: oklch(0.22 0.06 60);
-    --destructive: oklch(0.55 0.22 25);
+    --destructive: oklch(0.55 0.18 30);
     --border: oklch(0.90 0.015 35);
     --input: oklch(0.90 0.015 35);
-    --ring: oklch(0.25 0.08 25);
-    --chart-1: oklch(0.25 0.08 25);
+    --ring: oklch(0.40 0.14 25);
+    --chart-1: oklch(0.40 0.14 25);
     --chart-2: oklch(0.78 0.16 75);
     --chart-3: oklch(0.50 0.12 30);
     --chart-4: oklch(0.7 0.14 75);
@@ -32,12 +32,12 @@
     --radius: 0.5rem;
     --sidebar: oklch(0.98 0.008 35);
     --sidebar-foreground: oklch(0.12 0.04 30);
-    --sidebar-primary: oklch(0.25 0.08 25);
-    --sidebar-primary-foreground: oklch(0.98 0.01 50);
+    --sidebar-primary: oklch(0.40 0.14 25);
+    --sidebar-primary-foreground: oklch(0.98 0.01 35);
     --sidebar-accent: oklch(0.93 0.018 35);
     --sidebar-accent-foreground: oklch(0.30 0.05 30);
     --sidebar-border: oklch(0.90 0.015 35);
-    --sidebar-ring: oklch(0.25 0.08 25);
+    --sidebar-ring: oklch(0.40 0.14 25);
 }
 
 .dark {
@@ -47,31 +47,31 @@
     --card-foreground: oklch(0.95 0.005 35);
     --popover: oklch(0.14 0.015 35);
     --popover-foreground: oklch(0.95 0.005 35);
-    --primary: oklch(0.78 0.16 75);
-    --primary-foreground: oklch(0.10 0.02 35);
+    --primary: oklch(0.55 0.16 25);
+    --primary-foreground: oklch(0.98 0.01 35);
     --secondary: oklch(0.18 0.012 35);
     --secondary-foreground: oklch(0.95 0.005 35);
     --muted: oklch(0.18 0.012 35);
     --muted-foreground: oklch(0.60 0.01 35);
     --accent: oklch(0.78 0.16 75);
     --accent-foreground: oklch(0.15 0.04 60);
-    --destructive: oklch(0.65 0.20 22);
+    --destructive: oklch(0.60 0.18 30);
     --border: oklch(1 0 0 / 8%);
     --input: oklch(1 0 0 / 10%);
-    --ring: oklch(0.78 0.16 75);
-    --chart-1: oklch(0.78 0.16 75);
-    --chart-2: oklch(0.65 0.14 75);
+    --ring: oklch(0.55 0.16 25);
+    --chart-1: oklch(0.55 0.16 25);
+    --chart-2: oklch(0.78 0.16 75);
     --chart-3: oklch(0.55 0.1 35);
     --chart-4: oklch(0.7 0.12 75);
     --chart-5: oklch(0.45 0.08 35);
     --sidebar: oklch(0.14 0.015 35);
     --sidebar-foreground: oklch(0.95 0.005 35);
-    --sidebar-primary: oklch(0.78 0.16 75);
-    --sidebar-primary-foreground: oklch(0.10 0.02 35);
+    --sidebar-primary: oklch(0.55 0.16 25);
+    --sidebar-primary-foreground: oklch(0.98 0.01 35);
     --sidebar-accent: oklch(0.18 0.012 35);
     --sidebar-accent-foreground: oklch(0.95 0.005 35);
     --sidebar-border: oklch(1 0 0 / 8%);
-    --sidebar-ring: oklch(0.78 0.16 75);
+    --sidebar-ring: oklch(0.55 0.16 25);
 }
 
 @theme inline {
@@ -121,9 +121,11 @@
     --color-surface-raised: oklch(0.995 0.006 35);
     --color-warn: oklch(0.78 0.16 75);
     --color-warn-surface: oklch(0.96 0.04 80);
-    --color-money: oklch(0.50 0.14 155);
-    --color-money-surface: oklch(0.96 0.03 155);
-    --color-urgent: oklch(0.55 0.18 25);
+    --color-money: oklch(0.55 0.12 75);
+    --color-money-surface: oklch(0.96 0.04 75);
+    --color-success: oklch(0.55 0.12 75);
+    --color-success-surface: oklch(0.96 0.04 75);
+    --color-urgent: oklch(0.50 0.16 25);
     --color-urgent-surface: oklch(0.96 0.04 25);
 }
 
@@ -175,3 +177,38 @@
 .stagger-4 { animation-delay: 200ms; }
 .stagger-5 { animation-delay: 250ms; }
 .stagger-6 { animation-delay: 300ms; }
+
+/* Train loader animations */
+@keyframes train-tremble {
+  0%, 100% { 
+    transform: translateX(-50%) translateY(0) rotate(0deg);
+  }
+  25% { 
+    transform: translateX(-50%) translateY(-0.5px) rotate(-0.8deg);
+  }
+  75% { 
+    transform: translateX(-50%) translateY(0.5px) rotate(0.8deg);
+  }
+}
+
+@keyframes ground-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes wheel-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-train-tremble {
+  animation: train-tremble 0.4s ease-in-out infinite;
+}
+
+.animate-ground-scroll {
+  animation: ground-scroll 2s linear infinite;
+}
+
+.animate-wheel-spin {
+  animation: wheel-spin 0.8s linear infinite;
+}

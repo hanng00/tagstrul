@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { StationInput } from "@/components/StationInput"
 import { useRoutes, useAddRoute, useDeleteRoute } from "@/lib/queries"
 import { events } from "@/lib/posthog"
+import { TrainLoader } from "@/components/ui/train-loader"
 
 export function RoutesPage() {
   const { data: routes = [], isLoading: loading } = useRoutes()
@@ -37,8 +38,8 @@ export function RoutesPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center py-20">
-        <div className="size-5 animate-spin rounded-full border-2 border-muted-foreground/20 border-t-foreground" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <TrainLoader size="md" />
       </div>
     )
   }

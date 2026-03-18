@@ -7,7 +7,7 @@ import {
   submitTravelDetails,
   MOVINGO_CARD_TYPE_LABELS,
 } from '../../adapter/SJDelayCompensationAdapter.ts';
-import { success, badRequest, notFound, internalServerError } from '../../utils/response.ts';
+import { success, badRequest, notFound, structuredError } from '../../utils/response.ts';
 
 const schema = z.object({
   delayId: z.string().min(1),
@@ -83,7 +83,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     });
   } catch (error) {
     console.error('[StartClaim] Error:', error);
-    return internalServerError(error);
+    return structuredError(error);
   }
 };
 

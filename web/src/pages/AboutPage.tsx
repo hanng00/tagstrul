@@ -75,12 +75,12 @@ export function AboutPage() {
             <h2 className="text-sm font-semibold text-foreground">Feedback</h2>
             
             {submitted ? (
-              <div className="mt-3 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/30">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/50">
-                  <Check className="size-4 text-green-600 dark:text-green-400" />
+              <div className="mt-3 flex items-center gap-3 rounded-xl border border-money/20 bg-money-surface p-4">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-money/10">
+                  <Check className="size-4 text-money" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                  <p className="text-sm font-medium text-foreground">
                     Tack för din feedback!
                   </p>
                   <button
@@ -88,7 +88,7 @@ export function AboutPage() {
                       setSubmitted(false)
                       setShowForm(false)
                     }}
-                    className="mt-0.5 text-xs text-green-700 underline-offset-2 hover:underline dark:text-green-300"
+                    className="mt-0.5 text-xs text-muted-foreground underline-offset-2 hover:underline"
                   >
                     Skicka mer
                   </button>

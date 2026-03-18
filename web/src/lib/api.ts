@@ -3,6 +3,57 @@ import { getIdToken } from "@/lib/auth"
 
 const API_BASE = import.meta.env.VITE_API_URL || ""
 
+export interface StructuredError {
+  code: string
+  message: string
+  field?: string
+  retryable: boolean
+}
+
+export class ApiError extends Error {
+  public readonly code: string
+  public readonly field?: string
+  public readonly retryable: boolean
+  public readonly statusCode: number
+
+  constructor(
+    message: string,
+    code: string,
+    retryable: boolean,
+    statusCode: number,
+    field?: string
+  ) {
+    super(message)
+    this.name = "ApiError"
+    this.code = code
+    this.retryable = retryable
+    this.statusCode = statusCode
+    this.field = field
+  }
+}
+
+async function parseErrorResponse(response: Response): Promise<ApiError> {
+  try {
+    const body = await response.json()
+    if (body.error && typeof body.error === "object") {
+      const err = body.error as StructuredError
+      return new ApiError(
+        err.message || `API error: ${response.status}`,
+        err.code || "UNKNOWN",
+        err.retryable ?? false,
+        response.status,
+        err.field
+      )
+    }
+    if (body.error && typeof body.error === "string") {
+      return new ApiError(body.error, "UNKNOWN", false, response.status)
+    }
+  } catch {
+    // Failed to parse JSON
+  }
+  return new ApiError(`API error: ${response.status}`, "UNKNOWN", false, response.status)
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -22,7 +73,7 @@ async function request<T>(
   })
 
   if (!response.ok) {
-    throw new Error(`API error: ${response.status}`)
+    throw await parseErrorResponse(response)
   }
 
   return response.json()
@@ -41,7 +92,7 @@ async function publicRequest<T>(
   })
 
   if (!response.ok) {
-    throw new Error(`API error: ${response.status}`)
+    throw await parseErrorResponse(response)
   }
 
   return response.json()

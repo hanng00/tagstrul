@@ -2,7 +2,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
 import { userId, getDelay, putClaim } from '../../repository.ts';
 import { confirmClaim } from '../../adapter/SJDelayCompensationAdapter.ts';
-import { success, badRequest, notFound, internalServerError } from '../../utils/response.ts';
+import { success, badRequest, notFound, structuredError } from '../../utils/response.ts';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
@@ -66,6 +66,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     });
   } catch (error) {
     console.error('[ConfirmClaim] Error:', error);
-    return internalServerError(error);
+    return structuredError(error);
   }
 };

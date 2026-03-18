@@ -25,7 +25,7 @@ export function TrainCrashImage({
       {moneyPopups.map((popup, i) => (
         <div
           key={i}
-          className="absolute rounded-md sm:rounded-lg bg-emerald-500/70 backdrop-blur-sm text-white font-bold shadow-lg px-2 py-1 sm:px-4 sm:py-2.5 text-xs sm:text-base"
+          className="absolute rounded-md sm:rounded-lg bg-money/90 backdrop-blur-sm text-white font-bold shadow-lg px-2 py-1 sm:px-4 sm:py-2.5 text-xs sm:text-base"
           style={{
             top: popup.top,
             left: popup.left,

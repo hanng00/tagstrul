@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router"
 import { useAuth } from "@/components/AuthContext"
-import { Loader2 } from "lucide-react"
+import { TrainLoader } from "@/components/ui/train-loader"
 
 export function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -8,7 +8,7 @@ export function ProtectedRoute() {
   if (isLoading) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        <TrainLoader size="lg" />
       </div>
     )
   }

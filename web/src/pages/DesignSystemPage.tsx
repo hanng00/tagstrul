@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Info, ChevronDown, Check, AlertCircle, ArrowLeft, Loader2, Bell, Settings, User, Plus, Trash2 } from "lucide-react"
+import { TrainLoader } from "@/components/ui/train-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -71,6 +72,49 @@ export function DesignSystemPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-10">
         
+        {/* Loaders */}
+        <Section title="Loaders">
+          <div className="grid gap-4">
+            <ComponentCard name="Train Loader (Default)">
+              <div className="flex items-center justify-center py-8">
+                <TrainLoader />
+              </div>
+            </ComponentCard>
+
+            <ComponentCard name="Train Loader (Sizes)">
+              <div className="flex items-center justify-center gap-8 py-8">
+                <div className="flex flex-col items-center gap-2">
+                  <TrainLoader size="sm" />
+                  <span className="text-xs text-muted-foreground">Small</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <TrainLoader size="md" />
+                  <span className="text-xs text-muted-foreground">Medium</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <TrainLoader size="lg" />
+                  <span className="text-xs text-muted-foreground">Large</span>
+                </div>
+              </div>
+            </ComponentCard>
+
+            <ComponentCard name="Train Loader (With Text)">
+              <div className="flex flex-col items-center justify-center gap-3 py-8">
+                <TrainLoader size="md" />
+                <p className="text-sm text-muted-foreground animate-pulse">Laddar...</p>
+              </div>
+            </ComponentCard>
+
+            <ComponentCard name="Spinner (Generic)">
+              <div className="flex items-center justify-center gap-4 py-4">
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                <Loader2 className="size-8 animate-spin text-muted-foreground" />
+              </div>
+            </ComponentCard>
+          </div>
+        </Section>
+
         {/* Buttons */}
         <Section title="Buttons">
           <div className="grid gap-4">
@@ -189,9 +233,9 @@ export function DesignSystemPage() {
             </ComponentCard>
 
             <ComponentCard name="Success State">
-              <div className="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30">
-                <Check className="size-5 shrink-0 text-green-600 dark:text-green-400" />
-                <p className="text-sm text-green-800 dark:text-green-200">Ansökan skickad!</p>
+              <div className="flex items-center gap-3 rounded-xl border border-money/20 bg-money-surface p-4">
+                <Check className="size-5 shrink-0 text-money" />
+                <p className="text-sm text-foreground">Ansökan skickad!</p>
               </div>
             </ComponentCard>
           </div>

@@ -1,4 +1,12 @@
 import { withCors } from './cors';
+import { SJApiError } from '../features/claims/errors.ts';
+
+export interface StructuredError {
+  code: string;
+  message: string;
+  field?: string;
+  retryable: boolean;
+}
 
 export const success = (data: any) => {
   return {
@@ -74,6 +82,40 @@ export const internalServerError = (error: any) => {
     body: JSON.stringify({
       error: error.message,
       errorDetails: error.errorDetails,
+    }),
+    headers: withCors({ 'Content-Type': 'application/json' }),
+  };
+};
+
+export const structuredError = (error: unknown) => {
+  if (error instanceof SJApiError) {
+    const statusCode = error.statusCode >= 400 && error.statusCode < 600 
+      ? error.statusCode 
+      : 502;
+    
+    return {
+      statusCode,
+      body: JSON.stringify({
+        error: {
+          code: error.code,
+          message: error.message,
+          field: error.field,
+          retryable: error.isRetryable,
+        } satisfies StructuredError,
+      }),
+      headers: withCors({ 'Content-Type': 'application/json' }),
+    };
+  }
+
+  const message = error instanceof Error ? error.message : 'Ett oväntat fel uppstod';
+  return {
+    statusCode: 500,
+    body: JSON.stringify({
+      error: {
+        code: 'UNKNOWN',
+        message,
+        retryable: false,
+      } satisfies StructuredError,
     }),
     headers: withCors({ 'Content-Type': 'application/json' }),
   };
