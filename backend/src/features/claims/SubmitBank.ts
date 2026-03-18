@@ -10,6 +10,17 @@ const schema = z.object({
   swishPhone: z.string().min(10),
 });
 
+function formatPersonalNumber(pnr: string): string {
+  const digits = pnr.replace(/\D/g, '');
+  if (digits.length === 12) {
+    return `${digits.slice(0, 8)}-${digits.slice(8)}`;
+  }
+  if (digits.length === 10) {
+    return `${digits.slice(0, 6)}-${digits.slice(6)}`;
+  }
+  return pnr;
+}
+
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     const uid = userId(event as any);
@@ -17,9 +28,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     if (!body.success) return badRequest(body.error.message);
 
     const { claimToken, personalNumber, swishPhone } = body.data;
+    const formattedPnr = formatPersonalNumber(personalNumber);
 
     const barId = await submitBankDetails(claimToken, {
-      personalIdentityNumber: personalNumber,
+      personalIdentityNumber: formattedPnr,
       swishPhoneNumber: swishPhone,
     });
 

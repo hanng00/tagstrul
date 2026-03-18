@@ -20,6 +20,17 @@ import {
 } from "@/lib/api"
 import { events } from "@/lib/posthog"
 
+function formatPersonnummer(input: string): string {
+  const digits = input.replace(/\D/g, "")
+  if (digits.length === 12) {
+    return `${digits.slice(0, 8)}-${digits.slice(8)}`
+  }
+  if (digits.length === 10) {
+    return `${digits.slice(0, 6)}-${digits.slice(6)}`
+  }
+  return input
+}
+
 type Step =
   | "loading"
   | "travel"
@@ -126,7 +137,8 @@ export function ClaimPage() {
     try {
       const res: SubmitBankResponse = await api.submitClaimBank({
         claimToken,
-        ...bank,
+        personalNumber: formatPersonnummer(bank.personalNumber),
+        swishPhone: bank.swishPhone,
       })
       setClaimToken(res.claimToken)
       setBarId(res.barId)

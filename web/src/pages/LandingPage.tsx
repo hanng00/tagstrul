@@ -20,12 +20,22 @@ export function LandingPage() {
     <div className="flex min-h-svh flex-col bg-background">
       <header className="flex items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
         <Logo size="small" />
-        <button
-          onClick={handleAuthAction}
-          className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          {isLoading ? "" : isAuthenticated ? "Till appen" : "Logga in"}
-        </button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/om")}
+          >
+            Om oss
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAuthAction}
+          >
+            {isLoading ? "" : isAuthenticated ? "Till appen" : "Logga in"}
+          </Button>
+        </div>
       </header>
 
       <section className="flex flex-1 flex-col px-5 pb-12 pt-8 sm:px-8 sm:pt-12 lg:px-12">
