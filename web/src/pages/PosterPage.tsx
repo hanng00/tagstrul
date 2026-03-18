@@ -2,9 +2,9 @@ import { Logo } from "@/components/Logo"
 import { TrainCrashImage } from "@/components/TrainCrashImage"
 
 const steps = [
-  { number: "1", text: "Koppla ditt SL-kort" },
-  { number: "2", text: "Vi bevakar alla dina resor" },
-  { number: "3", text: "Pengarna kommer automatiskt" },
+  { number: "1", text: "Lägg till din pendling" },
+  { number: "2", text: "Vi hittar förseningar" },
+  { number: "3", text: "Kräv ersättning enkelt" },
 ]
 
 export function PosterPage() {
@@ -54,7 +54,7 @@ export function PosterPage() {
             style={{ fontSize: "20px", lineHeight: "1.4" }}
             className="mt-6 text-muted-foreground"
           >
-            Sluta missa ersättningar. Vi bevakar dina resor och ser till att du får tillbaka pengarna — automatiskt.
+            Sluta missa ersättningar. Vi bevakar dina resor och ser till att du får tillbaka pengarna  -  automatiskt.
           </p>
 
           {/* How it works - 3 steps */}
@@ -83,7 +83,7 @@ export function PosterPage() {
             style={{ fontSize: "16px", lineHeight: "1.4", marginTop: "24px" }}
             className="text-muted-foreground"
           >
-            <span className="text-foreground font-medium">50 kr</span> per försening över 20 min · Snitt <span className="text-foreground font-medium">900 kr/mån</span> tillbaka · <span className="text-foreground font-medium">Helt gratis</span>
+            <span className="text-foreground font-medium">50 kr</span> per försening över 20 min · Movingo-kort · <span className="text-foreground font-medium">Helt gratis</span>
           </p>
         </div>
 

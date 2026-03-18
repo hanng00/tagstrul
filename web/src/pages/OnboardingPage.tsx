@@ -480,7 +480,7 @@ function MovingoStep({
               <p className="font-medium text-foreground">Hitta ditt Movingo-nummer:</p>
               <ul className="mt-1.5 list-inside list-disc space-y-1">
                 <li>På framsidan av ditt fysiska kort</li>
-                <li>I SL-appen under "Mina biljetter"</li>
+                <li>I Movingo-appen under "Mina biljetter"</li>
                 <li>På kvittot från köpet</li>
               </ul>
             </div>

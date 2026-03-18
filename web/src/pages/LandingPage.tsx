@@ -114,9 +114,17 @@ export function LandingPage() {
       <footer className="border-t border-border px-5 py-6 sm:px-8 lg:px-12">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <Logo size="small" />
-          <span className="text-xs text-muted-foreground">
-            Byggt för Movingo-pendlare i Mälardalen
-          </span>
+          <div className="flex items-center gap-4">
+            <a
+              href="/om"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Om oss
+            </a>
+            <span className="text-xs text-muted-foreground">
+              Byggt för Movingo-pendlare
+            </span>
+          </div>
         </div>
       </footer>
     </div>

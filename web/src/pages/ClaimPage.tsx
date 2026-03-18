@@ -1,5 +1,12 @@
 import { useNavigate, useParams } from "react-router"
-import { ArrowLeft, Check, Loader2, AlertCircle, Info } from "lucide-react"
+import {
+  ArrowLeft,
+  Check,
+  Loader2,
+  AlertCircle,
+  Info,
+  ChevronDown,
+} from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +20,14 @@ import {
 } from "@/lib/api"
 import { events } from "@/lib/posthog"
 
-type Step = "loading" | "travel" | "contact" | "bank" | "confirm" | "success" | "error"
+type Step =
+  | "loading"
+  | "travel"
+  | "contact"
+  | "bank"
+  | "confirm"
+  | "success"
+  | "error"
 
 function formatDate(iso: string) {
   const d = new Date(iso)
@@ -191,7 +205,7 @@ export function ClaimPage() {
 
       <StepIndicator currentStep={step} />
 
-      <div className="flex flex-1 flex-col px-5 pb-6 pt-4">
+      <div className="flex flex-1 flex-col px-5 pt-4 pb-6">
         {step === "travel" && (
           <TravelStep
             delay={delay}
@@ -255,7 +269,11 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
   const steps = ["travel", "contact", "bank", "confirm"]
   const currentIndex = steps.indexOf(currentStep)
 
-  if (currentStep === "success" || currentStep === "error" || currentStep === "loading") {
+  if (
+    currentStep === "success" ||
+    currentStep === "error" ||
+    currentStep === "loading"
+  ) {
     return null
   }
 
@@ -273,6 +291,47 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
   )
 }
 
+function ScheduledChangeWarning({
+  disruptionReason,
+}: {
+  disruptionReason?: string
+}) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <button
+      type="button"
+      onClick={() => setExpanded(!expanded)}
+      className="animate-fade-up mb-4 w-full rounded-lg border border-amber-200/60 bg-amber-50/50 px-3 py-2.5 text-left transition-colors hover:bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20 dark:hover:bg-amber-950/30"
+    >
+      <div className="flex items-center gap-2">
+        <Info className="size-4 shrink-0 text-amber-600/80 dark:text-amber-400/80" />
+        <span className="flex-1 text-sm text-amber-800/90 dark:text-amber-200/90">
+          Troligen planerad ändring
+        </span>
+        <ChevronDown
+          className={`size-4 text-amber-600/60 transition-transform dark:text-amber-400/60 ${expanded ? "rotate-180" : ""}`}
+        />
+      </div>
+
+      {expanded && (
+        <div className="mt-2 space-y-2 pl-6 text-xs text-amber-700/80 dark:text-amber-300/80">
+          <p>
+            {disruptionReason ? `"${disruptionReason}" — ` : ""}
+            Denna ändring meddelades mer än 72 timmar i förväg, vilket enligt
+            SJ:s regler räknas som en tidtabellsändring snarare än en akut
+            försening.
+          </p>
+          <p>
+            Du kan fortfarande skicka in ansökan — SJ avgör slutgiltigt. Vid
+            avslag har du rätt till återbetalning av biljetten.
+          </p>
+        </div>
+      )}
+    </button>
+  )
+}
+
 function TravelStep({
   delay,
   loading,
@@ -286,25 +345,11 @@ function TravelStep({
     <>
       {/* Warning for likely scheduled changes */}
       {delay.likelyScheduledChange && (
-        <div className="animate-fade-up mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
-          <Info className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <div className="text-sm">
-            <p className="font-medium text-amber-800 dark:text-amber-200">
-              Troligen planerad tidtabellsändring
-            </p>
-            <p className="mt-1 text-amber-700 dark:text-amber-300">
-              {delay.disruptionReason ? `"${delay.disruptionReason}" — ` : ""}
-              Denna ändring meddelades mer än 72 timmar i förväg, vilket enligt SJ:s regler räknas som en tidtabellsändring snarare än en akut försening.
-            </p>
-            <p className="mt-2 text-amber-700 dark:text-amber-300">
-              Du kan fortfarande skicka in ansökan — SJ avgör slutgiltigt. Vid avslag har du rätt till återbetalning av biljetten.
-            </p>
-          </div>
-        </div>
+        <ScheduledChangeWarning disruptionReason={delay.disruptionReason} />
       )}
-      
+
       <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
           Steg 1: Bekräfta reseuppgifter
         </h2>
 
@@ -323,7 +368,7 @@ function TravelStep({
               ? "Inställt tåg"
               : `${delay.delayMinutes} min försening`}
           </span>
-          <span className="text-2xl font-semibold tabular-nums text-foreground">
+          <span className="text-2xl font-semibold text-foreground tabular-nums">
             ~{delay.estimatedCompensation}
             <span className="ml-0.5 text-sm font-medium text-muted-foreground">
               kr
@@ -377,7 +422,7 @@ function ContactStep({
   return (
     <>
       <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
           Steg 2: Kontaktuppgifter
         </h2>
 
@@ -450,9 +495,7 @@ function ContactStep({
           onClick={onContinue}
           disabled={loading || !isValid}
         >
-          {loading ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : null}
+          {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           Fortsätt
         </Button>
       </div>
@@ -479,7 +522,7 @@ function BankStep({
   return (
     <>
       <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
           Steg 3: Utbetalningsuppgifter
         </h2>
 
@@ -505,9 +548,7 @@ function BankStep({
             <Input
               type="tel"
               value={bank.swishPhone}
-              onChange={(e) =>
-                setBank({ ...bank, swishPhone: e.target.value })
-              }
+              onChange={(e) => setBank({ ...bank, swishPhone: e.target.value })}
               placeholder="07XXXXXXXX"
               className="mt-1"
             />
@@ -533,9 +574,7 @@ function BankStep({
           onClick={onContinue}
           disabled={loading || !isValid}
         >
-          {loading ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : null}
+          {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           Fortsätt
         </Button>
       </div>
@@ -563,7 +602,7 @@ function ConfirmStep({
   return (
     <>
       <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
           Steg 4: Granska och skicka
         </h2>
 
@@ -686,7 +725,9 @@ function SuccessStep({
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Uppskattad ersättning</span>
-            <span className="font-semibold">~{delay.estimatedCompensation} kr</span>
+            <span className="font-semibold">
+              ~{delay.estimatedCompensation} kr
+            </span>
           </div>
         </div>
       </div>
