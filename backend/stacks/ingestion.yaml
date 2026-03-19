@@ -34,7 +34,7 @@ Resources:
         Schedule:
           Type: ScheduleV2
           Properties:
-            ScheduleExpression: rate(6 hours)
+            ScheduleExpression: rate(1 hour)
             State: ENABLED
     Metadata:
       BuildMethod: esbuild
