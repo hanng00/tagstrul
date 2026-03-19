@@ -131,8 +131,12 @@ export function HomePage() {
     0,
   )
 
-  // Dismissed delays
-  const dismissedDelays = delays.filter((d) => d.dismissed)
+  // Dismissed delays for the selected date
+  const dismissedDelaysForDate = useMemo(() => {
+    const dismissed = delays.filter((d) => d.dismissed)
+    if (!activeDate) return dismissed
+    return dismissed.filter((d) => toDateKey(d.date) === activeDate)
+  }, [delays, activeDate])
 
   // Claims summary
   const pendingClaims = claims.filter((c) => c.status === "submitted")
@@ -342,8 +346,8 @@ export function HomePage() {
           </section>
         )}
 
-        {/* Dismissed delays - show hidden trips */}
-        {dismissedDelays.length > 0 && (
+        {/* Dismissed delays - show hidden trips for selected date */}
+        {dismissedDelaysForDate.length > 0 && (
           <section className="mt-6">
             <button
               onClick={() => setShowDismissed(!showDismissed)}
@@ -352,7 +356,7 @@ export function HomePage() {
               <div className="flex items-center gap-2">
                 <X className="size-3.5 text-muted-foreground" />
                 <span className="text-xs font-medium text-muted-foreground">
-                  {dismissedDelays.length} dolda resor
+                  {dismissedDelaysForDate.length} dolda resor
                 </span>
               </div>
               {showDismissed ? (
@@ -363,7 +367,7 @@ export function HomePage() {
             </button>
             {showDismissed && (
               <div className="mt-2 space-y-2">
-                {dismissedDelays.map((delay) => (
+                {dismissedDelaysForDate.map((delay) => (
                   <DismissedDelayRow
                     key={delay.delayId}
                     delay={delay}
