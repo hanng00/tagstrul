@@ -161,7 +161,7 @@ export function HomePage() {
   return (
     <div className="flex flex-1 flex-col">
       {/* Header - same style as Pendlingar */}
-      <header className="flex items-start justify-between px-5 pt-6 pb-4">
+      <header className="flex items-start justify-between app-padding pt-6 pb-4">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Hem</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -171,7 +171,7 @@ export function HomePage() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95 disabled:opacity-50"
+          className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95 disabled:opacity-50"
           aria-label="Uppdatera"
         >
           <RefreshCw
@@ -180,7 +180,7 @@ export function HomePage() {
         </button>
       </header>
 
-      <div className="flex-1 px-5 pb-6">
+      <div className="flex-1 app-padding pb-8">
         {/* Hero: Total Received with Pending */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-start justify-between">
@@ -258,7 +258,7 @@ export function HomePage() {
         <section className="mt-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-medium text-foreground">
-              Att kräva ersättning
+              Att kräva ersättning{claimable.length > 0 && ` (${claimable.length})`}
             </h2>
             {allTotalClaimable > 0 && (
               <span className="text-sm font-semibold tabular-nums text-money">
@@ -381,14 +381,14 @@ export function HomePage() {
 
         {/* Date picker - at the bottom */}
         {availableDates.length > 1 && (
-          <div className="mt-6 flex items-center justify-between rounded-lg bg-muted/30 px-4 py-3">
+          <div className="mt-6 flex items-center justify-between rounded-lg bg-muted/30 px-3 py-3 sm:px-4">
             <button
               onClick={goOlder}
               disabled={!canGoOlder}
-              className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+              className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
               aria-label="Äldre"
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeft className="size-5 sm:size-4" />
             </button>
             <div className="flex items-center gap-2">
               <Calendar className="size-4 text-muted-foreground" />
@@ -399,10 +399,10 @@ export function HomePage() {
             <button
               onClick={goNewer}
               disabled={!canGoNewer}
-              className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+              className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
               aria-label="Nyare"
             >
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-5 sm:size-4" />
             </button>
           </div>
         )}
@@ -476,18 +476,6 @@ function ClaimableCard({
       style={style}
       className="animate-fade-up rounded-xl border border-border bg-card text-left transition-all"
     >
-      {/* Warning banner for likely scheduled changes */}
-      {delay.likelyScheduledChange && (
-        <div className="flex items-start gap-2 border-b border-border bg-amber-50 px-4 py-2.5 dark:bg-amber-950/30">
-          <Info className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <div className="text-xs text-amber-800 dark:text-amber-200">
-            <p className="font-medium">Troligen planerad tidtabellsändring</p>
-            <p className="mt-0.5 text-amber-700 dark:text-amber-300">
-              {delay.disruptionReason || "Meddelades i förväg"} — du kan fortfarande begära ersättning, men SJ kan neka förseningsersättning för planerade ändringar.
-            </p>
-          </div>
-        </div>
-      )}
       
       <button
         onClick={onClick}
@@ -498,6 +486,15 @@ function ClaimableCard({
           <span className="truncate">{delay.fromStation}</span>
           <span className="shrink-0 text-muted-foreground">→</span>
           <span className="truncate">{delay.toStation}</span>
+          {delay.likelyScheduledChange && (
+            <span 
+              className="ml-auto shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+              title="Tåget är inställt på grund av fordonsbrist — du kan fortfarande begära ersättning, men SJ kan neka förseningsersättning för planerade ändringar."
+            >
+              <Info className="size-3" />
+              Planerad ändring
+            </span>
+          )}
         </div>
 
         {/* Reason for compensation - the key info */}
@@ -567,13 +564,13 @@ function ClaimableCard({
       </button>
 
       {/* Dismiss button */}
-      <div className="border-t border-border px-4 py-2">
+      <div className="border-t border-border px-4 py-2.5 sm:py-2">
         <button
           onClick={handleDismiss}
           disabled={dismissing}
-          className="flex w-full items-center justify-center gap-1.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-1.5 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50 sm:py-1"
         >
-          <X className="size-3" />
+          <X className="size-3.5 sm:size-3" />
           {dismissing ? "Döljer..." : "Åkte inte denna resa"}
         </button>
       </div>
@@ -583,13 +580,13 @@ function ClaimableCard({
 
 function SmallDelayRow({ delay }: { delay: Delay }) {
   return (
-    <div className="flex items-center justify-between py-2 text-sm text-muted-foreground">
-      <div className="flex items-center gap-1.5">
-        <span>{delay.fromStation}</span>
-        <span>→</span>
-        <span>{delay.toStation}</span>
+    <div className="flex items-center justify-between py-2.5 text-sm text-muted-foreground sm:py-2">
+      <div className="flex items-center gap-1.5 truncate pr-2">
+        <span className="truncate">{delay.fromStation}</span>
+        <span className="shrink-0">→</span>
+        <span className="truncate">{delay.toStation}</span>
       </div>
-      <div className="flex items-center gap-2 tabular-nums">
+      <div className="flex shrink-0 items-center gap-2 tabular-nums">
         <span className="text-xs">{delay.scheduledDeparture}</span>
         <span className="text-destructive/70">+{delay.delayMinutes} min</span>
       </div>
@@ -621,12 +618,12 @@ function DismissedDelayRow({
   }
 
   return (
-    <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
-      <div className="flex flex-col gap-0.5">
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <span>{delay.fromStation}</span>
-          <span>→</span>
-          <span>{delay.toStation}</span>
+    <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/30 px-3 py-3 sm:py-2">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <div className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+          <span className="truncate">{delay.fromStation}</span>
+          <span className="shrink-0">→</span>
+          <span className="truncate">{delay.toStation}</span>
         </div>
         <span className="text-xs text-muted-foreground/70">
           {delay.date} · {delay.scheduledDeparture}
@@ -635,7 +632,7 @@ function DismissedDelayRow({
       <button
         onClick={handleRestore}
         disabled={restoring}
-        className="rounded-md px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+        className="shrink-0 rounded-md px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50 sm:px-2.5 sm:py-1"
       >
         {restoring ? "..." : "Återställ"}
       </button>

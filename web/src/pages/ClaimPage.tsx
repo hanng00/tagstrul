@@ -447,7 +447,7 @@ function ContactStep({
         </h2>
 
         <div className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="text-xs text-muted-foreground">Förnamn</label>
               <Input
@@ -455,7 +455,7 @@ function ContactStep({
                 onChange={(e) =>
                   setContact({ ...contact, firstName: e.target.value })
                 }
-                className="mt-1"
+                className="mt-1 h-12 text-base sm:h-10 sm:text-sm"
               />
             </div>
             <div>
@@ -465,7 +465,7 @@ function ContactStep({
                 onChange={(e) =>
                   setContact({ ...contact, lastName: e.target.value })
                 }
-                className="mt-1"
+                className="mt-1 h-12 text-base sm:h-10 sm:text-sm"
               />
             </div>
           </div>
@@ -478,7 +478,7 @@ function ContactStep({
               onChange={(e) =>
                 setContact({ ...contact, email: e.target.value })
               }
-              className="mt-1"
+              className="mt-1 h-12 text-base sm:h-10 sm:text-sm"
             />
           </div>
 
@@ -489,7 +489,7 @@ function ContactStep({
               onChange={(value) =>
                 setContact({ ...contact, phone: value })
               }
-              className="mt-1"
+              className="mt-1 h-12 text-base sm:h-10 sm:text-sm"
             />
           </div>
         </div>
@@ -500,17 +500,17 @@ function ContactStep({
         angående din ersättning.
       </p>
 
-      <div className="mt-auto flex gap-3 pt-8">
+      <div className="mt-auto flex flex-col gap-3 pt-8 sm:flex-row">
         <Button
           variant="outline"
-          className="h-12 flex-1 rounded-lg"
+          className="h-12 w-full rounded-lg sm:flex-1"
           onClick={onBack}
           disabled={loading}
         >
           Tillbaka
         </Button>
         <Button
-          className="h-12 flex-1 rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
+          className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
           onClick={onContinue}
           disabled={loading || !isValid}
         >
@@ -566,7 +566,7 @@ function BankStep({
               onChange={(value) =>
                 setBank({ ...bank, personalNumber: value })
               }
-              className={`mt-1 ${personalNumberError ? "border-destructive" : ""}`}
+              className={`mt-1 h-12 text-base sm:h-10 sm:text-sm ${personalNumberError ? "border-destructive" : ""}`}
             />
             {personalNumberError && (
               <p className="mt-1 text-xs text-destructive">{personalNumberError}</p>
@@ -580,7 +580,7 @@ function BankStep({
             <PhoneInput
               value={bank.swishPhone}
               onChange={(value) => setBank({ ...bank, swishPhone: value })}
-              className={`mt-1 ${swishPhoneError ? "border-destructive" : ""}`}
+              className={`mt-1 h-12 text-base sm:h-10 sm:text-sm ${swishPhoneError ? "border-destructive" : ""}`}
             />
             {swishPhoneError && (
               <p className="mt-1 text-xs text-destructive">{swishPhoneError}</p>
@@ -593,17 +593,17 @@ function BankStep({
         Ersättningen betalas ut via Swish till det angivna numret.
       </p>
 
-      <div className="mt-auto flex gap-3 pt-8">
+      <div className="mt-auto flex flex-col gap-3 pt-8 sm:flex-row">
         <Button
           variant="outline"
-          className="h-12 flex-1 rounded-lg"
+          className="h-12 w-full rounded-lg sm:flex-1"
           onClick={onBack}
           disabled={loading}
         >
           Tillbaka
         </Button>
         <Button
-          className="h-12 flex-1 rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
+          className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
           onClick={onContinue}
           disabled={loading || !isValid}
         >
@@ -684,7 +684,7 @@ function ConfirmStep({
           type="checkbox"
           checked={accepted}
           onChange={(e) => setAccepted(e.target.checked)}
-          className="mt-0.5 size-4 rounded border-border"
+          className="mt-0.5 size-5 rounded border-border sm:size-4"
         />
         <span>
           Jag bekräftar att uppgifterna stämmer och godkänner att ansökan
@@ -701,17 +701,17 @@ function ConfirmStep({
         </span>
       </label>
 
-      <div className="mt-auto flex gap-3 pt-8">
+      <div className="mt-auto flex flex-col gap-3 pt-8 sm:flex-row">
         <Button
           variant="outline"
-          className="h-12 flex-1 rounded-lg"
+          className="h-12 w-full rounded-lg sm:flex-1"
           onClick={onBack}
           disabled={loading}
         >
           Tillbaka
         </Button>
         <Button
-          className="h-12 flex-1 rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
+          className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
           onClick={onConfirm}
           disabled={loading || !accepted}
         >
@@ -834,17 +834,17 @@ function ErrorStep({
         </div>
       )}
 
-      <div className="mt-8 flex w-full gap-3">
+      <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row">
         <Button
           variant="outline"
-          className="h-12 flex-1 rounded-lg"
+          className="h-12 w-full rounded-lg sm:flex-1"
           onClick={onBack}
         >
           Avbryt
         </Button>
         {isRetryable && (
           <Button
-            className="h-12 flex-1 rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
+            className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
             onClick={onRetry}
           >
             Försök igen

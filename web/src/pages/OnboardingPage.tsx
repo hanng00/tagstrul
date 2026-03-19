@@ -102,8 +102,8 @@ export function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col bg-background">
-      <div className="flex flex-1 flex-col items-center justify-center px-5 pb-10">
+    <div className="flex min-h-svh flex-col bg-background safe-bottom">
+      <div className="flex flex-1 flex-col items-center justify-center px-4 pb-10 sm:px-5">
         <div className="w-full max-w-sm">
           {step === "welcome" && (
             <WelcomeStep onNext={() => setStep("name")} />
@@ -471,7 +471,7 @@ function MovingoStep({
           <button
             type="button"
             onClick={() => setShowHelp(!showHelp)}
-            className="mt-1.5 text-xs text-muted-foreground underline-offset-2 hover:underline"
+            className="mt-1.5 py-1 text-xs text-muted-foreground underline-offset-2 hover:underline"
           >
             Var hittar jag mitt nummer?
           </button>

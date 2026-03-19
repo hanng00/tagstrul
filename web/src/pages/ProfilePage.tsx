@@ -119,33 +119,33 @@ export function ProfilePage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="px-5 pt-6 pb-4">
+      <header className="app-padding pt-6 pb-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="flex size-12 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
               {(profile.firstName?.[0] ?? "").toUpperCase()}
               {(profile.lastName?.[0] ?? "").toUpperCase()}
             </div>
-            <div>
-              <p className="text-base font-semibold text-foreground">
+            <div className="min-w-0">
+              <p className="truncate text-base font-semibold text-foreground">
                 {profile.firstName} {profile.lastName}
               </p>
-              <p className="text-sm text-muted-foreground">{profile.email}</p>
+              <p className="truncate text-sm text-muted-foreground">{profile.email}</p>
             </div>
           </div>
           {!editing && (
             <button
               onClick={startEditing}
-              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-auto sm:px-0"
             >
-              <Pencil className="size-3" />
-              Redigera
+              <Pencil className="size-3.5 sm:size-3" />
+              <span className="hidden sm:inline">Redigera</span>
             </button>
           )}
         </div>
       </header>
 
-      <div className="flex-1 px-5 pb-6">
+      <div className="flex-1 app-padding pb-6">
         <section className="animate-fade-up">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground">Uppgifter</h2>
@@ -156,15 +156,15 @@ export function ProfilePage() {
                     setDraft(null)
                     setEditing(false)
                   }}
-                  className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex btn-icon-touch items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  <X className="size-4" />
+                  <X className="size-5 sm:size-4" />
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-1 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background"
+                  className="flex h-10 items-center gap-1 rounded-lg bg-foreground px-4 text-xs font-medium text-background sm:h-auto sm:px-3 sm:py-1.5"
                 >
-                  <Check className="size-3" />
+                  <Check className="size-4 sm:size-3" />
                   Spara
                 </button>
               </div>
@@ -175,7 +175,7 @@ export function ProfilePage() {
             {profileFields.map(({ key, label }) => (
               <div
                 key={key}
-                className="flex items-center justify-between px-4 py-3"
+                className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
               >
                 <span className="text-sm text-muted-foreground">{label}</span>
                 {editing && draft ? (
@@ -183,13 +183,13 @@ export function ProfilePage() {
                     <PhoneInput
                       value={draft[key] ?? ""}
                       onChange={(value) => setDraft({ ...draft, [key]: value })}
-                      className="w-1/2 text-right text-sm"
+                      className="h-12 w-full text-base sm:h-auto sm:w-1/2 sm:text-right sm:text-sm"
                     />
                   ) : key === "personalNumber" ? (
                     <PersonnummerInput
                       value={draft[key] ?? ""}
                       onChange={(value) => setDraft({ ...draft, [key]: value })}
-                      className="w-1/2 text-right text-sm"
+                      className="h-12 w-full text-base sm:h-auto sm:w-1/2 sm:text-right sm:text-sm"
                     />
                   ) : (
                     <input
@@ -197,7 +197,7 @@ export function ProfilePage() {
                       onChange={(e) =>
                         setDraft({ ...draft, [key]: e.target.value })
                       }
-                      className="w-1/2 rounded-md border border-input bg-background px-2.5 py-1.5 text-right text-sm text-foreground outline-none transition-colors focus:border-foreground"
+                      className="h-12 w-full rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition-colors focus:border-foreground sm:h-auto sm:w-1/2 sm:px-2.5 sm:py-1.5 sm:text-right sm:text-sm"
                     />
                   )
                 ) : (
@@ -373,14 +373,14 @@ function MovingoCardRow({
 }) {
   return (
     <div
-      className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
+      className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3.5 sm:py-3 ${
         expired
           ? "border-border/50 bg-muted/30 opacity-50"
           : "border-border bg-card"
       }`}
     >
-      <div>
-        <p className="text-sm font-medium text-foreground">
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium text-foreground">
           {MOVINGO_CARD_LABELS[card.cardType]}
         </p>
         <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
@@ -390,9 +390,9 @@ function MovingoCardRow({
       </div>
       <button
         onClick={onDelete}
-        className="flex size-8 items-center justify-center rounded-lg text-muted-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
+        className="flex btn-icon-touch shrink-0 items-center justify-center rounded-lg text-muted-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
       >
-        <Trash2 className="size-3.5" />
+        <Trash2 className="size-4 sm:size-3.5" />
       </button>
     </div>
   )
@@ -421,14 +421,14 @@ function AddMovingoCardForm({
   }
 
   return (
-    <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
+    <div className="animate-fade-up rounded-xl border border-border bg-card p-4 sm:p-5">
       <div className="mb-5 flex items-center justify-between">
         <h3 className="text-base font-semibold text-foreground">Nytt kort</h3>
         <button
           onClick={onCancel}
-          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="flex btn-icon-touch items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          <X className="size-4" />
+          <X className="size-5 sm:size-4" />
         </button>
       </div>
 
@@ -442,7 +442,7 @@ function AddMovingoCardForm({
             value={movingoId}
             onChange={(e) => setMovingoId(e.target.value)}
             placeholder="ABCD1E234"
-            className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground"
+            className="input-mobile rounded-lg border border-input bg-background px-3 text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground"
           />
         </label>
 
@@ -453,7 +453,7 @@ function AddMovingoCardForm({
           <select
             value={cardType}
             onChange={(e) => setCardType(e.target.value as MovingoCardType)}
-            className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground"
+            className="input-mobile rounded-lg border border-input bg-background px-3 text-foreground outline-none transition-colors focus:border-foreground"
           >
             {CARD_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -471,7 +471,7 @@ function AddMovingoCardForm({
             type="number"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground"
+            className="input-mobile rounded-lg border border-input bg-background px-3 text-foreground outline-none transition-colors focus:border-foreground"
           />
         </label>
 
@@ -483,12 +483,12 @@ function AddMovingoCardForm({
             type="date"
             value={purchaseDate}
             onChange={(e) => setPurchaseDate(e.target.value)}
-            className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground"
+            className="input-mobile rounded-lg border border-input bg-background px-3 text-foreground outline-none transition-colors focus:border-foreground"
           />
         </label>
 
         <Button
-          className="h-11 w-full rounded-lg bg-foreground text-sm font-semibold text-background hover:bg-foreground/90"
+          className="input-mobile w-full rounded-lg bg-foreground font-semibold text-background hover:bg-foreground/90"
           onClick={() =>
             onAdd({
               movingoId: movingoId.trim(),

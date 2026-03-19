@@ -33,13 +33,14 @@ export function LandingPage() {
       <HowToSchema />
       <FAQSchema items={faqItems} />
 
-      <header className="flex items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
+      <header className="flex items-center justify-between section-padding py-4">
         <Logo size="small" />
-        <nav aria-label="Huvudnavigering" className="flex items-center gap-2">
+        <nav aria-label="Huvudnavigering" className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate("/om")}
+            className="h-10 px-3 text-sm sm:h-9"
           >
             Om oss
           </Button>
@@ -47,6 +48,7 @@ export function LandingPage() {
             variant="outline"
             size="sm"
             onClick={handleAuthAction}
+            className="h-10 px-4 text-sm sm:h-9"
           >
             {isLoading ? "" : isAuthenticated ? "Till appen" : "Logga in"}
           </Button>
@@ -54,25 +56,25 @@ export function LandingPage() {
       </header>
 
       <main>
-        <section aria-labelledby="hero-heading" className="flex flex-1 flex-col px-5 pb-12 pt-8 sm:px-8 sm:pt-12 lg:px-12">
+        <section aria-labelledby="hero-heading" className="flex flex-1 flex-col section-padding pb-10 pt-6 sm:pb-12 sm:pt-12">
         <div className="mx-auto w-full max-w-5xl">
           <div className="grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
             <div className="animate-fade-up">
-              <h1 id="hero-heading" className="text-[clamp(2rem,6vw,3rem)] font-semibold leading-[1.1] tracking-tight text-foreground">
+              <h1 id="hero-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-semibold leading-[1.1] tracking-tight text-foreground">
                 Tåget var sent.
                 <br />
                 Du har pengar att hämta.
               </h1>
 
-              <p className="mt-5 max-w-md text-[15px] leading-relaxed text-muted-foreground">
+              <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted-foreground sm:mt-5">
                 Vi bevakar dina Mälartåg och visar när du kan kräva ersättning.
                 Movingo-kort ger pengar tillbaka redan vid 20 min försening.
               </p>
 
-              <div className="mt-8 flex flex-wrap items-center gap-3">
+              <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8">
                 <Button
                   onClick={handleAuthAction}
-                  className="h-12 rounded-lg bg-foreground px-6 text-[15px] font-semibold text-background transition-transform hover:bg-foreground/90 active:scale-[0.98]"
+                  className="h-12 w-full rounded-lg bg-foreground px-6 text-[15px] font-semibold text-background transition-transform hover:bg-foreground/90 active:scale-[0.98] sm:w-auto"
                 >
                   {isAuthenticated ? "Till appen" : "Kom igång gratis"}
                   <ChevronRight className="ml-1 size-4" />
@@ -80,15 +82,15 @@ export function LandingPage() {
               </div>
             </div>
 
-            <div className="animate-fade-up stagger-1 relative">
+            <div className="animate-fade-up stagger-1 relative mt-2 lg:mt-0">
               <TrainCrashImage className="aspect-4/3" />
-              <div className="absolute -bottom-3 left-0 sm:-bottom-6 sm:-left-6 rounded-xl border border-border bg-card px-3 py-2 sm:px-4 sm:py-3 shadow-lg">
-                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">
+              <div className="absolute -bottom-2 left-2 rounded-xl border border-border bg-card px-3 py-2 shadow-lg sm:-bottom-6 sm:-left-6 sm:px-4 sm:py-3">
+                <p className="text-[10px] font-medium text-muted-foreground sm:text-xs">
                   Senaste veckan
                 </p>
-                <p className="mt-0.5 text-base sm:text-xl font-semibold tabular-nums text-foreground">
+                <p className="mt-0.5 text-base font-semibold tabular-nums text-foreground sm:text-xl">
                   312{" "}
-                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  <span className="text-xs font-medium text-muted-foreground sm:text-sm">
                     förseningar
                   </span>
                 </p>
@@ -100,7 +102,7 @@ export function LandingPage() {
 
       <CalculatorSection onGetStarted={handleAuthAction} isAuthenticated={isAuthenticated} />
 
-      <section aria-labelledby="how-it-works-heading" className="border-t border-border bg-card px-5 py-12 sm:px-8 lg:px-12">
+      <section aria-labelledby="how-it-works-heading" className="border-t border-border bg-card section-padding py-10 sm:py-12">
         <div className="mx-auto max-w-5xl">
           <h2 id="how-it-works-heading" className="text-lg font-semibold text-foreground">
             Så funkar det
@@ -110,7 +112,7 @@ export function LandingPage() {
               <h3 className="text-base font-medium text-foreground">
                 Lägg in din pendling
               </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                 Vilka stationer och vilken tid du brukar åka. Tar tio sekunder.
               </p>
             </li>
@@ -118,7 +120,7 @@ export function LandingPage() {
               <h3 className="text-base font-medium text-foreground">
                 Vi hittar förseningar
               </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                 Varje dag kollar vi Mälartågs data mot dina resor. Du behöver
                 inte göra något.
               </p>
@@ -127,7 +129,7 @@ export function LandingPage() {
               <h3 className="text-base font-medium text-foreground">
                 Kräv ersättning direkt
               </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                 Vi fyller i ansökan. Du trycker skicka. Klart på 30 sekunder.
               </p>
             </li>
@@ -138,8 +140,8 @@ export function LandingPage() {
       <FAQSection />
       </main>
 
-      <footer className="border-t border-border px-5 py-6 sm:px-8 lg:px-12">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
+      <footer className="border-t border-border section-padding py-6">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
           <Logo size="small" />
           <div className="flex items-center gap-4">
             <a
@@ -215,9 +217,9 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
   }
 
   return (
-    <section className="border-t border-border bg-muted/50 px-5 py-12 sm:px-8 lg:px-12">
+    <section className="border-t border-border bg-muted/50 section-padding py-10 sm:py-12">
       <div className="mx-auto max-w-5xl">
-        <div className="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-12">
+        <div className="grid gap-6 lg:grid-cols-2 lg:items-start lg:gap-12">
           <div>
             <h2 className="text-xl font-semibold text-foreground">
               Hur mycket har du missat?
@@ -228,7 +230,7 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
             </p>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
             {!result ? (
               <div className="space-y-4">
                 <label className="flex flex-col gap-1.5">
@@ -244,7 +246,7 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
                         setTimeout(() => setFromSuggestions([]), 150)
                       }
                       placeholder="T.ex. Stockholm Central"
-                      className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground"
+                      className="h-12 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground outline-none transition-colors focus:border-foreground sm:h-11 sm:text-sm"
                     />
                     {fromSuggestions.length > 0 && (
                       <ul className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-card shadow-lg">
@@ -255,7 +257,7 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
                               setFrom(s)
                               setFromSuggestions([])
                             }}
-                            className="cursor-pointer px-3 py-2 text-sm hover:bg-muted"
+                            className="cursor-pointer px-3 py-3 text-sm hover:bg-muted active:bg-muted/80 sm:py-2"
                           >
                             {s}
                           </li>
@@ -278,7 +280,7 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
                         setTimeout(() => setToSuggestions([]), 150)
                       }
                       placeholder="T.ex. Uppsala C"
-                      className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground"
+                      className="h-12 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground outline-none transition-colors focus:border-foreground sm:h-11 sm:text-sm"
                     />
                     {toSuggestions.length > 0 && (
                       <ul className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-card shadow-lg">
@@ -289,7 +291,7 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
                               setTo(s)
                               setToSuggestions([])
                             }}
-                            className="cursor-pointer px-3 py-2 text-sm hover:bg-muted"
+                            className="cursor-pointer px-3 py-3 text-sm hover:bg-muted active:bg-muted/80 sm:py-2"
                           >
                             {s}
                           </li>
@@ -397,7 +399,7 @@ function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
-    <section aria-labelledby="faq-heading" className="border-t border-border bg-background px-5 py-12 sm:px-8 lg:px-12">
+    <section aria-labelledby="faq-heading" className="border-t border-border bg-background section-padding py-10 sm:py-12">
       <div className="mx-auto max-w-xl">
         <h2 id="faq-heading" className="text-lg font-semibold text-foreground">Vanliga frågor</h2>
         <dl className="mt-6 divide-y divide-border">
@@ -408,7 +410,7 @@ function FAQSection() {
                   onClick={() => setOpenIndex(openIndex === index ? null : index)}
                   aria-expanded={openIndex === index}
                   aria-controls={`faq-answer-${index}`}
-                  className="flex w-full items-center justify-between text-left"
+                  className="flex w-full items-center justify-between gap-4 py-1 text-left"
                 >
                   <span className="text-[15px] font-medium text-foreground">
                     {item.question}

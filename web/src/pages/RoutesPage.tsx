@@ -46,14 +46,14 @@ export function RoutesPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="px-5 pt-6 pb-4">
+      <header className="app-padding pt-6 pb-4">
         <h1 className="text-xl font-semibold text-foreground">Pendlingar</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Vi bevakar dessa resor åt dig
         </p>
       </header>
 
-      <div className="flex-1 px-5 pb-6">
+      <div className="flex-1 app-padding pb-6">
         {routes.length > 0 && (
           <div className="space-y-2">
             {routes.map((route, i) => (
@@ -65,7 +65,7 @@ export function RoutesPage() {
                 <div>
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <span>{route.fromStation}</span>
-                    <span className="text-muted-foreground">→</span>
+                    <span className="text-muted-foreground">↔</span>
                     <span>{route.toStation}</span>
                   </div>
                   {route.departureTime && (
@@ -74,10 +74,10 @@ export function RoutesPage() {
                     </p>
                   )}
                 </div>
-                <button
+              <button
                   onClick={() => handleDelete(route.routeId)}
                   disabled={deleteRoute.isPending}
-                  className="flex size-8 items-center justify-center rounded-lg text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                  className="flex btn-icon-touch shrink-0 items-center justify-center rounded-lg text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
                 >
                   <Trash2 className="size-4" />
                 </button>
@@ -135,16 +135,16 @@ function AddRouteForm({
 
   return (
     <div
-      className={`animate-fade-up rounded-xl border border-border bg-card p-5 ${isFirst ? "" : "mt-3"}`}
+      className={`animate-fade-up rounded-xl border border-border bg-card p-4 sm:p-5 ${isFirst ? "" : "mt-3"}`}
     >
       <div className="mb-5 flex items-center justify-between">
         <h2 className="text-base font-semibold text-foreground">Ny pendling</h2>
         <button
           onClick={onCancel}
           disabled={isPending}
-          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+          className="flex btn-icon-touch items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
         >
-          <X className="size-4" />
+          <X className="size-5 sm:size-4" />
         </button>
       </div>
 
@@ -175,12 +175,12 @@ function AddRouteForm({
             value={time}
             onChange={(e) => setTime(e.target.value)}
             disabled={isPending}
-            className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-foreground focus:ring-1 focus:ring-foreground disabled:opacity-50"
+            className="input-mobile rounded-lg border border-input bg-background px-3 text-foreground outline-none transition-colors focus:border-foreground focus:ring-1 focus:ring-foreground disabled:opacity-50"
           />
         </label>
 
         <Button
-          className="h-11 w-full rounded-lg bg-foreground text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-50"
+          className="input-mobile w-full rounded-lg bg-foreground font-semibold text-background hover:bg-foreground/90 disabled:opacity-50"
           onClick={() => onAdd(from, to, time)}
           disabled={!from || !to || isPending}
         >

@@ -51,18 +51,18 @@ export function AboutPage() {
         ]}
       />
 
-      <header className="flex items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
+      <header className="flex items-center justify-between section-padding py-4">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="flex h-10 items-center gap-1 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-auto sm:px-0"
         >
           <ArrowLeft className="size-4" />
-          Tillbaka
+          <span className="hidden sm:inline">Tillbaka</span>
         </button>
         <Logo size="small" />
       </header>
 
-      <main className="flex-1 px-5 py-8 sm:px-8 lg:px-12">
+      <main className="flex-1 section-padding py-8">
         <div className="mx-auto max-w-xl">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Bakom appen
@@ -180,8 +180,8 @@ export function AboutPage() {
         </div>
       </main>
 
-      <footer className="border-t border-border px-5 py-6 sm:px-8 lg:px-12">
-        <div className="mx-auto flex max-w-xl items-center justify-between">
+      <footer className="border-t border-border section-padding py-6">
+        <div className="mx-auto flex max-w-xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
           <Logo size="small" />
           <span className="text-xs text-muted-foreground">
             Byggt för Movingo-pendlare
