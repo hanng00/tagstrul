@@ -24,6 +24,7 @@ import {
   type ConfirmClaimResponse,
 } from "@/features/claims"
 import { events } from "@/lib/posthog"
+import { PageHeader } from "@/components/AppLayout"
 
 type Step =
   | "loading"
@@ -208,17 +209,19 @@ export function ClaimPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex items-center gap-3 px-5 pt-4 pb-2">
-        <button
-          onClick={() => navigate("/app")}
-          className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <ArrowLeft className="size-5" />
-        </button>
-        <h1 className="text-lg font-semibold text-foreground">
-          Begär ersättning
-        </h1>
-      </header>
+      <PageHeader className="pb-2">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate("/app")}
+            className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="size-5" />
+          </button>
+          <h1 className="text-lg font-semibold text-foreground">
+            Begär ersättning
+          </h1>
+        </div>
+      </PageHeader>
 
       <StepIndicator currentStep={step} />
 
@@ -687,8 +690,25 @@ function ConfirmStep({
           className="mt-0.5 size-5 rounded border-border sm:size-4"
         />
         <span>
-          Jag bekräftar att uppgifterna stämmer och godkänner att ansökan
-          skickas till SJ enligt deras{" "}
+          Jag bekräftar att uppgifterna stämmer och godkänner{" "}
+          <a
+            href="/villkor"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            användarvillkoren
+          </a>
+          ,{" "}
+          <a
+            href="/integritet"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            integritetspolicyn
+          </a>
+          {" "}samt att ansökan skickas till SJ enligt deras{" "}
           <a
             href="https://www.sj.se/om-sj/regler-och-villkor/rattigheter-vid-forsening#Ers%C3%A4ttning_vid_f%C3%B6rsening"
             target="_blank"

@@ -1,6 +1,8 @@
+import type { ReactNode } from "react"
 import { NavLink, Outlet } from "react-router"
 import { Home, Route, User } from "lucide-react"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
+import { cn } from "@/lib/utils"
 
 const tabs = [
   { to: "/app", icon: Home, label: "Hem", end: true },
@@ -8,14 +10,30 @@ const tabs = [
   { to: "/app/profile", icon: User, label: "Profil", end: false },
 ] as const
 
+interface PageHeaderProps {
+  children: ReactNode
+  className?: string
+}
+
+export function PageHeader({ children, className }: PageHeaderProps) {
+  return (
+    <header
+      className={cn(
+        "sticky top-0 z-40 bg-background/80 backdrop-blur-xl backdrop-saturate-150 app-padding pt-6 pb-4",
+        className
+      )}
+    >
+      {children}
+    </header>
+  )
+}
+
 export function AppLayout() {
   return (
-    <div className="mx-auto flex min-h-svh max-w-lg flex-col bg-background">
-      <div className="flex-1 overflow-y-auto pb-20">
-        <ErrorBoundary>
-          <Outlet />
-        </ErrorBoundary>
-      </div>
+    <div className="mx-auto flex min-h-svh max-w-lg flex-col bg-background pb-20">
+      <ErrorBoundary>
+        <Outlet />
+      </ErrorBoundary>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/80 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex max-w-lg">

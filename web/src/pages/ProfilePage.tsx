@@ -16,6 +16,7 @@ import type { Profile, MovingoCard, MovingoCardType } from "@/types"
 import { MOVINGO_CARD_LABELS } from "@/types"
 import { PersonnummerInput } from "@/components/ui-extended/personnummer-input"
 import { PhoneInput, formatPhone, getPhoneDigits } from "@/components/ui-extended/phone-input"
+import { PageHeader } from "@/components/AppLayout"
 
 const profileFields = [
   { key: "firstName" as const, label: "Förnamn" },
@@ -119,7 +120,7 @@ export function ProfilePage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="app-padding pt-6 pb-4">
+      <PageHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="flex size-12 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
@@ -143,7 +144,7 @@ export function ProfilePage() {
             </button>
           )}
         </div>
-      </header>
+      </PageHeader>
 
       <div className="flex-1 app-padding pb-6">
         <section className="animate-fade-up">

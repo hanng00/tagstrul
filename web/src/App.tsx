@@ -5,11 +5,15 @@ import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { OnboardingGuard } from "@/components/OnboardingGuard"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { PWAInstallBanner } from "@/components/PWAInstallBanner"
+import { CookieConsentBanner } from "@/components/CookieConsentBanner"
 import { PostHogPageTracker } from "@/components/PostHogProvider"
 import { Toaster } from "@/components/ui/sonner"
 import { LandingPage } from "@/pages/LandingPage"
 import { PosterPage } from "@/pages/PosterPage"
 import { AboutPage } from "@/pages/AboutPage"
+import { PrivacyPage } from "@/pages/PrivacyPage"
+import { TermsPage } from "@/pages/TermsPage"
+import { CookiePage } from "@/pages/CookiePage"
 
 const LoginPage = lazy(() =>
   import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage }))
@@ -38,6 +42,9 @@ const DesignSystemPage = lazy(() =>
 const ThankYouPage = lazy(() =>
   import("@/features/donations").then((m) => ({ default: m.ThankYouPage }))
 )
+const AdminPage = lazy(() =>
+  import("@/pages/AdminPage").then((m) => ({ default: m.AdminPage }))
+)
 
 function PageLoader() {
   return (
@@ -59,8 +66,12 @@ export function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/poster" element={<PosterPage />} />
               <Route path="/om" element={<AboutPage />} />
+              <Route path="/integritet" element={<PrivacyPage />} />
+              <Route path="/villkor" element={<TermsPage />} />
+              <Route path="/cookies" element={<CookiePage />} />
               <Route path="/design-system" element={<DesignSystemPage />} />
               <Route path="/tack" element={<ThankYouPage />} />
+              <Route path="/admin" element={<AdminPage />} />
               <Route element={<ProtectedRoute />}>
                 <Route element={<OnboardingGuard />}>
                   <Route path="/onboarding" element={<OnboardingPage />} />
@@ -75,6 +86,7 @@ export function App() {
             </Routes>
           </Suspense>
           <PWAInstallBanner />
+          <CookieConsentBanner />
           <Toaster position="bottom-center" />
         </BrowserRouter>
       </AuthProvider>

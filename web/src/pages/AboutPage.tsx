@@ -181,11 +181,28 @@ export function AboutPage() {
       </main>
 
       <footer className="border-t border-border section-padding py-6">
-        <div className="mx-auto flex max-w-xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
+        <div className="mx-auto flex max-w-xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <Logo size="small" />
-          <span className="text-xs text-muted-foreground">
-            Byggt för Movingo-pendlare
-          </span>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <a
+              href="/integritet"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Integritet
+            </a>
+            <a
+              href="/villkor"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Villkor
+            </a>
+            <a
+              href="/cookies"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Cookies
+            </a>
+          </div>
         </div>
       </footer>
     </div>

@@ -141,18 +141,33 @@ export function LandingPage() {
       </main>
 
       <footer className="border-t border-border section-padding py-6">
-        <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <Logo size="small" />
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <a
               href="/om"
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               Om oss
             </a>
-            <span className="text-xs text-muted-foreground">
-              Byggt för Movingo-pendlare
-            </span>
+            <a
+              href="/integritet"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Integritet
+            </a>
+            <a
+              href="/villkor"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Villkor
+            </a>
+            <a
+              href="/cookies"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Cookies
+            </a>
           </div>
         </div>
       </footer>
@@ -386,7 +401,7 @@ const faqItems = [
   {
     question: "Är mina uppgifter säkra?",
     answer:
-      "Vi lagrar endast det som krävs för att skicka in ditt krav. Vi säljer aldrig din data och du kan radera ditt konto när som helst.",
+      "Vi lagrar endast det som krävs för att skicka in ditt krav. Vi säljer aldrig din data och du kan begära att radera ditt konto via mejl.",
   },
   {
     question: "Vad händer om kravet avslås?",

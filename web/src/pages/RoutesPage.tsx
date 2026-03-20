@@ -5,6 +5,7 @@ import { StationInput } from "@/components/StationInput"
 import { useRoutes, useAddRoute, useDeleteRoute } from "@/lib/queries"
 import { events } from "@/lib/posthog"
 import { TrainLoader } from "@/components/ui/train-loader"
+import { PageHeader } from "@/components/AppLayout"
 
 export function RoutesPage() {
   const { data: routes = [], isLoading: loading } = useRoutes()
@@ -46,12 +47,12 @@ export function RoutesPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="app-padding pt-6 pb-4">
+      <PageHeader>
         <h1 className="text-xl font-semibold text-foreground">Pendlingar</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Vi bevakar dessa resor åt dig
         </p>
-      </header>
+      </PageHeader>
 
       <div className="flex-1 app-padding pb-6">
         {routes.length > 0 && (

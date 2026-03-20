@@ -517,6 +517,31 @@ Resources:
       BuildProperties:
         Sourcemap: true
 
+  # --- Admin (unauthenticated, secret-protected) ---
+
+  GetAdminStats:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/features/admin/GetAdminStats.handler
+      Timeout: 60
+      MemorySize: 1024
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref TableName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /admin/stats
+            Method: GET
+            Auth:
+              Authorizer: NONE
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Sourcemap: true
+
 Outputs:
   ApiEndpoint:
     Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/Prod"
