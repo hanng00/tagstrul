@@ -8,3 +8,4 @@ export {
   useAddMovingoCard,
   useDeleteMovingoCard,
 } from "./use-movingo-cards"
+export { useAuth } from "./use-auth"

@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router"
 import { LogOut, Pencil, Check, X, Plus, Trash2, Bell, BellOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/components/AuthContext"
+import { useAuth } from "@/lib/queries"
 import { TrainLoader } from "@/components/ui/train-loader"
 import {
   useProfile,

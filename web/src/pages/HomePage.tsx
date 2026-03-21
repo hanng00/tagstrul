@@ -22,7 +22,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { PageHeader } from "@/components/AppLayout"
 
-import { useHomeData } from "./home/useHomeData"
+import { useHomeData, HomeState } from "./home/useHomeData"
 import { ClaimableCard } from "./home/ClaimableCard"
 import { PendingClaimCard } from "./home/PendingClaimCard"
 
@@ -59,29 +59,26 @@ export function HomePage() {
   const [showDismissed, setShowDismissed] = useState(false)
 
   const {
-    loading,
+    state,
     refreshing,
     handleRefresh,
     refetchDelays,
     refetchClaims,
-    hasRoutes,
     availableDates,
     activeDate,
     canGoNewer,
     canGoOlder,
     goNewer,
     goOlder,
-    delays,
     claimable,
     notClaimable,
-    allClaimable,
-    dismissedDelaysForDate,
+    dismissedForDate,
     pendingClaims,
     totalPending,
     totalReceived,
   } = useHomeData()
 
-  if (loading) {
+  if (state === HomeState.LOADING) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <TrainLoader size="md" />
@@ -111,7 +108,7 @@ export function HomePage() {
       </PageHeader>
 
       <div className="flex-1 app-padding pb-8">
-        {/* Hero: Total Received with Pending */}
+        {/* Hero: Total Received with Pending - always visible */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-start justify-between">
             <p className="text-sm font-medium text-muted-foreground">
@@ -182,182 +179,164 @@ export function HomePage() {
           )}
         </div>
 
-        {/* Claimable Routes */}
-        <section className="mt-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-foreground">
-              Ersättningar att kräva{claimable.length > 0 && ` (${claimable.length})`}
-            </h2>
-            {claimable.length > 0 && (
-              <span className="text-sm font-semibold tabular-nums text-money">
-                {claimable.reduce((s, d) => s + d.estimatedCompensation, 0)} kr
-              </span>
-            )}
-          </div>
-
-          {claimable.length > 0 ? (
-            <div className="space-y-2">
-              {claimable.map((delay, i) => (
-                <ClaimableCard
-                  key={delay.delayId}
-                  delay={delay}
-                  onClick={() =>
-                    navigate(`/app/claim/${encodeURIComponent(delay.delayId)}`)
-                  }
-                  onDismiss={() => refetchDelays()}
-                  style={{ animationDelay: `${i * 50}ms` }}
-                />
-              ))}
+        {state === HomeState.NO_ROUTES ? (
+          <div className="mt-8 flex flex-col items-center justify-center py-8 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+              <MapPin className="size-5 text-muted-foreground" />
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-8 text-center">
-              <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-                <Check className="size-4 text-muted-foreground" />
-              </div>
-              <p className="mt-3 text-sm font-medium text-muted-foreground">
-                Inga förseningar att kräva
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Vi bevakar dina resor och meddelar dig vid förseningar
-              </p>
-            </div>
-          )}
-        </section>
-
-        {/* Empty state when completely new user */}
-        {allClaimable.length === 0 &&
-          pendingClaims.length === 0 &&
-          totalReceived === 0 &&
-          delays.length === 0 && (
-            <div className="mt-8 flex flex-col items-center justify-center py-8 text-center">
-              {!hasRoutes ? (
-                <>
-                  <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                    <MapPin className="size-5 text-muted-foreground" />
-                  </div>
-                  <p className="mt-4 text-sm font-medium text-foreground">
-                    Du bevakar inga resor ännu
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Lägg till din pendling så hittar vi ersättningar åt dig automatiskt
-                  </p>
-                  <button
-                    onClick={() => navigate("/app/routes")}
-                    className="mt-4 rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
-                  >
-                    Lägg till pendling
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                    <Check className="size-5 text-muted-foreground" />
-                  </div>
-                  <p className="mt-4 text-sm font-medium text-foreground">
-                    Inga ersättningar just nu
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Dina bevakade resor visas här om de blir försenade
-                  </p>
-                </>
-              )}
-            </div>
-          )}
-
-        {/* Small delays - collapsed by default */}
-        {notClaimable.length > 0 && (
-          <section className="mt-6">
+            <p className="mt-4 text-sm font-medium text-foreground">
+              Du bevakar inga resor ännu
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Lägg till din pendling så hittar vi ersättningar åt dig automatiskt
+            </p>
             <button
-              onClick={() => setShowSmallDelays(!showSmallDelays)}
-              className="flex w-full items-center justify-between py-2 text-left"
+              onClick={() => navigate("/app/routes")}
+              className="mt-4 rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
             >
-              <div className="flex items-center gap-2">
-                <Clock className="size-3.5 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">
-                  {notClaimable.length} mindre förseningar
-                </span>
-              </div>
-              {showSmallDelays ? (
-                <ChevronUp className="size-4 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="size-4 text-muted-foreground" />
-              )}
+              Lägg till pendling
             </button>
-            {showSmallDelays && (
-              <div className="mt-2 rounded-lg bg-muted/30 p-3">
-                <p className="mb-3 text-xs text-muted-foreground">
-                  Förseningar under 20 min ger inte rätt till ersättning enligt SJ:s
-                  regler.
-                </p>
-                <div className="max-h-48 space-y-1 overflow-y-auto">
-                  {notClaimable.map((delay) => (
-                    <SmallDelayRow key={delay.delayId} delay={delay} />
+          </div>
+        ) : (
+          <>
+            {/* Claimable Routes */}
+            <section className="mt-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-medium text-foreground">
+                  Ersättningar att kräva{claimable.length > 0 && ` (${claimable.length})`}
+                </h2>
+                {claimable.length > 0 && (
+                  <span className="text-sm font-semibold tabular-nums text-money">
+                    {claimable.reduce((s, d) => s + d.estimatedCompensation, 0)} kr
+                  </span>
+                )}
+              </div>
+
+              {claimable.length > 0 ? (
+                <div className="space-y-2">
+                  {claimable.map((delay, i) => (
+                    <ClaimableCard
+                      key={delay.delayId}
+                      delay={delay}
+                      onClick={() =>
+                        navigate(`/app/claim/${encodeURIComponent(delay.delayId)}`)
+                      }
+                      onDismiss={() => refetchDelays()}
+                      style={{ animationDelay: `${i * 50}ms` }}
+                    />
                   ))}
                 </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Dismissed delays */}
-        {dismissedDelaysForDate.length > 0 && (
-          <section className="mt-6">
-            <button
-              onClick={() => setShowDismissed(!showDismissed)}
-              className="flex w-full items-center justify-between py-2 text-left"
-            >
-              <div className="flex items-center gap-2">
-                <X className="size-3.5 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">
-                  {dismissedDelaysForDate.length} dolda resor
-                </span>
-              </div>
-              {showDismissed ? (
-                <ChevronUp className="size-4 text-muted-foreground" />
               ) : (
-                <ChevronDown className="size-4 text-muted-foreground" />
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-8 text-center">
+                  <div className="flex size-10 items-center justify-center rounded-full bg-muted">
+                    <Check className="size-4 text-muted-foreground" />
+                  </div>
+                  <p className="mt-3 text-sm font-medium text-muted-foreground">
+                    Inga förseningar att kräva
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Vi bevakar dina resor och meddelar dig vid förseningar
+                  </p>
+                </div>
               )}
-            </button>
-            {showDismissed && (
-              <div className="mt-2 space-y-2">
-                {dismissedDelaysForDate.map((delay) => (
-                  <DismissedDelayRow
-                    key={delay.delayId}
-                    delay={delay}
-                    onRestore={() => refetchDelays()}
-                  />
-                ))}
+            </section>
+
+            {/* Small delays - collapsed by default */}
+            {notClaimable.length > 0 && (
+              <section className="mt-6">
+                <button
+                  onClick={() => setShowSmallDelays(!showSmallDelays)}
+                  className="flex w-full items-center justify-between py-2 text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <Clock className="size-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {notClaimable.length} mindre förseningar
+                    </span>
+                  </div>
+                  {showSmallDelays ? (
+                    <ChevronUp className="size-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="size-4 text-muted-foreground" />
+                  )}
+                </button>
+                {showSmallDelays && (
+                  <div className="mt-2 rounded-lg bg-muted/30 p-3">
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      Förseningar under 20 min ger inte rätt till ersättning enligt SJ:s
+                      regler.
+                    </p>
+                    <div className="max-h-48 space-y-1 overflow-y-auto">
+                      {notClaimable.map((delay) => (
+                        <SmallDelayRow key={delay.delayId} delay={delay} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* Dismissed delays */}
+            {dismissedForDate.length > 0 && (
+              <section className="mt-6">
+                <button
+                  onClick={() => setShowDismissed(!showDismissed)}
+                  className="flex w-full items-center justify-between py-2 text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <X className="size-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {dismissedForDate.length} dolda resor
+                    </span>
+                  </div>
+                  {showDismissed ? (
+                    <ChevronUp className="size-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="size-4 text-muted-foreground" />
+                  )}
+                </button>
+                {showDismissed && (
+                  <div className="mt-2 space-y-2">
+                    {dismissedForDate.map((delay) => (
+                      <DismissedDelayRow
+                        key={delay.delayId}
+                        delay={delay}
+                        onRestore={() => refetchDelays()}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* Date picker */}
+            {availableDates.length > 1 && (
+              <div className="mt-6 flex items-center justify-between rounded-lg bg-muted/30 px-3 py-3 sm:px-4">
+                <button
+                  onClick={goOlder}
+                  disabled={!canGoOlder}
+                  className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                  aria-label="Äldre"
+                >
+                  <ChevronLeft className="size-5 sm:size-4" />
+                </button>
+                <div className="flex items-center gap-2">
+                  <Calendar className="size-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">
+                    {activeDate ? formatDateFull(parseDateLocal(activeDate)) : "—"}
+                  </span>
+                </div>
+                <button
+                  onClick={goNewer}
+                  disabled={!canGoNewer}
+                  className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                  aria-label="Nyare"
+                >
+                  <ChevronRight className="size-5 sm:size-4" />
+                </button>
               </div>
             )}
-          </section>
-        )}
-
-        {/* Date picker */}
-        {availableDates.length > 1 && (
-          <div className="mt-6 flex items-center justify-between rounded-lg bg-muted/30 px-3 py-3 sm:px-4">
-            <button
-              onClick={goOlder}
-              disabled={!canGoOlder}
-              className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
-              aria-label="Äldre"
-            >
-              <ChevronLeft className="size-5 sm:size-4" />
-            </button>
-            <div className="flex items-center gap-2">
-              <Calendar className="size-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">
-                {activeDate ? formatDateFull(parseDateLocal(activeDate)) : "—"}
-              </span>
-            </div>
-            <button
-              onClick={goNewer}
-              disabled={!canGoNewer}
-              className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
-              aria-label="Nyare"
-            >
-              <ChevronRight className="size-5 sm:size-4" />
-            </button>
-          </div>
+          </>
         )}
       </div>
     </div>

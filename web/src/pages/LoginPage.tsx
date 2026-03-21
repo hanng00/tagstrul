@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router"
-import { useAuth } from "@/components/AuthContext"
+import { useAuth } from "@/lib/queries"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Loader2, Mail } from "lucide-react"
 import type { AuthSession } from "@/lib/auth"

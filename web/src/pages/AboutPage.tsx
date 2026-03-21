@@ -52,18 +52,18 @@ export function AboutPage() {
       />
 
       <header className="flex items-center justify-between section-padding py-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex h-10 items-center gap-1 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-auto sm:px-0"
-        >
-          <ArrowLeft className="size-4" />
-          <span className="hidden sm:inline">Tillbaka</span>
-        </button>
         <Logo size="small" />
       </header>
 
       <main className="flex-1 section-padding py-8">
         <div className="mx-auto max-w-xl">
+          <button
+            onClick={() => navigate("/")}
+            className="mb-6 flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Tillbaka
+          </button>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Bakom appen
           </h1>

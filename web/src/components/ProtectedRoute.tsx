@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router"
-import { useAuth } from "@/components/AuthContext"
+import { useAuth } from "@/lib/queries"
 import { TrainLoader } from "@/components/ui/train-loader"
 
 export function ProtectedRoute() {

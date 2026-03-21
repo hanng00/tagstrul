@@ -1,12 +1,13 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { HelmetProvider } from "react-helmet-async"
 
 import "./index.css"
 import App from "./App.tsx"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
 import { PostHogProvider } from "@/components/PostHogProvider.tsx"
+import { queryClient } from "@/lib/query-client"
 
 // Register service worker for PWA
 if ("serviceWorker" in navigator) {
@@ -14,15 +15,6 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {})
   })
 }
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-})
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

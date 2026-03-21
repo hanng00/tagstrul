@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api"
-import { useAuth } from "@/components/AuthContext"
+import { useAuth } from "@/lib/queries"
 
 type PushPermission = "default" | "granted" | "denied" | "unsupported"
 

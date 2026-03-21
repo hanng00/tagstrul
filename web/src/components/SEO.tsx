@@ -10,9 +10,9 @@ interface SEOProps {
 }
 
 const SITE_NAME = "Tågstrul"
-const DEFAULT_TITLE = "Tågstrul — Få ersättning när tåget är försenat"
+const DEFAULT_TITLE = "Tågstrul — Ersättning för Movingo-pendlare"
 const DEFAULT_DESCRIPTION =
-  "Sluta missa ersättningar. Vi bevakar dina Mälartåg-resor och hjälper dig kräva tillbaka pengar vid förseningar. Movingo-kort ger 50 kr redan vid 20 min försening."
+  "Har du Movingo-kort? Vi bevakar dina Mälartåg-resor och hjälper dig kräva ersättning vid förseningar. 50 kr redan vid 20 min försening."
 const SITE_URL = "https://tagstrul.se"
 const OG_IMAGE = `${SITE_URL}/og-image.png`
 

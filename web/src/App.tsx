@@ -1,6 +1,5 @@
 import { lazy, Suspense } from "react"
 import { BrowserRouter, Routes, Route } from "react-router"
-import { AuthProvider } from "@/components/AuthContext"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { OnboardingGuard } from "@/components/OnboardingGuard"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
@@ -14,6 +13,10 @@ import { AboutPage } from "@/pages/AboutPage"
 import { PrivacyPage } from "@/pages/PrivacyPage"
 import { TermsPage } from "@/pages/TermsPage"
 import { CookiePage } from "@/pages/CookiePage"
+import { RouteIndexPage } from "@/pages/RouteIndexPage"
+import { RoutePage } from "@/pages/RoutePage"
+import { BlogIndexPage } from "@/pages/BlogIndexPage"
+import { BlogPostPage } from "@/pages/BlogPostPage"
 
 const LoginPage = lazy(() =>
   import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage }))
@@ -57,39 +60,41 @@ function PageLoader() {
 export function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <BrowserRouter>
-          <PostHogPageTracker />
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/poster" element={<PosterPage />} />
-              <Route path="/om" element={<AboutPage />} />
-              <Route path="/integritet" element={<PrivacyPage />} />
-              <Route path="/villkor" element={<TermsPage />} />
-              <Route path="/cookies" element={<CookiePage />} />
-              <Route path="/design-system" element={<DesignSystemPage />} />
-              <Route path="/tack" element={<ThankYouPage />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route element={<ProtectedRoute />}>
-                <Route element={<OnboardingGuard />}>
-                  <Route path="/onboarding" element={<OnboardingPage />} />
-                  <Route path="/app" element={<AppLayout />}>
-                    <Route index element={<HomePage />} />
-                    <Route path="claim/:delayId" element={<ClaimPage />} />
-                    <Route path="routes" element={<RoutesPage />} />
-                    <Route path="profile" element={<ProfilePage />} />
-                  </Route>
+      <BrowserRouter>
+        <PostHogPageTracker />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/poster" element={<PosterPage />} />
+            <Route path="/om" element={<AboutPage />} />
+            <Route path="/integritet" element={<PrivacyPage />} />
+            <Route path="/villkor" element={<TermsPage />} />
+            <Route path="/cookies" element={<CookiePage />} />
+            <Route path="/stracka" element={<RouteIndexPage />} />
+            <Route path="/stracka/:route" element={<RoutePage />} />
+            <Route path="/blogg" element={<BlogIndexPage />} />
+            <Route path="/blogg/:slug" element={<BlogPostPage />} />
+            <Route path="/design-system" element={<DesignSystemPage />} />
+            <Route path="/tack" element={<ThankYouPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<OnboardingGuard />}>
+                <Route path="/onboarding" element={<OnboardingPage />} />
+                <Route path="/app" element={<AppLayout />}>
+                  <Route index element={<HomePage />} />
+                  <Route path="claim/:delayId" element={<ClaimPage />} />
+                  <Route path="routes" element={<RoutesPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
                 </Route>
               </Route>
-            </Routes>
-          </Suspense>
-          <PWAInstallBanner />
-          <CookieConsentBanner />
-          <Toaster position="bottom-center" />
-        </BrowserRouter>
-      </AuthProvider>
+            </Route>
+          </Routes>
+        </Suspense>
+        <PWAInstallBanner />
+        <CookieConsentBanner />
+        <Toaster position="bottom-center" />
+      </BrowserRouter>
     </ErrorBoundary>
   )
 }

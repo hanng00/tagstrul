@@ -1,12 +1,12 @@
 import { useState } from "react"
 import { useNavigate } from "react-router"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, ChevronDown, ChevronUp, Loader2 } from "lucide-react"
+import { ChevronRight, ChevronDown, ChevronUp, Loader2, Train } from "lucide-react"
 import { api } from "@/lib/api"
 import { searchStations } from "@/lib/stations"
 import { Logo } from "@/components/Logo"
 import { TrainCrashImage } from "@/components/TrainCrashImage"
-import { useAuth } from "@/components/AuthContext"
+import { useAuth } from "@/lib/queries"
 import { SEO } from "@/components/SEO"
 import {
   OrganizationSchema,
@@ -39,6 +39,14 @@ export function LandingPage() {
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => navigate("/blogg")}
+            className="h-10 px-3 text-sm sm:h-9"
+          >
+            Blogg
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => navigate("/om")}
             className="h-10 px-3 text-sm sm:h-9"
           >
@@ -67,8 +75,7 @@ export function LandingPage() {
               </h1>
 
               <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted-foreground sm:mt-5">
-                Vi bevakar dina Mälartåg och visar när du kan kräva ersättning.
-                Movingo-kort ger pengar tillbaka redan vid 20 min försening.
+                Har du Movingo-kort? Vi bevakar dina Mälartåg-resor och visar när du kan kräva ersättning — redan vid 20 min försening.
               </p>
 
               <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8">
@@ -110,10 +117,10 @@ export function LandingPage() {
           <ol className="mt-6 grid gap-6 sm:grid-cols-3" role="list">
             <li>
               <h3 className="text-base font-medium text-foreground">
-                Lägg in din pendling
+                Registrera ditt Movingo-kort
               </h3>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Vilka stationer och vilken tid du brukar åka. Tar tio sekunder.
+                Lägg in kortnummer och vilka sträckor du pendlar. Tar tio sekunder.
               </p>
             </li>
             <li>
@@ -130,7 +137,7 @@ export function LandingPage() {
                 Kräv ersättning direkt
               </h3>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Vi fyller i ansökan. Du trycker skicka. Klart på 30 sekunder.
+                Vi fyller i ansökan med ditt kortnummer. Du trycker skicka. Klart.
               </p>
             </li>
           </ol>
@@ -138,6 +145,8 @@ export function LandingPage() {
       </section>
 
       <FAQSection />
+
+      <PopularRoutesSection />
       </main>
 
       <footer className="border-t border-border section-padding py-6">
@@ -241,7 +250,7 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Skriv in din pendling så visar vi hur mycket du kunde ha krävt
-              tillbaka senaste veckan.
+              tillbaka med Movingo-kort senaste veckan.
             </p>
           </div>
 
@@ -384,29 +393,34 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
 
 const faqItems = [
   {
-    question: "Är det här lagligt?",
+    question: "Hur mycket ersättning får jag?",
     answer:
-      "Ja. EU-förordning 1371/2007 och svenska järnvägstrafiklagen ger dig rätt till ersättning vid förseningar. Vi hjälper dig bara att utnyttja rättigheter du redan har.",
+      "Med Movingo-kort får du 50 kr vid 20–39 min försening, 75 kr vid 40–59 min, och 100% av dagsvärdet vid 60+ min eller inställd avgång.",
   },
   {
-    question: "Hur tjänar ni pengar?",
+    question: "Hur lång tid tar det att få pengarna?",
     answer:
-      "Just nu är tjänsten gratis medan vi bygger och testar den. I framtiden kan vi ta en liten avgift på utbetalda ersättningar, men du betalar aldrig något i förskott.",
+      "Normalt 2–4 veckor från att du skickar in kravet. Vi hjälper dig följa upp statusen.",
   },
   {
-    question: "Varför gör ni det här?",
+    question: "Behöver jag spara kvitto?",
     answer:
-      "De flesta resenärer vet inte att de har rätt till ersättning, eller orkar inte fylla i formulären. Vi vill göra det enkelt att få tillbaka pengar du har rätt till.",
+      "Nej, med Movingo-kort räcker kortnumret. Du behöver inget kvitto eller biljett.",
+  },
+  {
+    question: "Är tjänsten gratis?",
+    answer:
+      "Ja, just nu är Tågstrul helt gratis. I framtiden kan vi ta en liten avgift på utbetalda ersättningar, men du betalar aldrig i förskott.",
   },
   {
     question: "Är mina uppgifter säkra?",
     answer:
-      "Vi lagrar endast det som krävs för att skicka in ditt krav. Vi säljer aldrig din data och du kan begära att radera ditt konto via mejl.",
+      "Vi lagrar endast det som krävs för att skicka in krav. Vi säljer aldrig din data och du kan radera ditt konto när som helst.",
   },
   {
     question: "Vad händer om kravet avslås?",
     answer:
-      "Du förlorar ingenting. Om tågbolaget avslår kravet har du inte betalat något och kan alltid överklaga själv om du vill.",
+      "Du förlorar ingenting. Tjänsten är gratis och du kan alltid överklaga själv om du vill.",
   },
 ]
 
@@ -445,6 +459,59 @@ function FAQSection() {
             </div>
           ))}
         </dl>
+      </div>
+    </section>
+  )
+}
+
+const popularRoutes = [
+  { from: "Stockholm C", to: "Uppsala C", slug: "stockholm-c-till-uppsala-c" },
+  { from: "Stockholm C", to: "Västerås C", slug: "stockholm-c-till-vasteras-c" },
+  { from: "Stockholm C", to: "Eskilstuna C", slug: "stockholm-c-till-eskilstuna-c" },
+  { from: "Uppsala C", to: "Arlanda C", slug: "uppsala-c-till-arlanda-c" },
+  { from: "Västerås C", to: "Eskilstuna C", slug: "vasteras-c-till-eskilstuna-c" },
+  { from: "Stockholm C", to: "Örebro C", slug: "stockholm-c-till-orebro-c" },
+]
+
+function PopularRoutesSection() {
+  return (
+    <section aria-labelledby="routes-heading" className="border-t border-border bg-muted/30 section-padding py-10 sm:py-12">
+      <div className="mx-auto max-w-5xl">
+        <div className="flex items-center justify-between">
+          <h2 id="routes-heading" className="text-lg font-semibold text-foreground">
+            Populära pendlarsträckor
+          </h2>
+          <a
+            href="/stracka"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Visa alla →
+          </a>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Se förseningsstatistik och ersättningsmöjligheter för vanliga sträckor i Mälardalen.
+        </p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {popularRoutes.map((route) => (
+            <a
+              key={route.slug}
+              href={`/stracka/${route.slug}`}
+              className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-foreground/20 hover:bg-muted/50"
+            >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                <Train className="size-4 text-muted-foreground" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {route.from} → {route.to}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Förseningar & ersättning
+                </p>
+              </div>
+            </a>
+          ))}
+        </div>
       </div>
     </section>
   )

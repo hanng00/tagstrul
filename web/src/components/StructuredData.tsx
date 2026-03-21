@@ -13,7 +13,7 @@ export function OrganizationSchema({
   name = "Tågstrul",
   url = SITE_URL,
   logo = `${SITE_URL}/icon-512.svg`,
-  description = "Tågstrul hjälper svenska tågpendlare att få ersättning vid förseningar. Vi bevakar dina resor automatiskt och gör det enkelt att kräva tillbaka pengar.",
+  description = "Tågstrul hjälper Movingo-pendlare i Mälardalen att få ersättning vid tågförseningar. Vi bevakar dina resor automatiskt och gör det enkelt att kräva tillbaka pengar.",
 }: OrganizationSchemaProps) {
   const schema = {
     "@context": "https://schema.org",
@@ -44,7 +44,7 @@ export function WebSiteSchema() {
     name: "Tågstrul",
     url: SITE_URL,
     description:
-      "Få ersättning när tåget är försenat. Vi bevakar dina Mälartåg-resor automatiskt.",
+      "Ersättning för Movingo-pendlare vid tågförseningar. Vi bevakar dina Mälartåg-resor automatiskt.",
     inLanguage: "sv-SE",
     potentialAction: {
       "@type": "SearchAction",
@@ -106,21 +106,14 @@ export function SoftwareApplicationSchema() {
       priceCurrency: "SEK",
     },
     description:
-      "Automatisk bevakning av tågförseningar och hjälp att kräva ersättning för Mälartåg och Movingo-kort.",
+      "Automatisk bevakning av tågförseningar för Movingo-pendlare. Få ersättning vid förseningar på Mälartåg.",
     featureList: [
       "Automatisk förseningsbevakning",
-      "Ersättningsberäkning",
+      "Ersättningsberäkning för Movingo-kort",
       "Förifylld ansökan",
       "Gratis att använda",
     ],
     screenshot: `${SITE_URL}/og-image.png`,
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "50",
-      bestRating: "5",
-      worstRating: "1",
-    },
   }
 
   return (
@@ -162,16 +155,16 @@ export function HowToSchema() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    name: "Hur du får ersättning för försenade tåg",
+    name: "Hur du får ersättning med Movingo-kort vid tågförsening",
     description:
-      "Steg-för-steg guide för att kräva ersättning när Mälartåg är försenade.",
+      "Steg-för-steg guide för Movingo-pendlare att kräva ersättning vid förseningar på Mälartåg.",
     totalTime: "PT2M",
     step: [
       {
         "@type": "HowToStep",
         position: 1,
-        name: "Lägg in din pendling",
-        text: "Ange vilka stationer du pendlar mellan och vilken tid du brukar åka. Tar tio sekunder.",
+        name: "Registrera ditt Movingo-kort",
+        text: "Lägg in kortnummer och vilka sträckor du pendlar. Tar tio sekunder.",
       },
       {
         "@type": "HowToStep",
@@ -183,7 +176,7 @@ export function HowToSchema() {
         "@type": "HowToStep",
         position: 3,
         name: "Kräv ersättning direkt",
-        text: "Vi fyller i ansökan. Du trycker skicka. Klart på 30 sekunder.",
+        text: "Vi fyller i ansökan med ditt kortnummer. Du trycker skicka. Klart.",
       },
     ],
   }
