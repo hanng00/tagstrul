@@ -12,6 +12,7 @@ import {
   Calendar,
   X,
   Info,
+  MapPin,
 } from "lucide-react"
 import { api } from "@/lib/api"
 import type { Delay } from "@/types"
@@ -63,6 +64,7 @@ export function HomePage() {
     handleRefresh,
     refetchDelays,
     refetchClaims,
+    hasRoutes,
     availableDates,
     activeDate,
     canGoNewer,
@@ -228,15 +230,37 @@ export function HomePage() {
           totalReceived === 0 &&
           delays.length === 0 && (
             <div className="mt-8 flex flex-col items-center justify-center py-8 text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                <Check className="size-5 text-muted-foreground" />
-              </div>
-              <p className="mt-4 text-sm font-medium text-foreground">
-                Inga ersättningar just nu
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Dina bevakade resor visas här om de blir försenade
-              </p>
+              {!hasRoutes ? (
+                <>
+                  <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                    <MapPin className="size-5 text-muted-foreground" />
+                  </div>
+                  <p className="mt-4 text-sm font-medium text-foreground">
+                    Du bevakar inga resor ännu
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Lägg till din pendling så hittar vi ersättningar åt dig automatiskt
+                  </p>
+                  <button
+                    onClick={() => navigate("/app/routes")}
+                    className="mt-4 rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
+                  >
+                    Lägg till pendling
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                    <Check className="size-5 text-muted-foreground" />
+                  </div>
+                  <p className="mt-4 text-sm font-medium text-foreground">
+                    Inga ersättningar just nu
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Dina bevakade resor visas här om de blir försenade
+                  </p>
+                </>
+              )}
             </div>
           )}
 

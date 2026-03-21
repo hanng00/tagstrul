@@ -1,16 +1,6 @@
 import { useMemo, useState } from "react"
-import { useDelays, useClaims } from "@/lib/queries"
-
-function toDateKey(iso: string | undefined) {
-  if (!iso) return ""
-  return iso.split("T")[0]
-}
-
-function hasDeparturePassed(date: string | undefined, time: string | undefined): boolean {
-  if (!date || !time) return false
-  const departure = new Date(`${date}T${time}:00`)
-  return departure.getTime() < Date.now()
-}
+import { useDelays, useClaims, useRoutes } from "@/lib/queries"
+import { toDateKey, hasDeparturePassed } from "@/lib/date-utils"
 
 export function useHomeData() {
   const {
@@ -25,8 +15,10 @@ export function useHomeData() {
     isFetching: claimsFetching,
     refetch: refetchClaims,
   } = useClaims()
+  const { data: routes = [], isLoading: routesLoading } = useRoutes()
 
-  const loading = delaysLoading || claimsLoading
+  const loading = delaysLoading || claimsLoading || routesLoading
+  const hasRoutes = routes.length > 0
   const refreshing = delaysFetching || claimsFetching
 
   const handleRefresh = () => {
@@ -130,6 +122,9 @@ export function useHomeData() {
     handleRefresh,
     refetchDelays,
     refetchClaims,
+
+    // Routes
+    hasRoutes,
 
     // Date navigation
     availableDates,

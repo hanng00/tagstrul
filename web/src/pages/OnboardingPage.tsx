@@ -26,6 +26,7 @@ export function OnboardingPage() {
   const [time, setTime] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showSkipWarning, setShowSkipWarning] = useState(false)
 
   const addRoute = useAddRoute()
   const updateProfile = useUpdateProfile()
@@ -152,13 +153,44 @@ export function OnboardingPage() {
       {step !== "welcome" && step !== "done" && (
         <div className="pb-6 text-center">
           <button
-            onClick={handleSkipOnboarding}
+            onClick={step === "route" ? () => setShowSkipWarning(true) : handleSkipOnboarding}
             disabled={isSubmitting}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
           >
             <SkipForward className="size-3.5" />
             Hoppa över
           </button>
+        </div>
+      )}
+
+      {showSkipWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-background p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-foreground">
+              Hoppa över pendling?
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Utan en pendling kan vi inte bevaka förseningar eller hitta ersättningar åt dig.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <Button
+                onClick={() => setShowSkipWarning(false)}
+                variant="outline"
+                className="flex-1 h-11 rounded-xl"
+              >
+                Avbryt
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowSkipWarning(false)
+                  handleSkipOnboarding()
+                }}
+                className="flex-1 h-11 rounded-xl bg-foreground text-background hover:bg-foreground/90"
+              >
+                Hoppa över ändå
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
