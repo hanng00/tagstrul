@@ -155,9 +155,6 @@ export function RoutePage() {
   }
 
   const delayRate = data ? Math.round((data.totalDelays / (7 * 2)) * 100) : 0
-  const avgCompensation = data && data.claimableDelays > 0
-    ? Math.round(data.estimatedCompensation / data.claimableDelays)
-    : 0
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
