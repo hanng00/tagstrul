@@ -16,6 +16,7 @@ export function initPostHog() {
     capture_pageleave: true,
     autocapture: true,
     persistence: "localStorage+cookie",
+    capture_exceptions: true,
   })
 }
 
