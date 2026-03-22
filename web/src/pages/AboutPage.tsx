@@ -1,6 +1,6 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ArrowLeft, MessageSquare, Send, Check } from "lucide-react"
-import { useNavigate } from "react-router"
+import { useNavigate, useSearchParams } from "react-router"
 import { Logo } from "@/components/Logo"
 import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api"
@@ -9,12 +9,22 @@ import { BreadcrumbSchema } from "@/components/StructuredData"
 
 export function AboutPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const requestType = searchParams.get("request")
+  
   const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState("")
   const [email, setEmail] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (requestType === "other-routes") {
+      setShowForm(true)
+      setMessage("Jag skulle vilja använda Tågstrul med en annan biljetttyp:\n\n")
+    }
+  }, [requestType])
 
   async function handleSubmit() {
     if (!message.trim()) return
@@ -25,7 +35,7 @@ export function AboutPage() {
       await api.submitFeedback({
         message: message.trim(),
         email: email.trim() || undefined,
-        source: "about_page",
+        source: requestType === "other-routes" ? "other_routes_request" : "about_page",
       })
       setSubmitted(true)
       setMessage("")

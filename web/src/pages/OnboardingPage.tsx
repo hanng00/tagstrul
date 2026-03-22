@@ -4,7 +4,7 @@ import { ArrowRight, Bell, Sparkles, Check, CreditCard, SkipForward, User } from
 import { Button } from "@/components/ui/button"
 import { StationInput } from "@/components/StationInput"
 import { useAddRoute, useUpdateProfile, useAddMovingoCard } from "@/lib/queries"
-import { MOVINGO_CARD_LABELS, type MovingoCardType, type MovingoCard } from "@/types"
+import { MOVINGO_CARD_LABELS, type MovingoCardType, type MovingoCard, isValidMovingoId, getMovingoIdError } from "@/types"
 import { Logo } from "@/components/Logo"
 import { events } from "@/lib/posthog"
 
@@ -452,6 +452,10 @@ function MovingoStep({
     new Date().toISOString().slice(0, 10),
   )
   const [showHelp, setShowHelp] = useState(false)
+  const [touched, setTouched] = useState(false)
+
+  const movingoIdError = touched && movingoId.length > 0 ? getMovingoIdError(movingoId) : null
+  const isValid = isValidMovingoId(movingoId) && price
 
   function expiryFromType(type: MovingoCardType, start: string): string {
     const d = new Date(start)
@@ -462,8 +466,10 @@ function MovingoStep({
   }
 
   function handleSubmit() {
+    setTouched(true)
+    if (!isValidMovingoId(movingoId)) return
     onAdd({
-      movingoId: movingoId.trim(),
+      movingoId: movingoId.trim().toUpperCase(),
       cardType,
       price: parseInt(price, 10),
       purchaseDate,
@@ -478,10 +484,10 @@ function MovingoStep({
           <CreditCard className="size-6 text-foreground" />
         </div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Har du Movingo-kort?
+          Lägg till Movingo-kort
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Lägg till ditt kort för att beräkna rätt ersättning
+          Vi stödjer Movingo i Mälardalstrafiks app på SJ-tåg
         </p>
       </div>
 
@@ -489,17 +495,24 @@ function MovingoStep({
         <div>
           <label className="flex flex-col gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">
-              Movingo-nummer
+              Movingo-nummer <span className="text-muted-foreground/50">(9–10 tecken)</span>
             </span>
             <input
               type="text"
               value={movingoId}
-              onChange={(e) => setMovingoId(e.target.value)}
-              placeholder="ABCD1E234"
+              onChange={(e) => setMovingoId(e.target.value.toUpperCase())}
+              onBlur={() => setTouched(true)}
+              placeholder="BWTF8E962"
+              maxLength={10}
               autoFocus
-              className="h-12 rounded-xl border border-input bg-background px-4 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground"
+              className={`h-12 rounded-xl border bg-background px-4 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground ${
+                movingoIdError ? "border-destructive" : "border-input"
+              }`}
             />
           </label>
+          {movingoIdError && (
+            <p className="mt-1.5 text-xs text-destructive">{movingoIdError}</p>
+          )}
           <button
             type="button"
             onClick={() => setShowHelp(!showHelp)}
@@ -511,9 +524,9 @@ function MovingoStep({
             <div className="mt-2 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
               <p className="font-medium text-foreground">Hitta ditt Movingo-nummer:</p>
               <ul className="mt-1.5 list-inside list-disc space-y-1">
+                <li>I Mälardalstrafiks app → Mina biljetter → fältet "Biljettnr."</li>
+                <li>På kvittot från köpet (9–10 tecken)</li>
                 <li>På framsidan av ditt fysiska kort</li>
-                <li>I Movingo-appen under "Mina biljetter"</li>
-                <li>På kvittot från köpet</li>
               </ul>
             </div>
           )}
@@ -561,13 +574,20 @@ function MovingoStep({
         </label>
       </div>
 
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        Endast Movingo i Mälardalstrafiks app på SJ-sträckor.{" "}
+        <a href="/om?request=other-routes" className="underline underline-offset-2 hover:no-underline" target="_blank">
+          Önska fler  
+        </a>
+      </p>
+
       {error && (
         <p className="mt-4 text-sm text-red-500">{error}</p>
       )}
 
       <Button
         onClick={handleSubmit}
-        disabled={!movingoId.trim() || !price || isSubmitting}
+        disabled={!isValid || isSubmitting}
         className="mt-8 h-12 w-full rounded-xl bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 disabled:opacity-50"
       >
         {isSubmitting ? (

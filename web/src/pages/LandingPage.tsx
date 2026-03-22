@@ -75,7 +75,7 @@ export function LandingPage() {
               </h1>
 
               <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted-foreground sm:mt-5">
-                Har du Movingo-kort? Vi bevakar dina Mälartåg-resor och visar när du kan kräva ersättning — redan vid 20 min försening.
+                Pendlar du med Movingo på SJ:s Mälartåg? Vi bevakar dina resor och visar när du kan kräva ersättning — redan vid 20 min försening.
               </p>
 
               <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8">
@@ -114,13 +114,16 @@ export function LandingPage() {
           <h2 id="how-it-works-heading" className="text-lg font-semibold text-foreground">
             Så funkar det
           </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            För dig med Movingo i Mälardalstrafiks app på SJ:s Mälartåg.
+          </p>
           <ol className="mt-6 grid gap-6 sm:grid-cols-3" role="list">
             <li>
               <h3 className="text-base font-medium text-foreground">
                 Registrera ditt Movingo-kort
               </h3>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Lägg in kortnummer och vilka sträckor du pendlar. Tar tio sekunder.
+                Lägg in kortnummer och vilka SJ-sträckor du pendlar. Tar tio sekunder.
               </p>
             </li>
             <li>
@@ -128,7 +131,7 @@ export function LandingPage() {
                 Vi hittar förseningar
               </h3>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Varje dag kollar vi Mälartågs data mot dina resor. Du behöver
+                Varje dag kollar vi SJ:s Mälartåg-data mot dina resor. Du behöver
                 inte göra något.
               </p>
             </li>
@@ -239,6 +242,8 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
     setResult(null)
     setError(null)
   }
+
+  const isZeroResult = result && result.amount === 0
 
   return (
     <section className="border-t border-border bg-muted/50 section-padding py-10 sm:py-12">
@@ -367,6 +372,19 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
                   </p>
                 </div>
 
+                {isZeroResult && (
+                  <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-left dark:border-amber-900/50 dark:bg-amber-950/30">
+                    <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+                      <strong>0 kr?</strong> Det kan bero på att sträckan inte trafikeras av SJ:s Mälartåg, 
+                      eller att det inte var några förseningar ≥20 min.
+                      Vi stödjer endast Movingo på SJ-opererade avgångar.{" "}
+                      <a href="/om?request=other-routes" className="underline underline-offset-2 hover:no-underline" target="_blank">
+                        Önska fler operatörer
+                      </a>
+                    </p>
+                  </div>
+                )}
+
                 <div className="mt-8 space-y-2">
                   <Button
                     onClick={onGetStarted}
@@ -393,9 +411,14 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
 
 const faqItems = [
   {
+    question: "Vilka biljetter och sträckor stöds?",
+    answer:
+      "Just nu stödjer vi endast Movingo-kort köpta i Mälardalstrafiks app, på SJ-opererade Mälartåg-avgångar (t.ex. Stockholm–Uppsala, Stockholm–Västerås, Stockholm–Eskilstuna). Andra operatörer som Västtrafik, SJ Regional, Tåg i Bergslagen eller lokaltrafik stöds inte ännu.",
+  },
+  {
     question: "Hur mycket ersättning får jag?",
     answer:
-      "Med Movingo-kort får du 50 kr vid 20–39 min försening, 75 kr vid 40–59 min, och 100% av dagsvärdet vid 60+ min eller inställd avgång.",
+      "Med Movingo-kort får du 50% vid 20–39 min försening, 75% vid 40–59 min, och 100% av dagsvärdet vid 60+ min eller inställd avgång.",
   },
   {
     question: "Hur lång tid tar det att få pengarna?",
@@ -489,7 +512,7 @@ function PopularRoutesSection() {
           </a>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
-          Se förseningsstatistik och ersättningsmöjligheter för vanliga sträckor i Mälardalen.
+          Se förseningsstatistik och ersättningsmöjligheter för SJ:s Mälartåg-sträckor.
         </p>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {popularRoutes.map((route) => (

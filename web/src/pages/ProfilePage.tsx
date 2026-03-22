@@ -13,9 +13,10 @@ import {
 } from "@/lib/queries"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
 import type { Profile, MovingoCard, MovingoCardType } from "@/types"
-import { MOVINGO_CARD_LABELS } from "@/types"
+import { MOVINGO_CARD_LABELS, isValidMovingoId, getMovingoIdError } from "@/types"
 import { PersonnummerInput } from "@/components/ui-extended/personnummer-input"
-import { PhoneInput, formatPhone, getPhoneDigits } from "@/components/ui-extended/phone-input"
+import { PhoneInput } from "@/components/ui-extended/phone-input"
+import { formatPhone, getPhoneDigits } from "@/components/ui-extended/phone-utils"
 import { PageHeader } from "@/components/AppLayout"
 
 const profileFields = [
@@ -412,6 +413,10 @@ function AddMovingoCardForm({
   const [purchaseDate, setPurchaseDate] = useState(
     new Date().toISOString().slice(0, 10)
   )
+  const [touched, setTouched] = useState(false)
+
+  const movingoIdError = touched && movingoId.length > 0 ? getMovingoIdError(movingoId) : null
+  const isValid = isValidMovingoId(movingoId) && price && purchaseDate
 
   function expiryFromType(type: MovingoCardType, start: string): string {
     const d = new Date(start)
@@ -419,6 +424,18 @@ function AddMovingoCardForm({
     else if (type === "movingo-90") d.setDate(d.getDate() + 90)
     else d.setDate(d.getDate() + 30)
     return d.toISOString().slice(0, 10)
+  }
+
+  function handleSubmit() {
+    setTouched(true)
+    if (!isValidMovingoId(movingoId)) return
+    onAdd({
+      movingoId: movingoId.trim().toUpperCase(),
+      cardType,
+      price: Number(price),
+      purchaseDate,
+      expiryDate: expiryFromType(cardType, purchaseDate),
+    })
   }
 
   return (
@@ -436,15 +453,22 @@ function AddMovingoCardForm({
       <div className="space-y-4">
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">
-            Movingo-nummer
+            Movingo-nummer <span className="text-muted-foreground/50">(9–10 tecken)</span>
           </span>
           <input
             type="text"
             value={movingoId}
-            onChange={(e) => setMovingoId(e.target.value)}
-            placeholder="ABCD1E234"
-            className="input-mobile rounded-lg border border-input bg-background px-3 text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground"
+            onChange={(e) => setMovingoId(e.target.value.toUpperCase())}
+            onBlur={() => setTouched(true)}
+            placeholder="BWTF8E962"
+            maxLength={10}
+            className={`input-mobile rounded-lg border bg-background px-3 text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground ${
+              movingoIdError ? "border-destructive" : "border-input"
+            }`}
           />
+          {movingoIdError && (
+            <p className="text-xs text-destructive">{movingoIdError}</p>
+          )}
         </label>
 
         <label className="flex flex-col gap-1.5">
@@ -490,20 +514,19 @@ function AddMovingoCardForm({
 
         <Button
           className="input-mobile w-full rounded-lg bg-foreground font-semibold text-background hover:bg-foreground/90"
-          onClick={() =>
-            onAdd({
-              movingoId: movingoId.trim(),
-              cardType,
-              price: Number(price),
-              purchaseDate,
-              expiryDate: expiryFromType(cardType, purchaseDate),
-            })
-          }
-          disabled={!movingoId.trim() || !price || !purchaseDate}
+          onClick={handleSubmit}
+          disabled={!isValid}
         >
           Spara kort
         </Button>
       </div>
+
+      <p className="mt-4 text-center text-xs text-muted-foreground">
+        Endast Movingo i Mälardalstrafiks app på SJ-sträckor.{" "}
+        <a href="/om?request=other-routes" className="underline underline-offset-2 hover:no-underline" target="_blank">
+          Önska fler
+        </a>
+      </p>
     </div>
   )
 }
