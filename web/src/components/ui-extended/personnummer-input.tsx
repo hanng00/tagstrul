@@ -1,12 +1,6 @@
 import * as React from "react"
 import { Input } from "@/components/ui/input"
-import {
-  formatPersonnummerLive,
-  formatPersonnummer,
-  validatePersonnummer,
-} from "@/lib/personnummer"
-
-export { formatPersonnummer, validatePersonnummer }
+import { formatPersonnummerLive } from "@/lib/personnummer"
 
 interface PersonnummerInputProps
   extends Omit<React.ComponentProps<"input">, "onChange" | "value" | "type"> {

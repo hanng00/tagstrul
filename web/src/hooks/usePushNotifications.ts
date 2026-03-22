@@ -10,6 +10,16 @@ export function usePushNotifications() {
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
+  const checkSubscription = useCallback(async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready
+      const subscription = await registration.pushManager.getSubscription()
+      setIsSubscribed(!!subscription)
+    } catch {
+      setIsSubscribed(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
       setPermission("unsupported")
@@ -21,17 +31,7 @@ export function usePushNotifications() {
     if (Notification.permission === "granted" && isAuthenticated) {
       checkSubscription()
     }
-  }, [isAuthenticated])
-
-  const checkSubscription = useCallback(async () => {
-    try {
-      const registration = await navigator.serviceWorker.ready
-      const subscription = await registration.pushManager.getSubscription()
-      setIsSubscribed(!!subscription)
-    } catch {
-      setIsSubscribed(false)
-    }
-  }, [])
+  }, [isAuthenticated, checkSubscription])
 
   const subscribe = useCallback(async () => {
     if (!isAuthenticated) return false

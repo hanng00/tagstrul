@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router"
+import { useQuery } from "@tanstack/react-query"
 import {
   Users,
   Route,
@@ -63,16 +64,25 @@ interface AdminStats {
 
 const ADMIN_SECRET_KEY = "tagstrul_admin_secret"
 
+function useAdminStats(secret: string) {
+  return useQuery({
+    queryKey: ["admin", "stats", secret],
+    queryFn: () => publicRequest<AdminStats>(`/admin/stats?secret=${encodeURIComponent(secret)}`),
+    enabled: !!secret,
+    staleTime: 0,
+    retry: false,
+  })
+}
+
 export function AdminPage() {
   const [searchParams] = useSearchParams()
-  const [stats, setStats] = useState<AdminStats | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [secret, setSecret] = useState(() => {
     return searchParams.get("secret") || localStorage.getItem(ADMIN_SECRET_KEY) || ""
   })
   const [showFeedback, setShowFeedback] = useState(false)
   const [showStations, setShowStations] = useState(false)
+
+  const { data: stats, isLoading, error, refetch, isFetching } = useAdminStats(secret)
 
   useEffect(() => {
     if (searchParams.get("secret")) {
@@ -80,32 +90,13 @@ export function AdminPage() {
     }
   }, [searchParams])
 
-  async function fetchStats() {
-    if (!secret) {
-      setError("Admin secret required")
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const data = await publicRequest<AdminStats>(`/admin/stats?secret=${encodeURIComponent(secret)}`)
-      setStats(data)
-      localStorage.setItem(ADMIN_SECRET_KEY, secret)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch stats")
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    fetchStats()
-  }, [])
+    if (stats) {
+      localStorage.setItem(ADMIN_SECRET_KEY, secret)
+    }
+  }, [stats, secret])
 
-  if (!secret && !loading) {
+  if (!secret) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background p-4">
         <div className="w-full max-w-sm space-y-4">
@@ -117,18 +108,12 @@ export function AdminPage() {
             onChange={(e) => setSecret(e.target.value)}
             className="input-mobile w-full rounded-lg border border-input bg-background px-3 text-foreground outline-none focus:border-foreground"
           />
-          <button
-            onClick={fetchStats}
-            className="input-mobile w-full rounded-lg bg-foreground font-semibold text-background hover:bg-foreground/90"
-          >
-            Logga in
-          </button>
         </div>
       </div>
     )
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background">
         <TrainLoader size="md" />
@@ -139,12 +124,11 @@ export function AdminPage() {
   if (error) {
     return (
       <div className="flex min-h-svh flex-col items-center justify-center gap-4 bg-background p-4">
-        <p className="text-sm text-destructive">{error}</p>
+        <p className="text-sm text-destructive">{error instanceof Error ? error.message : "Failed to fetch stats"}</p>
         <button
           onClick={() => {
             localStorage.removeItem(ADMIN_SECRET_KEY)
             setSecret("")
-            setError(null)
           }}
           className="rounded-lg bg-muted px-4 py-2 text-sm font-medium text-foreground"
         >
@@ -171,11 +155,11 @@ export function AdminPage() {
             </p>
           </div>
           <button
-            onClick={fetchStats}
-            disabled={loading}
+            onClick={() => refetch()}
+            disabled={isFetching}
             className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
           >
-            <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} />
           </button>
         </div>
       </header>

@@ -40,8 +40,8 @@ function generateSpanId(): string {
 function getBrowserHeaders(): Record<string, string> {
   const traceId = generateTraceId();
   const spanId = generateSpanId();
-  const userAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
-  const secChUa = SEC_CH_UA_OPTIONS[Math.floor(Math.random() * SEC_CH_UA_OPTIONS.length)];
+  const userAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)] ?? USER_AGENTS[0];
+  const secChUa = SEC_CH_UA_OPTIONS[Math.floor(Math.random() * SEC_CH_UA_OPTIONS.length)] ?? SEC_CH_UA_OPTIONS[0];
   
   return {
     'accept': '*/*',
@@ -52,15 +52,15 @@ function getBrowserHeaders(): Record<string, string> {
     'priority': 'u=1, i',
     'referer': 'https://www.sj.se/',
     'request-id': `|${traceId}.${spanId}`,
-    'sec-ch-ua': secChUa.ua,
-    'sec-ch-ua-mobile': secChUa.mobile,
-    'sec-ch-ua-platform': secChUa.platform,
+    'sec-ch-ua': secChUa!.ua,
+    'sec-ch-ua-mobile': secChUa!.mobile,
+    'sec-ch-ua-platform': secChUa!.platform,
     'sec-fetch-dest': 'empty',
     'sec-fetch-mode': 'cors',
     'sec-fetch-site': 'same-site',
     'sec-gpc': '1',
     'traceparent': `00-${traceId}-${spanId}-01`,
-    'user-agent': userAgent,
+    'user-agent': userAgent!,
     'x-api.sj.se-language': 'sv',
     'x-client-name': 'sjse-delay-compensation-client',
     'x-client-version': 'PLACEHOLDER_VERSION',
@@ -112,7 +112,7 @@ async function fetchWithRetry<T>(
       }
 
       const responseBody = await parseResponseBody(response);
-      const error = parseSJErrorResponse(response.status, responseBody, endpoint);
+      const error = parseSJErrorResponse(response.status, responseBody);
 
       console.error(`[SJ API] Error on attempt ${attempt + 1}:`, {
         endpoint,
@@ -133,7 +133,7 @@ async function fetchWithRetry<T>(
         throw error;
       }
 
-      const networkError = createNetworkError(error);
+      const networkError = createNetworkError();
       console.error(`[SJ API] Network error on attempt ${attempt + 1}:`, {
         endpoint,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -147,7 +147,7 @@ async function fetchWithRetry<T>(
     }
   }
 
-  throw lastError ?? createNetworkError(new Error('Max retries exceeded'));
+  throw lastError ?? createNetworkError();
 }
 
 export interface SJLocation {

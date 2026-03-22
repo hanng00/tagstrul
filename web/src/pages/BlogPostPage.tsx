@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/queries"
 import { SEO } from "@/components/SEO"
 import { BreadcrumbSchema } from "@/components/StructuredData"
-import { blogPosts } from "./BlogIndexPage"
+import { blogPosts } from "@/data/blog-posts"
 
 interface BlogContent {
   title: string

@@ -8,11 +8,13 @@ import {
   ChevronDown,
   ExternalLink,
 } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { PersonnummerInput, formatPersonnummer, validatePersonnummer } from "@/components/ui-extended/personnummer-input"
-import { PhoneInput, getPhoneDigits, formatPhone } from "@/components/ui-extended/phone-input"
+import { PersonnummerInput } from "@/components/ui-extended/personnummer-input"
+import { formatPersonnummer, validatePersonnummer } from "@/lib/personnummer"
+import { PhoneInput } from "@/components/ui-extended/phone-input"
+import { getPhoneDigits, formatPhone } from "@/components/ui-extended/phone-utils"
 import { TrainLoader } from "@/components/ui/train-loader"
 import { useDelay, useProfile } from "@/lib/queries"
 import { ApiError } from "@/lib/api-client"
@@ -79,11 +81,8 @@ export function ClaimPage() {
   const isLoading =
     startClaim.isPending || submitContact.isPending || submitBank.isPending || confirmClaim.isPending
 
-  useEffect(() => {
-    if (currentError) {
-      setStep("error")
-    }
-  }, [currentError])
+  const errorStep = currentError ? "error" : null
+  const effectiveStep = errorStep ?? step
 
   function handleStartClaim() {
     if (!delayId) return
@@ -223,10 +222,10 @@ export function ClaimPage() {
         </div>
       </PageHeader>
 
-      <StepIndicator currentStep={step} />
+      <StepIndicator currentStep={effectiveStep} />
 
       <div className="flex flex-1 flex-col px-5 pt-4 pb-6">
-        {step === "travel" && (
+        {effectiveStep === "travel" && (
           <TravelStep
             delay={delay}
             loading={isLoading}
@@ -234,7 +233,7 @@ export function ClaimPage() {
           />
         )}
 
-        {step === "contact" && (
+        {effectiveStep === "contact" && (
           <ContactStep
             contact={contact}
             setContact={setContact}
@@ -244,7 +243,7 @@ export function ClaimPage() {
           />
         )}
 
-        {step === "bank" && (
+        {effectiveStep === "bank" && (
           <BankStep
             bank={bank}
             setBank={setBank}
@@ -255,7 +254,7 @@ export function ClaimPage() {
           />
         )}
 
-        {step === "confirm" && (
+        {effectiveStep === "confirm" && (
           <ConfirmStep
             delay={delay}
             contact={contact}
@@ -266,7 +265,7 @@ export function ClaimPage() {
           />
         )}
 
-        {step === "success" && result && (
+        {effectiveStep === "success" && result && (
           <SuccessStep
             result={result}
             delay={delay}
@@ -274,7 +273,7 @@ export function ClaimPage() {
           />
         )}
 
-        {step === "error" && (
+        {effectiveStep === "error" && (
           <ErrorStep
             error={currentError}
             delay={delay}

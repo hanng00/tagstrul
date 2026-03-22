@@ -226,7 +226,7 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
         delays: data.claimableDelays,
         amount: data.estimatedCompensation,
       })
-    } catch (e) {
+    } catch {
       setError("Kunde inte hämta data. Försök igen.")
     } finally {
       setCalculating(false)

@@ -1,42 +1,55 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useSyncExternalStore } from "react"
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>
 }
 
+function getIsStandalone(): boolean {
+  if (typeof window === "undefined") return false
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  )
+}
+
+function getIsIOS(): boolean {
+  if (typeof navigator === "undefined") return false
+  return /iPad|iPhone|iPod/.test(navigator.userAgent)
+}
+
+const subscribeToDisplayMode = (callback: () => void) => {
+  const mq = window.matchMedia("(display-mode: standalone)")
+  mq.addEventListener("change", callback)
+  return () => mq.removeEventListener("change", callback)
+}
+
 export function usePWAInstall() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [isInstalled, setIsInstalled] = useState(false)
-  const [isIOS, setIsIOS] = useState(false)
+  const isStandalone = useSyncExternalStore(subscribeToDisplayMode, getIsStandalone, () => false)
+  const isIOS = getIsIOS()
+  const [wasInstalled, setWasInstalled] = useState(false)
+
+  const isInstalled = isStandalone || wasInstalled
 
   useEffect(() => {
-    // Check if already installed
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as Navigator & { standalone?: boolean }).standalone === true
-
-    setIsInstalled(isStandalone)
-
-    // Detect iOS (needs manual install instructions)
-    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-    setIsIOS(iOS)
-
-    // Capture the install prompt event
     const handler = (e: Event) => {
       e.preventDefault()
       setInstallPrompt(e as BeforeInstallPromptEvent)
     }
 
-    window.addEventListener("beforeinstallprompt", handler)
-
-    // Listen for successful install
-    window.addEventListener("appinstalled", () => {
-      setIsInstalled(true)
+    const installedHandler = () => {
+      setWasInstalled(true)
       setInstallPrompt(null)
-    })
+    }
 
-    return () => window.removeEventListener("beforeinstallprompt", handler)
+    window.addEventListener("beforeinstallprompt", handler)
+    window.addEventListener("appinstalled", installedHandler)
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler)
+      window.removeEventListener("appinstalled", installedHandler)
+    }
   }, [])
 
   const promptInstall = useCallback(async () => {

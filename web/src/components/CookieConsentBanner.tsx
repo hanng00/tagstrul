@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { Link } from "react-router"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -27,14 +27,16 @@ function setStoredConsent(status: "accepted" | "rejected") {
   }
 }
 
-export function CookieConsentBanner() {
-  const [status, setStatus] = useState<ConsentStatus>("accepted") // Default to accepted to avoid flash
-  const [mounted, setMounted] = useState(false)
+const subscribeToStorage = (callback: () => void) => {
+  window.addEventListener("storage", callback)
+  return () => window.removeEventListener("storage", callback)
+}
 
-  useEffect(() => {
-    setStatus(getStoredConsent())
-    setMounted(true)
-  }, [])
+const getServerSnapshot = (): ConsentStatus => "accepted"
+
+export function CookieConsentBanner() {
+  const storedStatus = useSyncExternalStore(subscribeToStorage, getStoredConsent, getServerSnapshot)
+  const [status, setStatus] = useState<ConsentStatus>(storedStatus)
 
   function handleAccept() {
     setStoredConsent("accepted")
@@ -46,8 +48,8 @@ export function CookieConsentBanner() {
     setStatus("rejected")
   }
 
-  // Don't render on server or if consent already given
-  if (!mounted || status !== "pending") {
+  // Don't render if consent already given
+  if (status !== "pending" && storedStatus !== "pending") {
     return null
   }
 
@@ -99,16 +101,3 @@ export function CookieConsentBanner() {
   )
 }
 
-export function useCookieConsent() {
-  const [consent, setConsent] = useState<ConsentStatus>("pending")
-
-  useEffect(() => {
-    setConsent(getStoredConsent())
-  }, [])
-
-  return {
-    hasConsent: consent === "accepted",
-    isPending: consent === "pending",
-    isRejected: consent === "rejected",
-  }
-}
