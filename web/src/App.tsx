@@ -59,8 +59,8 @@ function PageLoader() {
 
 export function App() {
   return (
-    <ErrorBoundary>
-      <BrowserRouter>
+    <BrowserRouter>
+      <ErrorBoundary>
         <PostHogPageTracker />
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -94,8 +94,8 @@ export function App() {
         <PWAInstallBanner />
         <CookieConsentBanner />
         <Toaster position="bottom-center" />
-      </BrowserRouter>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </BrowserRouter>
   )
 }
 
