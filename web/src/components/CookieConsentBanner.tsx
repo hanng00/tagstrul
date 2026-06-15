@@ -1,7 +1,8 @@
-import { useState, useSyncExternalStore } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
 import { Link } from "react-router"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { setGaConsent } from "@/lib/ga"
 
 const COOKIE_CONSENT_KEY = "cookie-consent"
 
@@ -38,14 +39,21 @@ export function CookieConsentBanner() {
   const storedStatus = useSyncExternalStore(subscribeToStorage, getStoredConsent, getServerSnapshot)
   const [status, setStatus] = useState<ConsentStatus>(storedStatus)
 
+  // Re-apply GA consent on load to match the stored choice (default is denied).
+  useEffect(() => {
+    if (storedStatus === "accepted") setGaConsent(true)
+  }, [storedStatus])
+
   function handleAccept() {
     setStoredConsent("accepted")
     setStatus("accepted")
+    setGaConsent(true)
   }
 
   function handleReject() {
     setStoredConsent("rejected")
     setStatus("rejected")
+    setGaConsent(false)
   }
 
   // Don't render if consent already given

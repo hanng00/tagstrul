@@ -169,7 +169,7 @@ export async function writeTrainSnapshots(departures: TrainDeparture[]): Promise
       PutRequest: {
         Item: {
           PK: `TRAIN#${d.date}`,
-          SK: `DEP#${d.fromStation}#${d.scheduledDeparture}#${d.trainId}`,
+          SK: `DEP#${d.fromStation}#${d.toStation}#${d.scheduledDeparture}#${d.trainId}`,
           ...d,
           fetchedAt: new Date().toISOString(),
         },

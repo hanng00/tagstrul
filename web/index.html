@@ -60,6 +60,21 @@
     <!-- DNS Prefetch -->
     <link rel="dns-prefetch" href="https://api.tagstrul.se" />
     
+    <!-- Google tag (gtag.js) — analytics_storage denied until consent -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9LLE8S8X4K"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: 'denied',
+      });
+      gtag('config', 'G-9LLE8S8X4K', { send_page_view: false });
+    </script>
+
     <!-- Structured Data for Site Name -->
     <script type="application/ld+json">
     {
