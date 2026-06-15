@@ -148,12 +148,14 @@ export async function getDelay(uid: string, delayId: string): Promise<(Delay & {
 
 export async function markDelayClaimed(uid: string, delayId: string): Promise<void> {
   await client.send(
-    new PutCommand({
+    new UpdateCommand({
       TableName: TABLE,
-      Item: {
+      Key: {
         PK: `USER#${uid}`,
         SK: `DELAY#${delayId}`,
       },
+      UpdateExpression: 'SET claimed = :claimed',
+      ExpressionAttributeValues: { ':claimed': true },
       ConditionExpression: 'attribute_exists(PK)',
     })
   );
@@ -203,15 +205,16 @@ export async function putClaim(uid: string, claim: Claim): Promise<void> {
     })
   );
 
-  // Mark the delay as claimed
+  // Mark the delay as claimed without overwriting the rest of the delay record
   await client.send(
-    new PutCommand({
+    new UpdateCommand({
       TableName: TABLE,
-      Item: {
+      Key: {
         PK: `USER#${uid}`,
         SK: `DELAY#${claim.delayId}`,
-        claimed: true,
       },
+      UpdateExpression: 'SET claimed = :claimed',
+      ExpressionAttributeValues: { ':claimed': true },
       ConditionExpression: 'attribute_exists(PK)',
     })
   );
