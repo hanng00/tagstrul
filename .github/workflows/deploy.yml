@@ -1,10 +1,10 @@
 name: Build and Deploy CDK Stacks
 
 on:
+  pull_request:
+    branches: [develop]        # CI on feature branch PRs
   push:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]  # CI + Deploy on push/merge
 
 permissions:
   id-token: write
@@ -33,7 +33,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE }}
-          aws-region: eu-west-1
+          aws-region: eu-north-1
 
       - name: Checkout Repository
         uses: actions/checkout@v2
