@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Calendar,
   X,
-  Info,
   MapPin,
 } from "lucide-react"
 import { api } from "@/lib/api"
@@ -88,96 +87,70 @@ export function HomePage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <PageHeader>
+      <PageHeader sticky={false}>
         <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">Hem</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Översikt över dina ersättningar
-            </p>
-          </div>
+          <h1 className="text-sm font-medium text-muted-foreground">
+            Du har fått tillbaka
+          </h1>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95 disabled:opacity-50"
+            className="-mt-2 -mr-2 flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95 disabled:opacity-50"
             aria-label="Uppdatera"
           >
             <RefreshCw className={cn("size-4", refreshing && "animate-spin")} />
           </button>
         </div>
+        <p className="font-sign mt-1 text-7xl leading-none font-bold text-signal">
+          {totalReceived}
+          <span className="ml-2 text-3xl font-semibold">kr</span>
+        </p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {pendingClaims.length > 0 ? (
+            <>
+              <span className="font-semibold text-foreground tabular-nums">
+                ~{totalPending} kr
+              </span>{" "}
+              väntar på svar från SJ
+            </>
+          ) : totalReceived === 0 ? (
+            "Kräv ersättning för en försenad resa så hamnar pengarna här."
+          ) : (
+            "Inga krav väntar på svar just nu."
+          )}
+        </p>
       </PageHeader>
 
       <div className="flex-1 app-padding pb-8">
-        {/* Hero: Total Received with Pending - always visible */}
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-start justify-between">
-            <p className="text-sm font-medium text-muted-foreground">
-              Fått tillbaka totalt
-            </p>
-            {totalReceived === 0 && pendingClaims.length === 0 && (
-              <button
-                className="group relative"
-                onClick={(e) => {
-                  const tooltip = e.currentTarget.querySelector('[data-tooltip]')
-                  tooltip?.classList.toggle('hidden')
-                }}
-              >
-                <Info className="size-4 text-muted-foreground/60 hover:text-muted-foreground" />
-                <div
-                  data-tooltip
-                  className="absolute right-0 top-6 z-10 hidden w-56 rounded-lg border border-border bg-popover p-3 text-left text-xs text-muted-foreground shadow-lg"
-                >
-                  Kräv ersättning för försenade resor så visas summan här
+        {pendingClaims.length > 0 && (
+          <Collapsible open={showPending} onOpenChange={setShowPending} className="mb-6">
+            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-left">
+              <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Clock className="size-4 text-muted-foreground" />
+                Skickade krav ({pendingClaims.length})
+              </span>
+              <ChevronDown
+                className={cn(
+                  "size-4 text-muted-foreground transition-transform",
+                  showPending && "rotate-180"
+                )}
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <ScrollArea className="mt-2 max-h-72">
+                <div className="space-y-2">
+                  {pendingClaims.map((claim) => (
+                    <PendingClaimCard
+                      key={claim.claimId}
+                      claim={claim}
+                      onResolved={() => refetchClaims()}
+                    />
+                  ))}
                 </div>
-              </button>
-            )}
-          </div>
-          <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-foreground">
-            {totalReceived}
-            <span className="ml-1 text-lg font-medium text-muted-foreground">kr</span>
-          </p>
-
-          {/* Pending claims row */}
-          {pendingClaims.length > 0 && (
-            <Collapsible
-              open={showPending}
-              onOpenChange={setShowPending}
-              className="mt-4 border-t border-border pt-4"
-            >
-              <CollapsibleTrigger className="flex w-full items-center justify-between text-left">
-                <div className="flex items-center gap-2">
-                  <Clock className="size-3.5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Väntar på svar</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium tabular-nums text-foreground">
-                    ~{totalPending} kr
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "size-4 text-muted-foreground transition-transform",
-                      showPending && "rotate-180"
-                    )}
-                  />
-                </div>
-              </CollapsibleTrigger>
-
-              <CollapsibleContent>
-                <ScrollArea className="mt-3 max-h-48">
-                  <div className="space-y-2 pr-3">
-                    {pendingClaims.map((claim) => (
-                      <PendingClaimCard
-                        key={claim.claimId}
-                        claim={claim}
-                        onResolved={() => refetchClaims()}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CollapsibleContent>
-            </Collapsible>
-          )}
-        </div>
+              </ScrollArea>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
 
         {state === HomeState.NO_ROUTES ? (
           <div className="mt-8 flex flex-col items-center justify-center py-8 text-center">
@@ -201,13 +174,16 @@ export function HomePage() {
           <>
             {/* Claimable Routes */}
             <section className="mt-6">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-medium text-foreground">
-                  Ersättningar att kräva{claimable.length > 0 && ` (${claimable.length})`}
+              <div className="mb-3 flex items-baseline justify-between border-b-2 border-foreground pb-2">
+                <h2 className="font-sign text-2xl font-bold text-foreground">
+                  Att kräva
                 </h2>
                 {claimable.length > 0 && (
-                  <span className="text-sm font-semibold tabular-nums text-money">
-                    {claimable.reduce((s, d) => s + d.estimatedCompensation, 0)} kr
+                  <span className="text-sm text-muted-foreground">
+                    {claimable.length} {claimable.length === 1 ? "resa" : "resor"},{" "}
+                    <span className="font-semibold text-foreground tabular-nums">
+                      {claimable.reduce((s, d) => s + d.estimatedCompensation, 0)} kr
+                    </span>
                   </span>
                 )}
               </div>
@@ -227,16 +203,16 @@ export function HomePage() {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-8 text-center">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-                    <Check className="size-4 text-muted-foreground" />
+                <div className="flex items-start gap-3 py-5">
+                  <Check className="mt-0.5 size-5 shrink-0 text-kronor" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      Inget att kräva den här dagen
+                    </p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      Vi bevakar dina resor och säger till när ett tåg blir 20 minuter sent.
+                    </p>
                   </div>
-                  <p className="mt-3 text-sm font-medium text-muted-foreground">
-                    Inga förseningar att kräva
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Vi bevakar dina resor och meddelar dig vid förseningar
-                  </p>
                 </div>
               )}
             </section>
@@ -311,7 +287,7 @@ export function HomePage() {
 
             {/* Date picker */}
             {availableDates.length > 1 && (
-              <div className="mt-6 flex items-center justify-between rounded-lg bg-muted/30 px-3 py-3 sm:px-4">
+              <div className="mt-6 flex items-center justify-between rounded-lg border border-border bg-card px-2 py-2">
                 <button
                   onClick={goOlder}
                   disabled={!canGoOlder}
@@ -322,7 +298,7 @@ export function HomePage() {
                 </button>
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-sm font-semibold text-foreground">
                     {activeDate ? formatDateFull(parseDateLocal(activeDate)) : "—"}
                   </span>
                 </div>
@@ -353,7 +329,7 @@ function SmallDelayRow({ delay }: { delay: Delay }) {
       </div>
       <div className="flex shrink-0 items-center gap-2 tabular-nums">
         <span className="text-xs">{delay.scheduledDeparture}</span>
-        <span className="text-destructive/70">+{delay.delayMinutes} min</span>
+        <span className="font-semibold text-late">+{delay.delayMinutes} min</span>
       </div>
     </div>
   )

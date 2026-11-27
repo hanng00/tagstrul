@@ -48,9 +48,9 @@ export function RoutesPage() {
   return (
     <div className="flex flex-1 flex-col">
       <PageHeader>
-        <h1 className="text-xl font-semibold text-foreground">Pendlingar</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Vi bevakar dessa resor åt dig
+        <h1 className="font-sign text-3xl leading-none font-bold text-foreground">Pendlingar</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Vi bevakar de här avgångarna åt dig
         </p>
       </PageHeader>
 
@@ -60,22 +60,22 @@ export function RoutesPage() {
             {routes.map((route, i) => (
               <div
                 key={route.routeId}
-                className="animate-fade-up flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3.5"
+                className="animate-fade-up flex items-center gap-4 rounded-lg border border-border bg-card px-4 py-3.5"
                 style={{ animationDelay: `${i * 50}ms` }}
               >
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <span>{route.fromStation}</span>
-                    <span className="text-muted-foreground">↔</span>
-                    <span>{route.toStation}</span>
-                  </div>
-                  {route.departureTime && (
-                    <p className="mt-1 text-xs tabular-nums text-muted-foreground">
-                      Avgång {route.departureTime}
-                    </p>
-                  )}
+                <span className="font-sign w-14 shrink-0 text-2xl leading-none font-bold text-foreground">
+                  {route.departureTime ?? "Alla"}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-sign truncate text-xl leading-tight font-bold text-foreground">
+                    {route.toStation}
+                  </p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    från {route.fromStation}
+                  </p>
                 </div>
               <button
+                  aria-label={`Sluta bevaka ${route.fromStation} till ${route.toStation}`}
                   onClick={() => handleDelete(route.routeId)}
                   disabled={deleteRoute.isPending}
                   className="flex btn-icon-touch shrink-0 items-center justify-center rounded-lg text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
@@ -108,7 +108,7 @@ export function RoutesPage() {
         ) : (
           <button
             onClick={() => setShowForm(true)}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-4 text-sm font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-input py-4 text-sm font-semibold text-foreground transition-colors hover:border-foreground hover:bg-card"
           >
             <Plus className="size-4" />
             Lägg till pendling

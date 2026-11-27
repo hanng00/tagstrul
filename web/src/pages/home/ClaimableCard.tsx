@@ -9,7 +9,7 @@ function daysUntil(iso: string) {
   return Math.max(0, Math.ceil(diff / 86_400_000))
 }
 
-function DeadlineBadge({
+function DeadlineNote({
   days,
   urgent,
 }: {
@@ -18,18 +18,30 @@ function DeadlineBadge({
 }) {
   if (urgent && days !== null) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive">
-        <AlertTriangle className="size-3" />
-        {days} dagar kvar
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-late">
+        <AlertTriangle className="size-3.5" />
+        {days === 1 ? "1 dag kvar att kräva" : `${days} dagar kvar att kräva`}
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-      <AlertTriangle className="size-3" />
-      Kräv inom 30 dagar
+    <span className="text-xs text-muted-foreground">
+      {days !== null ? `${days} dagar kvar att kräva` : "Kräv inom 30 dagar"}
     </span>
   )
+}
+
+function addMinutes(hhmm: string, minutes: number) {
+  const m = /^(\d{1,2}):(\d{2})/.exec(hhmm)
+  if (!m) return null
+  const total = (Number(m[1]) * 60 + Number(m[2]) + minutes) % (24 * 60)
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`
+}
+
+function formatDay(iso: string) {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })
 }
 
 export function ClaimableCard({
@@ -78,73 +90,73 @@ export function ClaimableCard({
     }
   }
 
+  const newTime = delay.cancelled
+    ? null
+    : addMinutes(delay.scheduledDeparture, delay.delayMinutes)
+
   return (
     <div
       style={style}
-      className="animate-fade-up rounded-xl border border-border bg-card text-left transition-all"
+      className="animate-fade-up overflow-hidden rounded-lg border border-border bg-card text-left"
     >
-      <div className="p-4">
-        {/* Top row: Date + Deadline */}
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">{delay.date}</span>
-          <DeadlineBadge days={deadlineDays} urgent={urgent} />
+      {/* Departure-board row: time | destination | amount */}
+      <button
+        onClick={onClick}
+        className="grid w-full grid-cols-[4.25rem_1fr_auto] items-start gap-3 p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-2"
+      >
+        <div className="font-sign leading-none">
+          <span
+            className={
+              delay.cancelled
+                ? "text-2xl font-bold text-muted-foreground line-through decoration-late decoration-2"
+                : "text-2xl font-bold text-foreground"
+            }
+          >
+            {delay.scheduledDeparture}
+          </span>
+          <span className="mt-1.5 block text-lg font-bold text-late">
+            {delay.cancelled ? "Inställt" : newTime ?? `+${delay.delayMinutes}`}
+          </span>
         </div>
 
-        {/* Route */}
-        <p className="mt-1 text-sm font-medium text-foreground">
-          <span className="tabular-nums">{delay.scheduledDeparture}</span>
-          <span className="mx-1 text-muted-foreground">→</span>
-          <span>{delay.toStation}</span>
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Från {delay.fromStation}
-        </p>
-
-        {/* Delay info box */}
-        <div className="mt-3 rounded-lg bg-destructive/5 px-3 py-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-destructive">
-                {delay.cancelled
-                  ? "Tåget ställdes in"
-                  : `${delay.delayMinutes} min försening`}
-              </p>
-              {!delay.cancelled && (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Skulle avgått {delay.scheduledDeparture}
-                </p>
-              )}
-            </div>
-            <p className="shrink-0 text-lg font-semibold text-foreground tabular-nums">
-              {delay.estimatedCompensation}
-              <span className="ml-0.5 text-xs font-medium text-muted-foreground">
-                kr
-              </span>
-            </p>
-          </div>
-          {delay.likelyScheduledChange && (
-            <div className="mt-2 flex items-center gap-1.5 border-t border-destructive/10 pt-2">
-              <Info className="size-3 shrink-0 text-amber-600" />
-              <span className="text-xs text-amber-700 dark:text-amber-400">
-                Planerad ändring — SJ kan neka
-              </span>
-            </div>
-          )}
+        <div className="min-w-0">
+          <p className="font-sign truncate text-2xl leading-none font-bold text-foreground">
+            {delay.toStation}
+          </p>
+          <p className="mt-1.5 truncate text-sm text-muted-foreground">
+            från {delay.fromStation}, {formatDay(delay.date)}
+          </p>
+          <p className="mt-1 text-sm font-medium text-late">
+            {delay.cancelled ? "Tåget ställdes in" : `${delay.delayMinutes} min sent`}
+          </p>
         </div>
 
-        {/* Actions */}
-        <div className="mt-3 flex items-center justify-end gap-2">
+        <span className="font-sign rounded-sm bg-signal px-2 py-1 text-xl leading-none font-bold whitespace-nowrap text-signal-foreground">
+          {delay.estimatedCompensation} kr
+        </span>
+      </button>
+
+      {delay.likelyScheduledChange && (
+        <div className="mx-4 mb-3 flex items-start gap-1.5 rounded-sm bg-warn-surface px-2.5 py-2 text-xs text-foreground">
+          <Info className="mt-px size-3.5 shrink-0" />
+          Ändringen annonserades i förväg, så SJ kan neka kravet.
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-2.5">
+        <DeadlineNote days={deadlineDays} urgent={urgent} />
+        <div className="flex items-center gap-1">
           <button
             onClick={handleDismiss}
             disabled={dismissing}
-            className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+            className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
           >
             <X className="size-3.5" />
-            {dismissing ? "..." : "Dölj"}
+            {dismissing ? "Döljer…" : "Dölj"}
           </button>
           <button
             onClick={onClick}
-            className="flex items-center gap-0.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            className="flex items-center gap-0.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Kräv ersättning
             <ChevronRight className="size-4" />

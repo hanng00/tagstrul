@@ -208,7 +208,7 @@ export function ClaimPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <PageHeader className="pb-2">
+      <PageHeader className="pb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/app")}
@@ -216,8 +216,8 @@ export function ClaimPage() {
           >
             <ArrowLeft className="size-5" />
           </button>
-          <h1 className="text-lg font-semibold text-foreground">
-            Begär ersättning
+          <h1 className="font-sign text-2xl leading-none font-bold text-foreground">
+            Kräv ersättning
           </h1>
         </div>
       </PageHeader>
@@ -304,7 +304,7 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
         <div
           key={s}
           className={`h-1.5 flex-1 rounded-full transition-colors ${
-            i <= currentIndex ? "bg-foreground" : "bg-muted"
+            i <= currentIndex ? "bg-foreground" : "bg-input"
           }`}
         />
       ))}
@@ -369,31 +369,33 @@ function TravelStep({
         <ScheduledChangeWarning disruptionReason={delay.disruptionReason} />
       )}
 
-      <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-          Steg 1: Bekräfta reseuppgifter
+      <div className="animate-fade-up rounded-lg border border-border bg-card p-5">
+        <p className="text-sm text-muted-foreground">Steg 1 av 4</p>
+        <h2 className="font-sign mt-0.5 text-2xl leading-tight font-bold text-foreground">
+          Bekräfta reseuppgifter
         </h2>
 
-        <div className="mt-4 flex items-center gap-2 text-base font-medium text-foreground">
-          <span>{delay.fromStation}</span>
-          <span className="text-muted-foreground">→</span>
-          <span>{delay.toStation}</span>
-        </div>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {formatDate(delay.date)} · avgång {delay.scheduledDeparture}
-        </p>
-
-        <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
-          <span className="text-sm text-destructive">
-            {delay.cancelled
-              ? "Inställt tåg"
-              : `${delay.delayMinutes} min försening`}
+        <div className="mt-4 grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 border-t border-border pt-4">
+          <span className="font-sign text-2xl leading-none font-bold text-foreground">
+            {delay.scheduledDeparture}
           </span>
-          <span className="text-2xl font-semibold text-foreground tabular-nums">
-            ~{delay.estimatedCompensation}
-            <span className="ml-0.5 text-sm font-medium text-muted-foreground">
-              kr
-            </span>
+          <span className="font-sign text-2xl leading-none font-bold text-foreground">
+            {delay.toStation}
+          </span>
+          <span />
+          <span className="text-sm text-muted-foreground">
+            från {delay.fromStation}, {formatDate(delay.date)}
+          </span>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+          <span className="text-sm font-semibold text-late">
+            {delay.cancelled
+              ? "Tåget ställdes in"
+              : `${delay.delayMinutes} min sent`}
+          </span>
+          <span className="font-sign rounded-sm bg-signal px-2 py-1 text-xl leading-none font-bold text-signal-foreground">
+            ~{delay.estimatedCompensation} kr
           </span>
         </div>
       </div>
@@ -443,9 +445,10 @@ function ContactStep({
 
   return (
     <>
-      <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-          Steg 2: Kontaktuppgifter
+      <div className="animate-fade-up rounded-lg border border-border bg-card p-5">
+        <p className="text-sm text-muted-foreground">Steg 2 av 4</p>
+        <h2 className="font-sign mt-0.5 text-2xl leading-tight font-bold text-foreground">
+          Kontaktuppgifter
         </h2>
 
         <div className="mt-4 space-y-4">
@@ -553,9 +556,10 @@ function BankStep({
 
   return (
     <>
-      <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-          Steg 3: Utbetalningsuppgifter
+      <div className="animate-fade-up rounded-lg border border-border bg-card p-5">
+        <p className="text-sm text-muted-foreground">Steg 3 av 4</p>
+        <h2 className="font-sign mt-0.5 text-2xl leading-tight font-bold text-foreground">
+          Utbetalningsuppgifter
         </h2>
 
         <div className="mt-4 space-y-4">
@@ -636,9 +640,10 @@ function ConfirmStep({
 
   return (
     <>
-      <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-          Steg 4: Granska och skicka
+      <div className="animate-fade-up rounded-lg border border-border bg-card p-5">
+        <p className="text-sm text-muted-foreground">Steg 4 av 4</p>
+        <h2 className="font-sign mt-0.5 text-2xl leading-tight font-bold text-foreground">
+          Granska och skicka
         </h2>
 
         <div className="mt-4 space-y-3 text-sm">

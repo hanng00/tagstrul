@@ -1,81 +1,113 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/outfit";
+@import "@fontsource-variable/archivo/wdth.css";
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Perrong: the visual language of a Swedish station platform.
+ * Night-blue signage, concrete ground, and the yellow safety line
+ * along the platform edge as the one loud element.
+ */
 :root {
-    --background: oklch(0.985 0.008 35);
-    --foreground: oklch(0.12 0.04 30);
-    --card: oklch(0.995 0.006 35);
-    --card-foreground: oklch(0.12 0.04 30);
-    --popover: oklch(0.995 0.006 35);
-    --popover-foreground: oklch(0.12 0.04 30);
-    --primary: oklch(0.40 0.14 25);
-    --primary-foreground: oklch(0.98 0.01 35);
-    --secondary: oklch(0.94 0.015 35);
-    --secondary-foreground: oklch(0.30 0.05 30);
-    --muted: oklch(0.94 0.012 35);
-    --muted-foreground: oklch(0.50 0.03 30);
-    --accent: oklch(0.78 0.16 75);
-    --accent-foreground: oklch(0.22 0.06 60);
-    --destructive: oklch(0.55 0.18 30);
-    --border: oklch(0.90 0.015 35);
-    --input: oklch(0.90 0.015 35);
-    --ring: oklch(0.40 0.14 25);
-    --chart-1: oklch(0.40 0.14 25);
-    --chart-2: oklch(0.78 0.16 75);
-    --chart-3: oklch(0.50 0.12 30);
-    --chart-4: oklch(0.7 0.14 75);
-    --chart-5: oklch(0.40 0.08 30);
-    --radius: 0.5rem;
-    --sidebar: oklch(0.98 0.008 35);
-    --sidebar-foreground: oklch(0.12 0.04 30);
-    --sidebar-primary: oklch(0.40 0.14 25);
-    --sidebar-primary-foreground: oklch(0.98 0.01 35);
-    --sidebar-accent: oklch(0.93 0.018 35);
-    --sidebar-accent-foreground: oklch(0.30 0.05 30);
-    --sidebar-border: oklch(0.90 0.015 35);
-    --sidebar-ring: oklch(0.40 0.14 25);
+    --board: #16233f;          /* platform-sign blue */
+    --board-raised: #22335a;
+    --board-foreground: #f4f6f8;
+    --board-muted: #9aa8c2;
+    --signal: #ffd100;         /* the yellow edge line */
+    --signal-foreground: #16233f;
+    --late: #c8372d;           /* delay / cancelled */
+    --kronor: #1e7b4f;         /* money paid out */
+
+    --background: #eef0f2;     /* concrete */
+    --foreground: #16233f;
+    --card: #ffffff;
+    --card-foreground: #16233f;
+    --popover: #ffffff;
+    --popover-foreground: #16233f;
+    --primary: #16233f;
+    --primary-foreground: #ffffff;
+    --secondary: #e2e6eb;
+    --secondary-foreground: #16233f;
+    --muted: #e4e8ed;
+    --muted-foreground: #5a6478;
+    --accent: #ffd100;
+    --accent-foreground: #16233f;
+    --destructive: #c8372d;
+    --border: #d5dae1;
+    --input: #c9cfd8;
+    --ring: #16233f;
+    --chart-1: #16233f;
+    --chart-2: #ffd100;
+    --chart-3: #c8372d;
+    --chart-4: #1e7b4f;
+    --chart-5: #7d8aa3;
+    --radius: 0.375rem;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #16233f;
+    --sidebar-primary: #16233f;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e4e8ed;
+    --sidebar-accent-foreground: #16233f;
+    --sidebar-border: #d5dae1;
+    --sidebar-ring: #16233f;
 }
 
 .dark {
-    --background: oklch(0.10 0.012 35);
-    --foreground: oklch(0.95 0.005 35);
-    --card: oklch(0.14 0.015 35);
-    --card-foreground: oklch(0.95 0.005 35);
-    --popover: oklch(0.14 0.015 35);
-    --popover-foreground: oklch(0.95 0.005 35);
-    --primary: oklch(0.55 0.16 25);
-    --primary-foreground: oklch(0.98 0.01 35);
-    --secondary: oklch(0.18 0.012 35);
-    --secondary-foreground: oklch(0.95 0.005 35);
-    --muted: oklch(0.18 0.012 35);
-    --muted-foreground: oklch(0.60 0.01 35);
-    --accent: oklch(0.78 0.16 75);
-    --accent-foreground: oklch(0.15 0.04 60);
-    --destructive: oklch(0.60 0.18 30);
-    --border: oklch(1 0 0 / 8%);
-    --input: oklch(1 0 0 / 10%);
-    --ring: oklch(0.55 0.16 25);
-    --chart-1: oklch(0.55 0.16 25);
-    --chart-2: oklch(0.78 0.16 75);
-    --chart-3: oklch(0.55 0.1 35);
-    --chart-4: oklch(0.7 0.12 75);
-    --chart-5: oklch(0.45 0.08 35);
-    --sidebar: oklch(0.14 0.015 35);
-    --sidebar-foreground: oklch(0.95 0.005 35);
-    --sidebar-primary: oklch(0.55 0.16 25);
-    --sidebar-primary-foreground: oklch(0.98 0.01 35);
-    --sidebar-accent: oklch(0.18 0.012 35);
-    --sidebar-accent-foreground: oklch(0.95 0.005 35);
-    --sidebar-border: oklch(1 0 0 / 8%);
-    --sidebar-ring: oklch(0.55 0.16 25);
+    --board: #16233f;
+    --board-raised: #22335a;
+    --board-foreground: #f4f6f8;
+    --board-muted: #9aa8c2;
+    --signal: #ffd100;
+    --signal-foreground: #16233f;
+    --late: #f06a5e;
+    --kronor: #4cc38a;
+
+    --background: #0c1426;
+    --foreground: #e9edf3;
+    --card: #131e36;
+    --card-foreground: #e9edf3;
+    --popover: #131e36;
+    --popover-foreground: #e9edf3;
+    --primary: #ffd100;
+    --primary-foreground: #16233f;
+    --secondary: #1c2945;
+    --secondary-foreground: #e9edf3;
+    --muted: #1c2945;
+    --muted-foreground: #9aa8c2;
+    --accent: #ffd100;
+    --accent-foreground: #16233f;
+    --destructive: #f06a5e;
+    --border: rgb(255 255 255 / 10%);
+    --input: rgb(255 255 255 / 14%);
+    --ring: #ffd100;
+    --chart-1: #ffd100;
+    --chart-2: #9aa8c2;
+    --chart-3: #f06a5e;
+    --chart-4: #4cc38a;
+    --chart-5: #5a6478;
+    --sidebar: #131e36;
+    --sidebar-foreground: #e9edf3;
+    --sidebar-primary: #ffd100;
+    --sidebar-primary-foreground: #16233f;
+    --sidebar-accent: #1c2945;
+    --sidebar-accent-foreground: #e9edf3;
+    --sidebar-border: rgb(255 255 255 / 10%);
+    --sidebar-ring: #ffd100;
 }
 
 @theme inline {
-    --font-sans: 'Outfit Variable', system-ui, sans-serif;
+    --font-sans: 'Archivo Variable', system-ui, sans-serif;
+    --font-display: 'Archivo Variable', system-ui, sans-serif;
+    --color-board: var(--board);
+    --color-board-raised: var(--board-raised);
+    --color-board-foreground: var(--board-foreground);
+    --color-board-muted: var(--board-muted);
+    --color-signal: var(--signal);
+    --color-signal-foreground: var(--signal-foreground);
+    --color-late: var(--late);
+    --color-kronor: var(--kronor);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -114,21 +146,37 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
-    --color-ink: oklch(0.12 0.04 30);
-    --color-ink-muted: oklch(0.40 0.03 30);
-    --color-ink-faint: oklch(0.60 0.02 30);
-    --color-surface: oklch(0.96 0.01 35);
-    --color-surface-raised: oklch(0.995 0.006 35);
-    --color-warn: oklch(0.78 0.16 75);
-    --color-warn-surface: oklch(0.96 0.04 80);
-    --color-money: oklch(0.55 0.14 145);
-    --color-money-surface: oklch(0.97 0.02 145);
-    --color-success: oklch(0.55 0.12 75);
-    --color-success-surface: oklch(0.96 0.04 75);
-    --color-urgent: oklch(0.50 0.16 25);
-    --color-urgent-surface: oklch(0.96 0.04 25);
-    --color-pending: oklch(0.42 0.12 25);
-    --color-pending-surface: oklch(0.97 0.02 25);
+    --color-ink: var(--foreground);
+    --color-ink-muted: var(--muted-foreground);
+    --color-ink-faint: #8a94a6;
+    --color-surface: var(--muted);
+    --color-surface-raised: var(--card);
+    --color-warn: var(--signal);
+    --color-warn-surface: #fff6cc;
+    --color-money: var(--kronor);
+    --color-money-surface: #e3f2ea;
+    --color-success: var(--kronor);
+    --color-success-surface: #e3f2ea;
+    --color-urgent: var(--late);
+    --color-urgent-surface: #fbe8e6;
+    --color-pending: var(--board-raised);
+    --color-pending-surface: #e4e8ed;
+}
+
+/* Condensed signage cut of Archivo: station names, times, amounts. */
+@utility font-sign {
+  font-family: var(--font-display);
+  font-stretch: 72%;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.005em;
+}
+
+/* The yellow safety line at the platform edge, with its tactile studs. */
+@utility platform-edge {
+  height: 14px;
+  background:
+    radial-gradient(circle at 50% 50%, rgb(22 35 63 / 22%) 1.6px, transparent 2px) 0 6px / 8px 8px repeat-x,
+    var(--signal);
 }
 
 @layer base {
@@ -341,7 +389,7 @@
 
 /* Blog prose styling */
 .prose-custom {
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
   line-height: 1.75;
 }
 .prose-custom p {
@@ -352,14 +400,14 @@
   margin-top: 0;
 }
 .prose-custom h2 {
-  color: hsl(var(--foreground));
+  color: var(--foreground);
   font-size: 1.25rem;
   font-weight: 600;
   margin-top: 2rem;
   margin-bottom: 0.75rem;
 }
 .prose-custom h3 {
-  color: hsl(var(--foreground));
+  color: var(--foreground);
   font-size: 1.125rem;
   font-weight: 600;
   margin-top: 1.5rem;
@@ -382,7 +430,7 @@
   margin-bottom: 0.5rem;
 }
 .prose-custom strong {
-  color: hsl(var(--foreground));
+  color: var(--foreground);
   font-weight: 600;
 }
 .prose-custom table {
@@ -395,18 +443,29 @@
 .prose-custom td {
   padding: 0.75rem 1rem;
   text-align: left;
-  border-bottom: 1px solid hsl(var(--border));
+  border-bottom: 1px solid var(--border);
 }
 .prose-custom th {
-  color: hsl(var(--foreground));
+  color: var(--foreground);
   font-weight: 600;
-  background: hsl(var(--muted) / 0.5);
+  background: color-mix(in srgb, var(--muted) 50%, transparent);
 }
 .prose-custom a {
-  color: hsl(var(--foreground));
+  color: var(--foreground);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .prose-custom a:hover {
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
+}
+
+/* Re-scope tokens so ordinary components read correctly on the blue board. */
+.board-scope {
+  --foreground: var(--board-foreground);
+  --muted-foreground: var(--board-muted);
+  --muted: var(--board-raised);
+  --border: rgb(255 255 255 / 12%);
+  --ring: var(--signal);
+  background-color: var(--board);
+  color: var(--board-foreground);
 }

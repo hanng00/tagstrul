@@ -24,8 +24,8 @@ export function Logo({ size = "default" }: { size?: "small" | "default" | "large
         </g>
       </svg>
       <span
-        className="font-semibold tracking-tight"
-        style={{ fontSize: s.text }}
+        className="font-sign font-bold"
+        style={{ fontSize: s.text * 1.2, lineHeight: 1 }}
       >
         tågstrul
       </span>

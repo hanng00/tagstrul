@@ -2,8 +2,9 @@ import { useState } from "react"
 import { useNavigate } from "react-router"
 import { useAuth } from "@/lib/queries"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Loader2, Mail } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import type { AuthSession } from "@/lib/auth"
+import { Logo } from "@/components/Logo"
 
 type Step = "email" | "otp"
 
@@ -82,30 +83,31 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
-      <header className="flex items-center px-5 py-4 sm:px-8">
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Tillbaka
-        </button>
+      <header className="board-scope safe-top">
+        <div className="flex items-center justify-between px-5 py-4 sm:px-8">
+          <button
+            onClick={() => navigate("/")}
+            className="-ml-2 flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Tillbaka
+          </button>
+          <Logo size="small" />
+        </div>
+        <div className="platform-edge" aria-hidden />
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-5 pb-20">
+      <main className="flex flex-1 flex-col items-center px-5 pt-14 pb-20 sm:justify-center sm:pt-0">
         <div className="w-full max-w-sm">
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
-              <Mail className="size-6 text-foreground" />
-            </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          <div className="mb-8">
+            <h1 className="font-sign text-4xl leading-none font-bold text-foreground">
               {step === "email"
                 ? "Logga in"
                 : session?.type === "confirm_signup"
                   ? "Bekräfta e-post"
                   : "Logga in"}
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-3 text-sm text-muted-foreground">
               {step === "email"
                 ? "Vi skickar en engångskod till din e-post"
                 : session?.type === "confirm_signup"
@@ -127,12 +129,12 @@ export function LoginPage() {
                   placeholder="namn@exempel.se"
                   autoComplete="email"
                   autoFocus
-                  className="h-12 rounded-lg border border-input bg-background px-4 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-foreground"
+                  className="h-12 rounded-lg border border-input bg-card px-4 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-foreground"
                 />
               </label>
 
               {error && (
-                <p className="text-sm text-red-500">{error}</p>
+                <p className="text-sm font-medium text-late">{error}</p>
               )}
 
               <Button
@@ -166,16 +168,16 @@ export function LoginPage() {
                   autoComplete="one-time-code"
                   autoFocus
                   maxLength={session?.type === "confirm_signup" ? 6 : 8}
-                  className="h-12 rounded-lg border border-input bg-background px-4 text-center text-2xl font-semibold tracking-[0.3em] text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 placeholder:tracking-normal placeholder:text-base focus:border-foreground"
+                  className="h-12 rounded-lg border border-input bg-card px-4 text-center text-2xl font-semibold tracking-[0.3em] text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 placeholder:tracking-normal placeholder:text-base focus:border-foreground"
                 />
               </label>
 
               {notice && (
-                <p className="text-sm text-green-600">{notice}</p>
+                <p className="text-sm font-medium text-kronor">{notice}</p>
               )}
 
               {error && (
-                <p className="text-sm text-red-500">{error}</p>
+                <p className="text-sm font-medium text-late">{error}</p>
               )}
 
               <Button

@@ -14,7 +14,7 @@ export function TrainCrashImage({
   showDisclaimer?: boolean
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl bg-muted ${className}`} style={style}>
+    <div className={`relative overflow-hidden rounded-lg bg-muted ${className}`} style={style}>
       <img
         src="/traincrash.webp"
         alt="Försenat tåg"
@@ -25,7 +25,7 @@ export function TrainCrashImage({
       {moneyPopups.map((popup, i) => (
         <div
           key={i}
-          className="absolute rounded-md sm:rounded-lg bg-money/90 backdrop-blur-sm text-white font-bold shadow-lg px-2 py-1 sm:px-4 sm:py-2.5 text-xs sm:text-base"
+          className="absolute rounded-md sm:rounded-lg bg-signal text-signal-foreground font-sign font-bold shadow-lg px-2 py-1 sm:px-4 sm:py-2.5 text-xs sm:text-base"
           style={{
             top: popup.top,
             left: popup.left,
