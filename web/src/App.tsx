@@ -33,6 +33,9 @@ const HomePage = lazy(() =>
 const ClaimPage = lazy(() =>
   import("@/pages/ClaimPage").then((m) => ({ default: m.ClaimPage }))
 )
+const ClaimAllPage = lazy(() =>
+  import("@/pages/ClaimAllPage").then((m) => ({ default: m.ClaimAllPage }))
+)
 const RoutesPage = lazy(() =>
   import("@/pages/RoutesPage").then((m) => ({ default: m.RoutesPage }))
 )
@@ -84,6 +87,7 @@ export function App() {
                 <Route path="/app" element={<AppLayout />}>
                   <Route index element={<HomePage />} />
                   <Route path="claim/:delayId" element={<ClaimPage />} />
+                  <Route path="claim-all" element={<ClaimAllPage />} />
                   <Route path="routes" element={<RoutesPage />} />
                   <Route path="profile" element={<ProfilePage />} />
                 </Route>

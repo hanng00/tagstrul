@@ -33,14 +33,14 @@ export function LandingPage() {
       <HowToSchema />
       <FAQSchema items={faqItems} />
 
-      <header className="board-scope flex items-center justify-between section-padding py-4">
+      <header className="flex items-center justify-between section-padding py-4">
         <Logo size="small" />
         <nav aria-label="Huvudnavigering" className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate("/blogg")}
-            className="h-10 px-3 text-sm text-foreground hover:bg-board-raised hover:text-foreground sm:h-9"
+            className="h-10 px-3 text-sm sm:h-9"
           >
             Blogg
           </Button>
@@ -48,14 +48,15 @@ export function LandingPage() {
             variant="ghost"
             size="sm"
             onClick={() => navigate("/om")}
-            className="h-10 px-3 text-sm text-foreground hover:bg-board-raised hover:text-foreground sm:h-9"
+            className="h-10 px-3 text-sm sm:h-9"
           >
             Om oss
           </Button>
           <Button
+            variant="outline"
             size="sm"
             onClick={handleAuthAction}
-            className="h-10 bg-signal px-4 text-sm font-semibold text-signal-foreground hover:bg-signal/90 sm:h-9"
+            className="h-10 px-4 text-sm sm:h-9"
           >
             {isLoading ? "" : isAuthenticated ? "Till appen" : "Logga in"}
           </Button>
@@ -63,24 +64,24 @@ export function LandingPage() {
       </header>
 
       <main>
-        <section aria-labelledby="hero-heading" className="board-scope flex flex-1 flex-col section-padding pb-12 pt-8 sm:pb-16 sm:pt-14">
+        <section aria-labelledby="hero-heading" className="flex flex-1 flex-col section-padding pb-10 pt-6 sm:pb-12 sm:pt-12">
         <div className="mx-auto w-full max-w-5xl">
           <div className="grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
             <div className="animate-fade-up">
-              <h1 id="hero-heading" className="font-sign text-[clamp(3rem,9vw,5.25rem)] leading-[0.92] font-bold text-foreground">
+              <h1 id="hero-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-semibold leading-[1.1] tracking-tight text-foreground">
                 Tåget var sent.
                 <br />
                 Du har pengar att hämta.
               </h1>
 
-              <p className="mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:mt-6">
+              <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted-foreground sm:mt-5">
                 Pendlar du med Movingo på SJ:s Mälartåg? Vi bevakar dina resor och visar när du kan kräva ersättning — redan vid 20 min försening.
               </p>
 
               <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8">
                 <Button
                   onClick={handleAuthAction}
-                  className="h-12 w-full rounded-md bg-signal px-6 text-base font-bold text-signal-foreground transition-transform hover:bg-signal/90 active:scale-[0.98] sm:w-auto"
+                  className="h-12 w-full rounded-lg bg-foreground px-6 text-[15px] font-semibold text-background transition-transform hover:bg-foreground/90 active:scale-[0.98] sm:w-auto"
                 >
                   {isAuthenticated ? "Till appen" : "Kom igång gratis"}
                   <ChevronRight className="ml-1 size-4" />
@@ -90,45 +91,43 @@ export function LandingPage() {
 
             <div className="animate-fade-up stagger-1 relative mt-2 lg:mt-0">
               <TrainCrashImage className="aspect-4/3" />
-              <div className="absolute -bottom-3 left-3 rounded-sm bg-signal px-3 py-2 text-signal-foreground sm:-bottom-5 sm:-left-5 sm:px-4 sm:py-3">
-                <p className="text-xs font-medium">Senaste veckan</p>
-                <p className="font-sign mt-0.5 text-2xl leading-none font-bold sm:text-3xl">
-                  312 förseningar
+              <div className="absolute -bottom-2 left-2 rounded-xl border border-border bg-card px-3 py-2 shadow-lg sm:-bottom-6 sm:-left-6 sm:px-4 sm:py-3">
+                <p className="text-[10px] font-medium text-muted-foreground sm:text-xs">
+                  Senaste veckan
+                </p>
+                <p className="mt-0.5 text-base font-semibold tabular-nums text-foreground sm:text-xl">
+                  312{" "}
+                  <span className="text-xs font-medium text-muted-foreground sm:text-sm">
+                    förseningar
+                  </span>
                 </p>
               </div>
             </div>
           </div>
         </div>
       </section>
-      <div className="platform-edge" aria-hidden />
 
       <CalculatorSection onGetStarted={handleAuthAction} isAuthenticated={isAuthenticated} />
 
       <section aria-labelledby="how-it-works-heading" className="border-t border-border bg-card section-padding py-10 sm:py-12">
         <div className="mx-auto max-w-5xl">
-          <h2 id="how-it-works-heading" className="font-sign text-3xl leading-none font-bold text-foreground">
+          <h2 id="how-it-works-heading" className="text-lg font-semibold text-foreground">
             Så funkar det
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             För dig med Movingo i Mälardalstrafiks app på SJ:s Mälartåg.
           </p>
-          <ol className="mt-8 grid gap-8 sm:grid-cols-3" role="list">
-            <li className="grid grid-cols-[2.5rem_1fr] gap-x-4">
-              <span aria-hidden className="font-sign row-span-2 flex size-10 items-center justify-center rounded-sm bg-board text-2xl font-bold text-signal">
-                1
-              </span>
-              <h3 className="text-base font-semibold text-foreground">
+          <ol className="mt-6 grid gap-6 sm:grid-cols-3" role="list">
+            <li>
+              <h3 className="text-base font-medium text-foreground">
                 Registrera ditt Movingo-kort
               </h3>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                 Lägg in kortnummer och vilka SJ-sträckor du pendlar. Tar tio sekunder.
               </p>
             </li>
-            <li className="grid grid-cols-[2.5rem_1fr] gap-x-4">
-              <span aria-hidden className="font-sign row-span-2 flex size-10 items-center justify-center rounded-sm bg-board text-2xl font-bold text-signal">
-                2
-              </span>
-              <h3 className="text-base font-semibold text-foreground">
+            <li>
+              <h3 className="text-base font-medium text-foreground">
                 Vi hittar förseningar
               </h3>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -136,11 +135,8 @@ export function LandingPage() {
                 inte göra något.
               </p>
             </li>
-            <li className="grid grid-cols-[2.5rem_1fr] gap-x-4">
-              <span aria-hidden className="font-sign row-span-2 flex size-10 items-center justify-center rounded-sm bg-board text-2xl font-bold text-signal">
-                3
-              </span>
-              <h3 className="text-base font-semibold text-foreground">
+            <li>
+              <h3 className="text-base font-medium text-foreground">
                 Kräv ersättning direkt
               </h3>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -254,7 +250,7 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
       <div className="mx-auto max-w-5xl">
         <div className="grid gap-6 lg:grid-cols-2 lg:items-start lg:gap-12">
           <div>
-            <h2 className="font-sign text-3xl leading-none font-bold text-foreground">
+            <h2 className="text-xl font-semibold text-foreground">
               Hur mycket har du missat?
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -263,7 +259,7 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
             </p>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-5 sm:p-6">
+          <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
             {!result ? (
               <div className="space-y-4">
                 <label className="flex flex-col gap-1.5">
@@ -355,13 +351,19 @@ function CalculatorSection({ onGetStarted, isAuthenticated }: { onGetStarted: ()
               </div>
             ) : (
               <div className="animate-scale-in text-center">
-                <p className="text-sm text-muted-foreground">
-                  {from} till {to}, senaste 7 dagarna
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Senaste 7 dagarna
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {from} → {to}
                 </p>
 
                 <div className="mt-6">
-                  <p className="font-sign inline-block rounded-sm bg-signal px-4 py-2 text-6xl leading-none font-bold text-signal-foreground">
-                    {result.amount} kr
+                  <p className="text-5xl font-semibold tabular-nums text-foreground">
+                    {result.amount}
+                    <span className="ml-1 text-xl font-medium text-muted-foreground">
+                      kr
+                    </span>
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
                     {result.delays > 0
@@ -451,7 +453,7 @@ function FAQSection() {
   return (
     <section aria-labelledby="faq-heading" className="border-t border-border bg-background section-padding py-10 sm:py-12">
       <div className="mx-auto max-w-xl">
-        <h2 id="faq-heading" className="font-sign text-3xl leading-none font-bold text-foreground">Vanliga frågor</h2>
+        <h2 id="faq-heading" className="text-lg font-semibold text-foreground">Vanliga frågor</h2>
         <dl className="mt-6 divide-y divide-border">
           {faqItems.map((item, index) => (
             <div key={index} className="py-4">
@@ -499,7 +501,7 @@ function PopularRoutesSection() {
     <section aria-labelledby="routes-heading" className="border-t border-border bg-muted/30 section-padding py-10 sm:py-12">
       <div className="mx-auto max-w-5xl">
         <div className="flex items-center justify-between">
-          <h2 id="routes-heading" className="font-sign text-3xl leading-none font-bold text-foreground">
+          <h2 id="routes-heading" className="text-lg font-semibold text-foreground">
             Populära pendlarsträckor
           </h2>
           <a
@@ -517,13 +519,13 @@ function PopularRoutesSection() {
             <a
               key={route.slug}
               href={`/stracka/${route.slug}`}
-              className="group flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-foreground"
+              className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-foreground/20 hover:bg-muted/50"
             >
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-board">
-                <Train className="size-4 text-signal" />
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                <Train className="size-4 text-muted-foreground" />
               </div>
               <div className="min-w-0">
-                <p className="font-sign truncate text-lg leading-tight font-bold text-foreground">
+                <p className="truncate text-sm font-medium text-foreground">
                   {route.from} → {route.to}
                 </p>
                 <p className="text-xs text-muted-foreground">

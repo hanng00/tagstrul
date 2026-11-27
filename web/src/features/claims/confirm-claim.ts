@@ -15,7 +15,7 @@ export interface ConfirmClaimResponse {
   submittedAt: string
 }
 
-async function confirmClaim(data: ConfirmClaimRequest): Promise<ConfirmClaimResponse> {
+export async function confirmClaim(data: ConfirmClaimRequest): Promise<ConfirmClaimResponse> {
   return request<ConfirmClaimResponse>("/claims/confirm", {
     method: "POST",
     body: JSON.stringify(data),

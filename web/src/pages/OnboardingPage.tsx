@@ -204,7 +204,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         <Logo size="large" />
       </div>
 
-      <h1 className="font-sign text-4xl leading-none font-bold text-foreground">
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground">
         Välkommen
       </h1>
 
@@ -228,7 +228,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 
       <Button
         onClick={onNext}
-        className="mt-10 h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
+        className="mt-10 h-12 w-full rounded-xl bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
       >
         Kom igång
         <ArrowRight className="ml-2 size-4" />
@@ -276,7 +276,7 @@ function NameStep({
         <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
           <User className="size-6 text-foreground" />
         </div>
-        <h1 className="font-sign text-4xl leading-none font-bold text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Vad heter du?
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -308,7 +308,7 @@ function NameStep({
       <Button
         onClick={onSubmit}
         disabled={!firstName.trim() || isSubmitting}
-        className="mt-8 h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 disabled:opacity-50"
+        className="mt-8 h-12 w-full rounded-xl bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 disabled:opacity-50"
       >
         {isSubmitting ? (
           <div className="size-5 animate-spin rounded-full border-2 border-background/20 border-t-background" />
@@ -349,7 +349,7 @@ function RouteStep({
   return (
     <div className="animate-fade-up">
       <div className="mb-8 text-center">
-        <h1 className="font-sign text-4xl leading-none font-bold text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Hej {firstName}! 👋
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -394,7 +394,7 @@ function RouteStep({
       <Button
         onClick={onSubmit}
         disabled={!from || !to || isSubmitting}
-        className="mt-8 h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 disabled:opacity-50"
+        className="mt-8 h-12 w-full rounded-xl bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 disabled:opacity-50"
       >
         {isSubmitting ? (
           <div className="size-5 animate-spin rounded-full border-2 border-background/20 border-t-background" />
@@ -416,7 +416,7 @@ function DoneStep({ firstName, onFinish }: { firstName: string; onFinish: () => 
         <Check className="size-8 text-success" />
       </div>
 
-      <h1 className="font-sign text-4xl leading-none font-bold text-foreground">
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground">
         Tack {firstName}!
       </h1>
 
@@ -427,7 +427,7 @@ function DoneStep({ firstName, onFinish }: { firstName: string; onFinish: () => 
 
       <Button
         onClick={onFinish}
-        className="mt-10 h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
+        className="mt-10 h-12 w-full rounded-xl bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
       >
         Gå till appen
         <ArrowRight className="ml-2 size-4" />
@@ -483,7 +483,7 @@ function MovingoStep({
         <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
           <CreditCard className="size-6 text-foreground" />
         </div>
-        <h1 className="font-sign text-4xl leading-none font-bold text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Lägg till Movingo-kort
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -588,7 +588,7 @@ function MovingoStep({
       <Button
         onClick={handleSubmit}
         disabled={!isValid || isSubmitting}
-        className="mt-8 h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 disabled:opacity-50"
+        className="mt-8 h-12 w-full rounded-xl bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 disabled:opacity-50"
       >
         {isSubmitting ? (
           <div className="size-5 animate-spin rounded-full border-2 border-background/20 border-t-background" />
@@ -613,7 +613,7 @@ function StepIndicator({ current }: { current: Step }) {
         <div
           key={step}
           className={`h-1.5 w-6 rounded-full transition-colors ${
-            i <= currentIndex ? "bg-foreground" : "bg-input"
+            i <= currentIndex ? "bg-foreground" : "bg-muted"
           }`}
         />
       ))}

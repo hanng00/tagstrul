@@ -13,19 +13,17 @@ const tabs = [
 interface PageHeaderProps {
   children: ReactNode
   className?: string
-  /** Keep the band pinned while scrolling. Off for tall headers. */
-  sticky?: boolean
 }
 
-/**
- * The blue sign band at the top of every app screen, ending in the
- * yellow platform edge. Content inside reads the board tokens.
- */
-export function PageHeader({ children, className, sticky = true }: PageHeaderProps) {
+export function PageHeader({ children, className }: PageHeaderProps) {
   return (
-    <header className={cn("board-scope z-40 mb-5 safe-top", sticky && "sticky top-0")}>
-      <div className={cn("app-padding pt-6 pb-5", className)}>{children}</div>
-      <div className="platform-edge" aria-hidden />
+    <header
+      className={cn(
+        "sticky top-0 z-40 bg-background/80 backdrop-blur-xl backdrop-saturate-150 app-padding pt-6 pb-4",
+        className
+      )}
+    >
+      {children}
     </header>
   )
 }
@@ -37,7 +35,7 @@ export function AppLayout() {
         <Outlet />
       </ErrorBoundary>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card pb-safe">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/80 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex max-w-lg">
           {tabs.map(({ to, icon: Icon, label, end }) => (
             <NavLink
@@ -45,23 +43,23 @@ export function AppLayout() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `relative flex flex-1 flex-col items-center gap-1 pt-3 pb-2.5 text-[11px] transition-colors focus-visible:outline-2 focus-visible:-outline-offset-4 ${
+                `relative flex flex-1 flex-col items-center gap-0.5 py-3 text-[10px] font-medium transition-colors ${
                   isActive
-                    ? "font-semibold text-foreground"
-                    : "font-medium text-muted-foreground hover:text-foreground"
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground/70"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <span className="absolute -top-px inset-x-4 h-1 bg-signal" />
+                    <span className="absolute top-0 left-1/2 h-[2px] w-8 -translate-x-1/2 rounded-full bg-foreground" />
                   )}
                   <Icon
                     className="size-5"
-                    strokeWidth={isActive ? 2.25 : 1.75}
+                    strokeWidth={isActive ? 2 : 1.5}
                   />
-                  <span>{label}</span>
+                  <span className="tracking-wide">{label}</span>
                 </>
               )}
             </NavLink>

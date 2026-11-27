@@ -16,7 +16,10 @@ import { formatPersonnummer, validatePersonnummer } from "@/lib/personnummer"
 import { PhoneInput } from "@/components/ui-extended/phone-input"
 import { getPhoneDigits, formatPhone } from "@/components/ui-extended/phone-utils"
 import { TrainLoader } from "@/components/ui/train-loader"
-import { useDelay, useProfile } from "@/lib/queries"
+import { useDelay, useProfile, queryKeys } from "@/lib/queries"
+import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+import { api } from "@/lib/api"
 import { ApiError } from "@/lib/api-client"
 import {
   useStartClaim,
@@ -208,7 +211,7 @@ export function ClaimPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <PageHeader className="pb-4">
+      <PageHeader className="pb-2">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/app")}
@@ -216,7 +219,7 @@ export function ClaimPage() {
           >
             <ArrowLeft className="size-5" />
           </button>
-          <h1 className="font-sign text-2xl leading-none font-bold text-foreground">
+          <h1 className="text-xl font-extrabold tracking-tight text-foreground">
             Kräv ersättning
           </h1>
         </div>
@@ -304,7 +307,7 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
         <div
           key={s}
           className={`h-1.5 flex-1 rounded-full transition-colors ${
-            i <= currentIndex ? "bg-foreground" : "bg-input"
+            i <= currentIndex ? "bg-foreground" : "bg-muted"
           }`}
         />
       ))}
@@ -369,33 +372,32 @@ function TravelStep({
         <ScheduledChangeWarning disruptionReason={delay.disruptionReason} />
       )}
 
-      <div className="animate-fade-up rounded-lg border border-border bg-card p-5">
-        <p className="text-sm text-muted-foreground">Steg 1 av 4</p>
-        <h2 className="font-sign mt-0.5 text-2xl leading-tight font-bold text-foreground">
+      <div className="animate-fade-up rounded-2xl bg-card p-5">
+        <p className="text-[13px] text-muted-foreground">Steg 1 av 4</p>
+        <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
           Bekräfta reseuppgifter
         </h2>
 
-        <div className="mt-4 grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 border-t border-border pt-4">
-          <span className="font-sign text-2xl leading-none font-bold text-foreground">
-            {delay.scheduledDeparture}
-          </span>
-          <span className="font-sign text-2xl leading-none font-bold text-foreground">
-            {delay.toStation}
-          </span>
-          <span />
-          <span className="text-sm text-muted-foreground">
-            från {delay.fromStation}, {formatDate(delay.date)}
-          </span>
+        <div className="mt-4 flex items-center gap-2 text-base font-medium text-foreground">
+          <span>{delay.fromStation}</span>
+          <span className="text-muted-foreground">→</span>
+          <span>{delay.toStation}</span>
         </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {formatDate(delay.date)} · avgång {delay.scheduledDeparture}
+        </p>
 
-        <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-          <span className="text-sm font-semibold text-late">
+        <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
+          <span className="text-sm text-destructive">
             {delay.cancelled
-              ? "Tåget ställdes in"
-              : `${delay.delayMinutes} min sent`}
+              ? "Inställt tåg"
+              : `${delay.delayMinutes} min försening`}
           </span>
-          <span className="font-sign rounded-sm bg-signal px-2 py-1 text-xl leading-none font-bold text-signal-foreground">
-            ~{delay.estimatedCompensation} kr
+          <span className="text-2xl font-semibold text-foreground tabular-nums">
+            ~{delay.estimatedCompensation}
+            <span className="ml-0.5 text-sm font-medium text-muted-foreground">
+              kr
+            </span>
           </span>
         </div>
       </div>
@@ -407,7 +409,7 @@ function TravelStep({
 
       <div className="mt-auto pt-8">
         <Button
-          className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
+          className="h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90"
           onClick={onContinue}
           disabled={loading}
         >
@@ -418,6 +420,7 @@ function TravelStep({
           )}
           Bekräfta och fortsätt
         </Button>
+        <DismissTripButton delay={delay} />
       </div>
     </>
   )
@@ -445,9 +448,9 @@ function ContactStep({
 
   return (
     <>
-      <div className="animate-fade-up rounded-lg border border-border bg-card p-5">
-        <p className="text-sm text-muted-foreground">Steg 2 av 4</p>
-        <h2 className="font-sign mt-0.5 text-2xl leading-tight font-bold text-foreground">
+      <div className="animate-fade-up rounded-2xl bg-card p-5">
+        <p className="text-[13px] text-muted-foreground">Steg 2 av 4</p>
+        <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
           Kontaktuppgifter
         </h2>
 
@@ -515,7 +518,7 @@ function ContactStep({
           Tillbaka
         </Button>
         <Button
-          className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
+          className="h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90 sm:flex-1"
           onClick={onContinue}
           disabled={loading || !isValid}
         >
@@ -556,9 +559,9 @@ function BankStep({
 
   return (
     <>
-      <div className="animate-fade-up rounded-lg border border-border bg-card p-5">
-        <p className="text-sm text-muted-foreground">Steg 3 av 4</p>
-        <h2 className="font-sign mt-0.5 text-2xl leading-tight font-bold text-foreground">
+      <div className="animate-fade-up rounded-2xl bg-card p-5">
+        <p className="text-[13px] text-muted-foreground">Steg 3 av 4</p>
+        <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
           Utbetalningsuppgifter
         </h2>
 
@@ -609,7 +612,7 @@ function BankStep({
           Tillbaka
         </Button>
         <Button
-          className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
+          className="h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90 sm:flex-1"
           onClick={onContinue}
           disabled={loading || !isValid}
         >
@@ -640,9 +643,9 @@ function ConfirmStep({
 
   return (
     <>
-      <div className="animate-fade-up rounded-lg border border-border bg-card p-5">
-        <p className="text-sm text-muted-foreground">Steg 4 av 4</p>
-        <h2 className="font-sign mt-0.5 text-2xl leading-tight font-bold text-foreground">
+      <div className="animate-fade-up rounded-2xl bg-card p-5">
+        <p className="text-[13px] text-muted-foreground">Steg 4 av 4</p>
+        <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
           Granska och skicka
         </h2>
 
@@ -735,7 +738,7 @@ function ConfirmStep({
           Tillbaka
         </Button>
         <Button
-          className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
+          className="h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90 sm:flex-1"
           onClick={onConfirm}
           disabled={loading || !accepted}
         >
@@ -795,7 +798,7 @@ function SuccessStep({
       </p>
 
       <Button
-        className="mt-8 h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
+        className="mt-8 h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90"
         onClick={onDone}
       >
         Klar
@@ -868,7 +871,7 @@ function ErrorStep({
         </Button>
         {isRetryable && (
           <Button
-            className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
+            className="h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90 sm:flex-1"
             onClick={onRetry}
           >
             Försök igen
@@ -876,5 +879,53 @@ function ErrorStep({
         )}
       </div>
     </div>
+  )
+}
+
+function DismissTripButton({
+  delay,
+}: {
+  delay: NonNullable<ReturnType<typeof useDelay>["delay"]>
+}) {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [dismissing, setDismissing] = useState(false)
+
+  async function handleDismiss() {
+    setDismissing(true)
+    try {
+      await api.dismissDelay(delay.delayId)
+      await queryClient.invalidateQueries({ queryKey: queryKeys.delays })
+      navigate("/app")
+      toast(`${delay.scheduledDeparture} till ${delay.toStation} är dold`, {
+        action: {
+          label: "Ångra",
+          onClick: async () => {
+            try {
+              await api.undismissDelay(delay.delayId)
+              await queryClient.invalidateQueries({ queryKey: queryKeys.delays })
+            } catch (err) {
+              console.error(err)
+              toast.error("Kunde inte ångra. Hitta resan under Dolda resor.")
+            }
+          },
+        },
+        duration: 5000,
+      })
+    } catch (err) {
+      console.error(err)
+      toast.error("Kunde inte dölja resan. Försök igen.")
+      setDismissing(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleDismiss}
+      disabled={dismissing}
+      className="mt-2 h-11 w-full rounded-xl text-[15px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+    >
+      {dismissing ? "Döljer…" : "Dölj resan, jag vill inte kräva den"}
+    </button>
   )
 }

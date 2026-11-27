@@ -124,12 +124,12 @@ export function ProfilePage() {
       <PageHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-12 items-center justify-center rounded-full bg-signal text-base font-bold text-signal-foreground">
+            <div className="flex size-12 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
               {(profile.firstName?.[0] ?? "").toUpperCase()}
               {(profile.lastName?.[0] ?? "").toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="font-sign truncate text-2xl leading-tight font-bold text-foreground">
+              <p className="truncate text-base font-semibold text-foreground">
                 {profile.firstName} {profile.lastName}
               </p>
               <p className="truncate text-sm text-muted-foreground">{profile.email}</p>
@@ -150,7 +150,7 @@ export function ProfilePage() {
       <div className="flex-1 app-padding pb-6">
         <section className="animate-fade-up">
           <div className="flex items-center justify-between">
-            <h2 className="font-sign text-xl leading-none font-bold text-foreground">Uppgifter</h2>
+            <h2 className="text-sm font-semibold text-foreground">Uppgifter</h2>
             {editing && (
               <div className="flex items-center gap-1">
                 <button
@@ -214,7 +214,7 @@ export function ProfilePage() {
 
         <section className="animate-fade-up stagger-1 mt-8">
           <div className="flex items-center justify-between">
-            <h2 className="font-sign text-xl leading-none font-bold text-foreground">
+            <h2 className="text-sm font-semibold text-foreground">
               Movingo-kort
             </h2>
             <span className="text-xs tabular-nums text-muted-foreground">
@@ -278,7 +278,7 @@ export function ProfilePage() {
         </section>
 
         <section className="animate-fade-up stagger-2 mt-8">
-          <h2 className="font-sign text-xl leading-none font-bold text-foreground">Notiser</h2>
+          <h2 className="text-sm font-semibold text-foreground">Notiser</h2>
           <div className="mt-3 rounded-xl border border-border bg-card">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
