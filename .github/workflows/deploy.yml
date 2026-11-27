@@ -1,21 +1,49 @@
-name: Build and Deploy CDK Stacks
+name: Build and Deploy SAM Stack
 
 on:
   pull_request:
-    branches: [develop]        # CI on feature branch PRs
+    branches: [main, develop]  # Build only, never deploys
   push:
-    branches: [main, develop]  # CI + Deploy on push/merge
+    branches: [main, develop]  # Build + deploy
 
 permissions:
   id-token: write
   contents: read
 
+# One deploy per branch at a time; never cancel a deploy mid-flight.
+concurrency:
+  group: deploy-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Set AWS Account ID and Environment Suffix
-        id: set-environment
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          npm install -g esbuild
+          npm install
+
+      - name: Build Stack
+        working-directory: backend
+        run: sam build
+
+      - name: Select AWS account
+        if: github.event_name == 'push'
         run: |
           if [[ "${{ github.ref_name }}" == "main" ]]; then
             echo "Production branch detected"
@@ -24,28 +52,18 @@ jobs:
             echo "Develop branch detected"
             echo "AWS_ROLE=arn:aws:iam::030847345012:role/github-actions" >> $GITHUB_ENV
           else
-            echo "Unknown branch. Cannot set environment variables."
+            echo "Unknown branch '${{ github.ref_name }}'. Refusing to deploy."
             exit 1
           fi
 
       - name: Configure AWS Credentials
-        id: configure-aws-credentials
+        if: github.event_name == 'push'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE }}
           aws-region: eu-north-1
 
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Install dependencies
+      - name: Deploy Stack
+        if: github.event_name == 'push'
         working-directory: backend
-        run: |
-          npm install -g esbuild
-          npm install
-
-      - name: Build and Deploy Stack
-        working-directory: backend
-        run: |
-          sam build
-          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
+        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
