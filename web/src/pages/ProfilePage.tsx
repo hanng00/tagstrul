@@ -407,7 +407,7 @@ function maskPersonnummer(pnr?: string) {
 }
 
 /** The active Movingo card, drawn as a card, with how long it stays valid. */
-function MovingoCardView({ card, onDelete }: { card: MovingoCard; onDelete: () => void }) {
+export function MovingoCardView({ card, onDelete }: { card: MovingoCard; onDelete: () => void }) {
   const left = daysLeft(card.expiryDate)
   const soon = left <= 5
 

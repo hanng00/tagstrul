@@ -14,7 +14,7 @@ import { useClaimsSummary } from "./home/useClaimsSummary"
 import { WalletCard } from "./home/WalletCard"
 import { countWord, delaySummary, formatKr } from "./home/format"
 
-type Status = "waiting" | "sending" | BatchClaimOutcome
+export type TripStatus = "waiting" | "sending" | BatchClaimOutcome
 
 function maskPersonnummer(pnr?: string) {
   const digits = (pnr ?? "").replace(/\D/g, "")
@@ -39,7 +39,7 @@ export function ClaimAllPage() {
 
   // Freeze the list once sending starts, so rows don't vanish as claims land.
   const [batch, setBatch] = useState<Delay[] | null>(null)
-  const [statuses, setStatuses] = useState<Record<string, Status>>({})
+  const [statuses, setStatuses] = useState<Record<string, TripStatus>>({})
   const [phase, setPhase] = useState<"review" | "sending" | "done">("review")
 
   const trips = batch ?? toClaim
@@ -49,7 +49,7 @@ export function ClaimAllPage() {
     const list = [...toClaim]
     setBatch(list)
     setPhase("sending")
-    setStatuses(Object.fromEntries(list.map((d) => [d.delayId, "waiting" as Status])))
+    setStatuses(Object.fromEntries(list.map((d) => [d.delayId, "waiting" as TripStatus])))
 
     for (const delay of list) {
       setStatuses((s) => ({ ...s, [delay.delayId]: "sending" }))
@@ -237,7 +237,7 @@ export function ClaimAllPage() {
   )
 }
 
-function TripRow({ delay, status }: { delay: Delay; status?: Status }) {
+export function TripRow({ delay, status }: { delay: Delay; status?: TripStatus }) {
   const summary = delaySummary(delay)
   const failed = typeof status === "object" && !status.ok ? status : null
 
@@ -282,7 +282,7 @@ function TripRow({ delay, status }: { delay: Delay; status?: Status }) {
   )
 }
 
-function StatusIcon({ status }: { status?: Status }) {
+function StatusIcon({ status }: { status?: TripStatus }) {
   if (!status) return null
   if (status === "waiting")
     return <span className="size-5 rounded-full border-2 border-border" aria-label="Väntar" />

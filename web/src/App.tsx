@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react"
-import { BrowserRouter, Routes, Route } from "react-router"
+import { BrowserRouter, Routes, Route, useLocation } from "react-router"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { OnboardingGuard } from "@/components/OnboardingGuard"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
@@ -36,6 +36,12 @@ const ClaimPage = lazy(() =>
 const ClaimAllPage = lazy(() =>
   import("@/pages/ClaimAllPage").then((m) => ({ default: m.ClaimAllPage }))
 )
+const StorybookPage = lazy(() =>
+  import("@/storybook/StorybookPage").then((m) => ({ default: m.StorybookPage }))
+)
+const StoryFramePage = lazy(() =>
+  import("@/storybook/StoryFramePage").then((m) => ({ default: m.StoryFramePage }))
+)
 const RoutesPage = lazy(() =>
   import("@/pages/RoutesPage").then((m) => ({ default: m.RoutesPage }))
 )
@@ -60,6 +66,18 @@ function PageLoader() {
   )
 }
 
+/** Install and cookie prompts, kept out of the storybook previews. */
+function GlobalBanners() {
+  const { pathname } = useLocation()
+  if (pathname.startsWith("/storybook")) return null
+  return (
+    <>
+      <PWAInstallBanner />
+      <CookieConsentBanner />
+    </>
+  )
+}
+
 export function App() {
   return (
     <BrowserRouter>
@@ -81,6 +99,8 @@ export function App() {
             <Route path="/design-system" element={<DesignSystemPage />} />
             <Route path="/tack" element={<ThankYouPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/storybook" element={<StorybookPage />} />
+            <Route path="/storybook/frame/:screen/:delayId?" element={<StoryFramePage />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<OnboardingGuard />}>
                 <Route path="/onboarding" element={<OnboardingPage />} />
@@ -95,8 +115,7 @@ export function App() {
             </Route>
           </Routes>
         </Suspense>
-        <PWAInstallBanner />
-        <CookieConsentBanner />
+        <GlobalBanners />
         <Toaster position="bottom-center" />
       </ErrorBoundary>
     </BrowserRouter>
