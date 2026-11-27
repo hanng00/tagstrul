@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react"
-import { useSearchParams } from "react-router"
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   Users,
@@ -13,7 +12,7 @@ import {
   MapPin,
   UserPlus,
 } from "lucide-react"
-import { publicRequest } from "@/lib/api-client"
+import { request, ApiError } from "@/lib/api-client"
 import { TrainLoader } from "@/components/ui/train-loader"
 
 interface AdminStats {
@@ -62,56 +61,20 @@ interface AdminStats {
   generatedAt: string
 }
 
-const ADMIN_SECRET_KEY = "tagstrul_admin_secret"
-
-function useAdminStats(secret: string) {
+function useAdminStats() {
   return useQuery({
-    queryKey: ["admin", "stats", secret],
-    queryFn: () => publicRequest<AdminStats>(`/admin/stats?secret=${encodeURIComponent(secret)}`),
-    enabled: !!secret,
+    queryKey: ["admin", "stats"],
+    queryFn: () => request<AdminStats>("/admin/stats"),
     staleTime: 0,
     retry: false,
   })
 }
 
 export function AdminPage() {
-  const [searchParams] = useSearchParams()
-  const [secret, setSecret] = useState(() => {
-    return searchParams.get("secret") || localStorage.getItem(ADMIN_SECRET_KEY) || ""
-  })
   const [showFeedback, setShowFeedback] = useState(false)
   const [showStations, setShowStations] = useState(false)
 
-  const { data: stats, isLoading, error, refetch, isFetching } = useAdminStats(secret)
-
-  useEffect(() => {
-    if (searchParams.get("secret")) {
-      localStorage.setItem(ADMIN_SECRET_KEY, searchParams.get("secret")!)
-    }
-  }, [searchParams])
-
-  useEffect(() => {
-    if (stats) {
-      localStorage.setItem(ADMIN_SECRET_KEY, secret)
-    }
-  }, [stats, secret])
-
-  if (!secret) {
-    return (
-      <div className="flex min-h-svh items-center justify-center bg-background p-4">
-        <div className="w-full max-w-sm space-y-4">
-          <h1 className="text-center text-xl font-semibold text-foreground">Admin</h1>
-          <input
-            type="password"
-            placeholder="Secret"
-            value={secret}
-            onChange={(e) => setSecret(e.target.value)}
-            className="input-mobile w-full rounded-lg border border-input bg-background px-3 text-foreground outline-none focus:border-foreground"
-          />
-        </div>
-      </div>
-    )
-  }
+  const { data: stats, isLoading, error, refetch, isFetching } = useAdminStats()
 
   if (isLoading) {
     return (
@@ -122,18 +85,24 @@ export function AdminPage() {
   }
 
   if (error) {
+    const forbidden = error instanceof ApiError && error.statusCode === 403
     return (
       <div className="flex min-h-svh flex-col items-center justify-center gap-4 bg-background p-4">
-        <p className="text-sm text-destructive">{error instanceof Error ? error.message : "Failed to fetch stats"}</p>
-        <button
-          onClick={() => {
-            localStorage.removeItem(ADMIN_SECRET_KEY)
-            setSecret("")
-          }}
-          className="rounded-lg bg-muted px-4 py-2 text-sm font-medium text-foreground"
-        >
-          Försök igen
-        </button>
+        <p className="text-sm text-destructive">
+          {forbidden
+            ? "Ditt konto har inte adminbehörighet."
+            : error instanceof Error
+              ? error.message
+              : "Failed to fetch stats"}
+        </p>
+        {!forbidden && (
+          <button
+            onClick={() => refetch()}
+            className="rounded-lg bg-muted px-4 py-2 text-sm font-medium text-foreground"
+          >
+            Försök igen
+          </button>
+        )}
       </div>
     )
   }

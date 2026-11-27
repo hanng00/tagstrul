@@ -8,7 +8,7 @@ import {
   buildDepartureDateTime,
   compensationLabel,
   type MovingoCard,
-} from './CompensationCalculator.ts';
+} from './compensation.ts';
 
 describe('CompensationCalculator', () => {
   describe('averageTripPrice', () => {

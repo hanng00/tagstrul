@@ -1,7 +1,8 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
 import { userId, putProfile, getProfile } from '../../repository.ts';
-import { submitBankDetails } from '../../adapter/SJDelayCompensationAdapter.ts';
+import { claimAdapterFor } from '../../adapter/registry.ts';
+import { decodeClaimToken, encodeClaimToken } from './claimToken.ts';
 import { success, badRequest, structuredError } from '../../utils/response.ts';
 
 const schema = z.object({
@@ -30,9 +31,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const { claimToken, personalNumber, swishPhone } = body.data;
     const formattedPnr = formatPersonalNumber(personalNumber);
 
-    const barId = await submitBankDetails(claimToken, {
-      personalIdentityNumber: formattedPnr,
-      swishPhoneNumber: swishPhone,
+    const { provider, session } = decodeClaimToken(claimToken);
+    const next = await claimAdapterFor(provider).submitPayment(session, {
+      personalNumber: formattedPnr,
+      swishPhone,
     });
 
     const profile = await getProfile(uid);
@@ -43,8 +45,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     });
 
     return success({
-      claimToken,
-      barId,
+      claimToken: encodeClaimToken(provider, next.session),
+      // The web app calls the payment reference barId, after SJ's bank account record id.
+      barId: next.paymentRef,
       step: 'confirm',
     });
   } catch (error) {

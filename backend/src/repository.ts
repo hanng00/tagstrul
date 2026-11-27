@@ -1,7 +1,8 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, QueryCommand, PutCommand, DeleteCommand, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, QueryCommand, PutCommand, DeleteCommand, GetCommand, UpdateCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import type { Route, Delay, Claim, Profile, MovingoCard } from './types.ts';
-import { estimateCompensation, isClaimable } from './features/ingestion/CompensationCalculator.ts';
+import type { ClaimProviderId } from './domain/claims.ts';
+import { estimateCompensation, isClaimable } from './domain/compensation.ts';
 import { getUserMovingoCard } from './ingestion-repository.ts';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -98,6 +99,7 @@ export async function getDelays(uid: string): Promise<Delay[]> {
       announcedAt: item.announcedAt,
       firstSeenAt: item.firstSeenAt,
       disruptionReason: item.disruptionReason,
+      operator: item.operator,
       likelyScheduledChange: item.likelyScheduledChange ?? false,
     };
   });
@@ -139,6 +141,7 @@ export async function getDelay(uid: string, delayId: string): Promise<(Delay & {
     claimed: result.Item.claimed ?? false,
     claimDeadline: result.Item.claimDeadline,
     trainId: result.Item.trainId,
+    operator: result.Item.operator,
     announcedAt: result.Item.announcedAt,
     firstSeenAt: result.Item.firstSeenAt,
     disruptionReason: result.Item.disruptionReason,
@@ -185,39 +188,121 @@ export async function getClaims(uid: string): Promise<Claim[]> {
   }));
 }
 
-export async function putClaim(uid: string, claim: Claim): Promise<void> {
-  await client.send(
-    new PutCommand({
-      TableName: TABLE,
-      Item: {
-        PK: `USER#${uid}`,
-        SK: `CLAIM#${claim.claimId}`,
-        delayId: claim.delayId,
-        fromStation: claim.fromStation,
-        toStation: claim.toStation,
-        date: claim.date,
-        scheduledDeparture: claim.scheduledDeparture,
-        delayMinutes: claim.delayMinutes,
-        estimatedCompensation: claim.estimatedCompensation,
-        status: claim.status,
-        submittedAt: claim.submittedAt,
-      },
-    })
-  );
+/** Thrown when a delay is already claimed, or another claim for it is in progress. */
+export class ClaimConflictError extends Error {
+  constructor(message = 'Delay is already claimed') {
+    super(message);
+    this.name = 'ClaimConflictError';
+  }
+}
 
-  // Mark the delay as claimed without overwriting the rest of the delay record
+/** How long a claim reservation blocks other attempts before it counts as abandoned. */
+const CLAIM_RESERVATION_MS = 2 * 60 * 1000;
+
+const NOT_CLAIMED = '(attribute_not_exists(claimed) OR claimed = :false)';
+
+/**
+ * Reserves a delay before we confirm the claim with SJ, so a double tap or a retry
+ * cannot file the same claim twice. Release it with releaseClaimReservation if the
+ * SJ call fails; putClaim clears it on success.
+ */
+export async function reserveDelayForClaim(uid: string, delayId: string): Promise<void> {
+  const now = Date.now();
+  try {
+    await client.send(
+      new UpdateCommand({
+        TableName: TABLE,
+        Key: { PK: `USER#${uid}`, SK: `DELAY#${delayId}` },
+        UpdateExpression: 'SET claimStartedAt = :now',
+        ConditionExpression: `attribute_exists(PK) AND ${NOT_CLAIMED} AND (attribute_not_exists(claimStartedAt) OR claimStartedAt < :staleBefore)`,
+        ExpressionAttributeValues: {
+          ':now': new Date(now).toISOString(),
+          ':staleBefore': new Date(now - CLAIM_RESERVATION_MS).toISOString(),
+          ':false': false,
+        },
+      }),
+    );
+  } catch (err) {
+    if ((err as { name?: string }).name === 'ConditionalCheckFailedException') {
+      throw new ClaimConflictError('Delay is already claimed or a claim is in progress');
+    }
+    throw err;
+  }
+}
+
+export async function releaseClaimReservation(uid: string, delayId: string): Promise<void> {
   await client.send(
     new UpdateCommand({
       TableName: TABLE,
-      Key: {
-        PK: `USER#${uid}`,
-        SK: `DELAY#${claim.delayId}`,
-      },
-      UpdateExpression: 'SET claimed = :claimed',
-      ExpressionAttributeValues: { ':claimed': true },
+      Key: { PK: `USER#${uid}`, SK: `DELAY#${delayId}` },
+      UpdateExpression: 'REMOVE claimStartedAt',
       ConditionExpression: 'attribute_exists(PK)',
-    })
+    }),
   );
+}
+
+/**
+ * Stores the claim and marks its delay as claimed in one transaction, so we never
+ * end up with a claim whose delay still looks unclaimed (or two claims for one delay).
+ */
+export async function putClaim(
+  uid: string,
+  claim: Claim,
+  extra: { provider?: ClaimProviderId; confirmationId?: string } = {},
+): Promise<void> {
+  const delayValues: Record<string, unknown> = { ':true': true, ':false': false, ':claimId': claim.claimId };
+  let delaySet = 'SET claimed = :true, claimId = :claimId';
+  if (extra.provider) {
+    delaySet += ', claimProvider = :provider';
+    delayValues[':provider'] = extra.provider;
+  }
+  if (extra.confirmationId) {
+    // SJ confirmations keep their original attribute name so existing records and readers still line up.
+    const attr = !extra.provider || extra.provider === 'sj' ? 'sjConfirmationId' : 'providerConfirmationId';
+    delaySet += `, ${attr} = :confirmationId`;
+    delayValues[':confirmationId'] = extra.confirmationId;
+  }
+
+  try {
+    await client.send(
+      new TransactWriteCommand({
+        TransactItems: [
+          {
+            Put: {
+              TableName: TABLE,
+              Item: {
+                PK: `USER#${uid}`,
+                SK: `CLAIM#${claim.claimId}`,
+                delayId: claim.delayId,
+                fromStation: claim.fromStation,
+                toStation: claim.toStation,
+                date: claim.date,
+                scheduledDeparture: claim.scheduledDeparture,
+                delayMinutes: claim.delayMinutes,
+                estimatedCompensation: claim.estimatedCompensation,
+                status: claim.status,
+                submittedAt: claim.submittedAt,
+              },
+            },
+          },
+          {
+            Update: {
+              TableName: TABLE,
+              Key: { PK: `USER#${uid}`, SK: `DELAY#${claim.delayId}` },
+              UpdateExpression: `${delaySet} REMOVE claimStartedAt`,
+              ConditionExpression: `attribute_exists(PK) AND ${NOT_CLAIMED}`,
+              ExpressionAttributeValues: delayValues,
+            },
+          },
+        ],
+      }),
+    );
+  } catch (err) {
+    if ((err as { name?: string }).name === 'TransactionCanceledException') {
+      throw new ClaimConflictError();
+    }
+    throw err;
+  }
 }
 
 export async function updateClaimStatus(

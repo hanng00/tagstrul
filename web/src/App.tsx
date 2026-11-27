@@ -98,10 +98,10 @@ export function App() {
             <Route path="/blogg/:slug" element={<BlogPostPage />} />
             <Route path="/design-system" element={<DesignSystemPage />} />
             <Route path="/tack" element={<ThankYouPage />} />
-            <Route path="/admin" element={<AdminPage />} />
             <Route path="/storybook" element={<StorybookPage />} />
             <Route path="/storybook/frame/:screen/:delayId?" element={<StoryFramePage />} />
             <Route element={<ProtectedRoute />}>
+              <Route path="/admin" element={<AdminPage />} />
               <Route element={<OnboardingGuard />}>
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 <Route path="/app" element={<AppLayout />}>

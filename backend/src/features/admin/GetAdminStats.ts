@@ -1,11 +1,11 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
-import { success, unauthorized, internalServerError } from '../../utils/response.ts';
+import { success, forbidden, internalServerError } from '../../utils/response.ts';
+import { isAdmin } from '../../utils/auth.ts';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME!;
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'tagstrul-admin-2024';
 
 interface AdminStats {
   users: {
@@ -55,9 +55,9 @@ interface AdminStats {
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
-    const secret = event.queryStringParameters?.secret;
-    if (secret !== ADMIN_SECRET) {
-      return unauthorized('Invalid admin secret');
+    // The route sits behind the Cognito authorizer; only members of the admin group get through.
+    if (!isAdmin(event as any)) {
+      return forbidden('Admin access required');
     }
 
     const stats = await collectStats();

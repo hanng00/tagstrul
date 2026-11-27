@@ -1,8 +1,9 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, ScanCommand, PutCommand, BatchWriteCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, ScanCommand, BatchWriteCommand, QueryCommand, UpdateCommand, type BatchWriteCommandInput } from '@aws-sdk/lib-dynamodb';
+import { buildDelayUpsert, becameClaimable } from './features/ingestion/DelayRecord.ts';
 import type { UserRoute, UserDelayMatch } from './features/ingestion/UserRouteMatcher.ts';
-import type { TrainDeparture } from './adapter/TrainDataPort.ts';
-import type { MovingoCard } from './features/ingestion/CompensationCalculator.ts';
+import type { TrainDeparture } from './domain/train.ts';
+import type { MovingoCard } from './domain/compensation.ts';
 import type { PushSubscription } from './types.ts';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -128,7 +129,7 @@ export async function getActiveMovingoCards(): Promise<Map<string, MovingoCard>>
   return cards;
 }
 
-import type { StationPair } from './adapter/TrainDataPort.ts';
+import type { StationPair } from './domain/train.ts';
 
 export function uniqueRoutePairs(routes: UserRoute[]): StationPair[] {
   const seen = new Set<string>();
@@ -183,63 +184,31 @@ export async function writeTrainSnapshots(departures: TrainDeparture[]): Promise
   if (current.length > 0) batches.push(current);
 
   for (const batch of batches) {
-    await client.send(new BatchWriteCommand({ RequestItems: { [TABLE]: batch } }));
+    await batchWriteWithRetry(batch);
   }
 }
 
-export async function writeUserDelays(matches: UserDelayMatch[]): Promise<void> {
+/**
+ * Creates or refreshes each user's delay record and returns the matches that just
+ * became claimable (new records, or existing ones that crossed the claimable line).
+ * Callers use the result to notify users once per delay instead of on every poll.
+ */
+export async function writeUserDelays(matches: UserDelayMatch[]): Promise<UserDelayMatch[]> {
   const now = new Date();
-  const claimDeadline = new Date(now);
-  claimDeadline.setDate(claimDeadline.getDate() + 30);
-  const deadlineStr = claimDeadline.toISOString().slice(0, 10);
-  const firstSeenAt = now.toISOString();
+  const newlyClaimable: UserDelayMatch[] = [];
 
   for (const m of matches) {
-    const delayId = `${m.delay.date}_${m.delay.trainId}_${m.fromStationUic}_${m.toStationUic}`;
-
     try {
-      // Only insert if delay doesn't exist yet (idempotent write)
-      await client.send(
-        new PutCommand({
-          TableName: TABLE,
-          Item: {
-            PK: `USER#${m.userId}`,
-            SK: `DELAY#${delayId}`,
-            trainId: m.delay.trainId,
-            routeId: m.routeId,
-            fromStation: m.delay.fromStation,
-            fromStationUic: m.fromStationUic,
-            toStation: m.delay.toStation,
-            toStationUic: m.toStationUic,
-            date: m.delay.date,
-            scheduledDeparture: m.delay.scheduledDeparture,
-            actualDeparture: m.delay.actualDeparture,
-            delayMinutes: m.delay.delayMinutes,
-            cancelled: m.delay.cancelled,
-            estimatedCompensation: m.estimatedCompensation,
-            claimable: m.claimable,
-            claimed: false,
-            claimDeadline: m.claimable ? deadlineStr : undefined,
-            source: m.delay.source,
-            trainDataRef: m.delay.rawRef,
-            detectedAt: now.toISOString(),
-            // New fields for 72-hour rule
-            announcedAt: m.delay.announcedAt,
-            disruptionReason: m.delay.disruptionReason,
-            likelyScheduledChange: m.likelyScheduledChange,
-            firstSeenAt,
-          },
-          ConditionExpression: 'attribute_not_exists(PK)',
-        }),
-      );
+      const result = await client.send(new UpdateCommand(buildDelayUpsert(TABLE, m, now)));
+      if (becameClaimable(m, result.Attributes)) newlyClaimable.push(m);
     } catch (err: unknown) {
-      // ConditionalCheckFailedException means delay already exists - skip silently
-      if ((err as { name?: string }).name === 'ConditionalCheckFailedException') {
-        continue;
-      }
+      // Condition failed: the delay is already claimed, so leave it as it is.
+      if ((err as { name?: string }).name === 'ConditionalCheckFailedException') continue;
       throw err;
     }
   }
+
+  return newlyClaimable;
 }
 
 export async function getUserPushSubscriptions(userId: string): Promise<PushSubscription[]> {
@@ -258,4 +227,23 @@ export async function getUserPushSubscriptions(userId: string): Promise<PushSubs
       auth: item.auth as string,
     },
   }));
+}
+
+/**
+ * DynamoDB may accept only part of a batch under load and return the rest as
+ * UnprocessedItems. Retry those with backoff instead of dropping them silently.
+ */
+async function batchWriteWithRetry(requests: NonNullable<BatchWriteCommandInput['RequestItems']>[string]): Promise<void> {
+  let pending = requests;
+  for (let attempt = 0; pending.length > 0; attempt++) {
+    if (attempt > 0) {
+      if (attempt > 5) {
+        console.warn(`[ingestion] Dropping ${pending.length} unprocessed snapshot writes after retries`);
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100 * 2 ** attempt));
+    }
+    const result = await client.send(new BatchWriteCommand({ RequestItems: { [TABLE]: pending } }));
+    pending = result.UnprocessedItems?.[TABLE] ?? [];
+  }
 }

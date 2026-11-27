@@ -1,7 +1,8 @@
 import type { ScheduledEvent } from 'aws-lambda';
-import { createTrainDataAdapter } from '../../adapter/TrainDataPort.ts';
+import { createTrainDataAdapter } from '../../adapter/registry.ts';
 import { detectDelays } from './DelayDetector.ts';
 import { matchDelaysToUsers } from './UserRouteMatcher.ts';
+import { delayIdFor } from './DelayRecord.ts';
 import {
   getAllUserRoutes,
   getActiveMovingoCards,
@@ -45,11 +46,12 @@ export const handler = async (_event: ScheduledEvent): Promise<void> => {
 
   if (matches.length === 0) return;
 
-  await writeUserDelays(matches);
-  console.log(`[PollTrainData] Wrote ${matches.length} user delay records.`);
+  const newlyClaimable = await writeUserDelays(matches);
+  console.log(`[PollTrainData] Wrote ${matches.length} user delay records (${newlyClaimable.length} newly claimable).`);
 
-  // Send push notifications for claimable delays (if configured)
-  const claimableMatches = matches.filter((m) => m.claimable && !m.likelyScheduledChange);
+  // Notify only about delays that became claimable in this poll, so a delayed train
+  // does not trigger a new push every hour.
+  const claimableMatches = newlyClaimable.filter((m) => !m.likelyScheduledChange);
   if (claimableMatches.length > 0 && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
     console.log(`[PollTrainData] Sending push notifications for ${claimableMatches.length} claimable delays`);
     
@@ -73,7 +75,7 @@ export const handler = async (_event: ScheduledEvent): Promise<void> => {
       const subscriptions = subscriptionsByUser.get(match.userId);
       if (!subscriptions || subscriptions.length === 0) continue;
 
-      const delayId = `${match.delay.date}_${match.delay.trainId}_${match.fromStationUic}_${match.toStationUic}`;
+      const delayId = delayIdFor(match);
       const notification = formatDelayNotification({
         delayId,
         fromStation: match.delay.fromStation,

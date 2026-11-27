@@ -2,6 +2,13 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: Tagersattning — parent stack
 
+Parameters:
+  TrafikverketApiKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: Key for Trafikverket's open API (data.trafikverket.se). Empty turns off Mälartåg train data.
+
 Resources:
   # ========== Shared infrastructure ==========
 
@@ -53,6 +60,15 @@ Resources:
       UserPoolId: !Ref CognitoUserPool
       ExplicitAuthFlows: [ALLOW_USER_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
 
+  # Members of this group can read /admin/stats. Add users with:
+  #   aws cognito-idp admin-add-user-to-group --user-pool-id <pool> --username <email> --group-name admin
+  AdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: admin
+      UserPoolId: !Ref CognitoUserPool
+      Description: Can read admin statistics
+
   Table:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -87,6 +103,7 @@ Resources:
         TableName: !Ref Table
         TableArn: !GetAtt Table.Arn
         TableStreamArn: !GetAtt Table.StreamArn
+        TrafikverketApiKey: !Ref TrafikverketApiKey
 
 Outputs:
   CognitoUserPoolId: { Value: !Ref CognitoUserPool }

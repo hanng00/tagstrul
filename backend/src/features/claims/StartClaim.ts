@@ -1,12 +1,10 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
-import { userId } from '../../repository.ts';
-import { getDelay, getProfile, getMovingoCards } from '../../repository.ts';
-import {
-  getDelayCompensationToken,
-  submitTravelDetails,
-  MOVINGO_CARD_TYPE_LABELS,
-} from '../../adapter/SJDelayCompensationAdapter.ts';
+import { userId, getDelay, getProfile, getMovingoCards } from '../../repository.ts';
+import { findCardForDate } from '../../domain/movingo.ts';
+import { claimProviderFor, CLAIM_PROVIDER_NAMES } from '../../domain/claims.ts';
+import { claimAdapterFor } from '../../adapter/registry.ts';
+import { encodeClaimToken } from './claimToken.ts';
 import { success, badRequest, notFound, structuredError } from '../../utils/response.ts';
 
 const schema = z.object({
@@ -29,40 +27,33 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       getMovingoCards(uid),
     ]);
 
-    const activeCard = movingoCards.find((c) => c.expiryDate >= new Date().toISOString().slice(0, 10));
+    const activeCard = findCardForDate(movingoCards, delay.date);
     if (!activeCard) {
-      return badRequest('No active Movingo card');
+      return badRequest(`No Movingo card valid on ${delay.date}`);
     }
 
-    const cardTypeLabel = MOVINGO_CARD_TYPE_LABELS[activeCard.cardType] ?? 'Movingo 30 dgr på SJ kort';
+    const provider = claimProviderFor(delay.operator);
+    const claims = claimAdapterFor(provider);
 
-    const token = await getDelayCompensationToken(activeCard.movingoId, cardTypeLabel);
-
-    const trainId = delay.trainId ?? extractTrainId(delay.delayId);
-
-    const { token: updatedToken, ticketCompensation } = await submitTravelDetails(token, {
-      journeyDetail: {
-        departureLocation: {
-          id: delay.fromStationUic ?? '',
-          name: delay.fromStation,
-        },
-        arrivalLocation: {
-          id: delay.toStationUic ?? '',
-          name: delay.toStation,
-        },
-        journeyDate: { date: delay.date },
-        journeyTime: { time: delay.scheduledDeparture },
-        trainNumber: trainId,
+    const { session, eligible } = await claims.start(
+      { kind: 'movingo', cardNumber: activeCard.movingoId, cardType: activeCard.cardType },
+      {
+        fromStation: delay.fromStation,
+        fromStationUic: delay.fromStationUic ?? '',
+        toStation: delay.toStation,
+        toStationUic: delay.toStationUic ?? '',
+        date: delay.date,
+        departureTime: delay.scheduledDeparture,
+        trainNumber: delay.trainId ?? extractTrainId(delay.delayId),
       },
-      expenses: [],
-    });
+    );
 
-    if (!ticketCompensation) {
-      return badRequest('SJ indicates this trip is not eligible for compensation');
+    if (!eligible) {
+      return badRequest(`${CLAIM_PROVIDER_NAMES[provider]} indicates this trip is not eligible for compensation or is already claimed`);
     }
 
     return success({
-      claimToken: updatedToken,
+      claimToken: encodeClaimToken(provider, session),
       step: 'contact',
       delay: {
         delayId: delay.delayId,

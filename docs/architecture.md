@@ -36,10 +36,16 @@ tagersattning/
 │       ├── types.ts
 │       ├── repository.ts           # DynamoDB access (user-facing)
 │       ├── ingestion-repository.ts # DynamoDB access (ingestion)
+│       ├── domain/             # Pure rules, no I/O: compensation, movingo, operator, claims routing
+│       ├── ports/
+│       │   ├── TrainDataPort.ts    # Train data source
+│       │   └── ClaimPort.ts        # Compensation claim provider
 │       ├── adapter/
-│       │   ├── TrainDataPort.ts
+│       │   ├── registry.ts         # Composition root: picks the adapter for each port
 │       │   ├── SJTrafficInfoAdapter.ts
-│       │   └── TrafikverketAdapter.ts
+│       │   ├── TrafikverketAdapter.ts
+│       │   ├── SJClaimAdapter.ts
+│       │   └── SJDelayCompensationAdapter.ts
 │       ├── utils/
 │       │   ├── cors.ts
 │       │   └── response.ts
@@ -49,7 +55,7 @@ tagersattning/
 │           ├── claims/         # GetClaims, PostClaim
 │           ├── profile/        # GetProfile, PutProfile
 │           ├── movingo/        # GetMovingoCards, PostMovingoCard, DeleteMovingoCard
-│           └── ingestion/      # PollTrainData, DelayDetector, UserRouteMatcher, CompensationCalculator
+│           └── ingestion/      # PollTrainData, DelayDetector, UserRouteMatcher, DelayRecord
 └── web/                        # Vite SPA (React)
     ├── package.json
     ├── vite.config.ts
@@ -269,9 +275,26 @@ interface TrainDataPort {
 
 Current adapters:
 - `SJTrafficInfoAdapter` — calls SJ's public Traffic Info API for real departure data
-- `TrafikverketAdapter` — placeholder, throws "not yet implemented"
+- `TrafikverketAdapter` — Trafikverket's open API (`TrainAnnouncement`). Joins departures at the origin with arrivals at the destination and measures delay **at arrival**. Only station pairs on the Mälartåg network (`data/malartag-stations.ts`) are queried.
+- `CombinedTrainDataAdapter` — merges sources. With `TRAFIKVERKET_API_KEY` set, Mälartåg trains come from Trafikverket and everything else from SJ.
 
 The `PollTrainData` Lambda only talks to `TrainDataPort`. Swap the adapter in one line when ready.
+
+Each `TrainDeparture` also carries an `operator` (`sj`, `malartag` or `unknown`), because the operator decides which compensation rules apply and where a claim goes.
+
+### Claims (ClaimPort)
+
+Claim handlers (`StartClaim`, `SubmitContact`, `SubmitBank`, `ConfirmClaim`) never call a provider directly. `domain/claims.ts#claimProviderFor(operator)` picks the provider for a delay, and `adapter/registry.ts#claimAdapterFor(provider)` returns its `ClaimPort` adapter. The claim token the web app carries between steps is `<provider>:<provider session>`, so later steps reach the same provider. Tokens without a prefix are legacy SJ tokens.
+
+Current claim adapters:
+- `SJClaimAdapter` — wraps SJ's delay compensation API (`SJDelayCompensationAdapter`)
+- `MalardalstrafikClaimAdapter` — Mälardalstrafik's claim form (EVF, run by Precio) for Mälartåg trains. The form files a claim in one `POST /api/Claims`, so the earlier steps collect details in the session and `confirm` sends them. Payout is Swish.
+
+Routing: `claimProviderFor('malartag')` is `malardalstrafik`; SJ and unknown operators go to `sj`.
+
+### Configuration
+
+- `TRAFIKVERKET_API_KEY` (ingestion Lambdas) — free key from data.trafikverket.se. Deployed from the `TRAFIKVERKET_API_KEY` GitHub secret through the `TrafikverketApiKey` stack parameter. Without it, only SJ data is polled.
 
 ---
 

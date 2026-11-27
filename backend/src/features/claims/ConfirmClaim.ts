@@ -1,13 +1,16 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
-import { userId, getDelay, putClaim } from '../../repository.ts';
-import { confirmClaim } from '../../adapter/SJDelayCompensationAdapter.ts';
-import { success, badRequest, notFound, structuredError } from '../../utils/response.ts';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-
-const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
-const TABLE = process.env.TABLE_NAME!;
+import {
+  userId,
+  getDelay,
+  putClaim,
+  reserveDelayForClaim,
+  releaseClaimReservation,
+  ClaimConflictError,
+} from '../../repository.ts';
+import { claimAdapterFor } from '../../adapter/registry.ts';
+import { decodeClaimToken } from './claimToken.ts';
+import { success, badRequest, notFound, conflict, structuredError } from '../../utils/response.ts';
 
 const schema = z.object({
   claimToken: z.string().min(1),
@@ -25,37 +28,41 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const delay = await getDelay(uid, delayId);
     if (!delay) return notFound('Delay not found');
-    if (delay.claimed) return badRequest('Already claimed');
+    if (delay.claimed) return conflict('Already claimed');
 
-    const confirmationId = await confirmClaim(claimToken, barId);
+    const { provider, session } = decodeClaimToken(claimToken);
+
+    // Reserve the delay before talking to the provider so a double tap cannot file twice.
+    await reserveDelayForClaim(uid, delayId);
+
+    let confirmationId: string;
+    try {
+      ({ confirmationId } = await claimAdapterFor(provider).confirm(session, barId));
+    } catch (err) {
+      await releaseClaimReservation(uid, delayId).catch((releaseErr) =>
+        console.error('[ConfirmClaim] Failed to release reservation:', releaseErr),
+      );
+      throw err;
+    }
 
     const claimId = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    await putClaim(uid, {
-      claimId,
-      delayId,
-      fromStation: delay.fromStation,
-      toStation: delay.toStation,
-      date: delay.date,
-      scheduledDeparture: delay.scheduledDeparture,
-      delayMinutes: delay.delayMinutes,
-      estimatedCompensation: delay.estimatedCompensation,
-      status: 'submitted',
-      submittedAt: now,
-    });
-
-    await client.send(
-      new UpdateCommand({
-        TableName: TABLE,
-        Key: { PK: `USER#${uid}`, SK: `DELAY#${delayId}` },
-        UpdateExpression: 'SET claimed = :claimed, claimId = :claimId, sjConfirmationId = :confirmationId',
-        ExpressionAttributeValues: {
-          ':claimed': true,
-          ':claimId': claimId,
-          ':confirmationId': confirmationId,
-        },
-      }),
+    await putClaim(
+      uid,
+      {
+        claimId,
+        delayId,
+        fromStation: delay.fromStation,
+        toStation: delay.toStation,
+        date: delay.date,
+        scheduledDeparture: delay.scheduledDeparture,
+        delayMinutes: delay.delayMinutes,
+        estimatedCompensation: delay.estimatedCompensation,
+        status: 'submitted',
+        submittedAt: now,
+      },
+      { provider, confirmationId },
     );
 
     return success({
@@ -65,6 +72,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       submittedAt: now,
     });
   } catch (error) {
+    if (error instanceof ClaimConflictError) return conflict(error.message);
     console.error('[ConfirmClaim] Error:', error);
     return structuredError(error);
   }
