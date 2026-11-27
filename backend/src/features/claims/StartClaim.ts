@@ -1,7 +1,7 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
-import { userId } from '../../repository.ts';
-import { getDelay, getProfile, getMovingoCards } from '../../repository.ts';
+import { userId, getDelay, getProfile, getMovingoCards } from '../../repository.ts';
+import { findCardForDate } from './movingo.ts';
 import {
   getDelayCompensationToken,
   submitTravelDetails,
@@ -29,9 +29,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       getMovingoCards(uid),
     ]);
 
-    const activeCard = movingoCards.find((c) => c.expiryDate >= new Date().toISOString().slice(0, 10));
+    const activeCard = findCardForDate(movingoCards, delay.date);
     if (!activeCard) {
-      return badRequest('No active Movingo card');
+      return badRequest(`No Movingo card valid on ${delay.date}`);
     }
 
     const cardTypeLabel = MOVINGO_CARD_TYPE_LABELS[activeCard.cardType] ?? 'Movingo 30 dgr på SJ kort';

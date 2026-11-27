@@ -1,7 +1,7 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
-import { putClaim, userId } from '../../repository.ts';
-import { created, badRequest, internalServerError } from '../../utils/response.ts';
+import { putClaim, userId, ClaimConflictError } from '../../repository.ts';
+import { created, badRequest, conflict, internalServerError } from '../../utils/response.ts';
 
 const schema = z.object({
   delayId: z.string().min(1),
@@ -30,6 +30,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     await putClaim(uid, claim);
     return created(claim);
   } catch (error) {
+    if (error instanceof ClaimConflictError) return conflict(error.message);
     return internalServerError(error);
   }
 };
