@@ -6,6 +6,10 @@ describe('claim token', () => {
     expect(decodeClaimToken(encodeClaimToken('sj', 'abc123'))).toEqual({ provider: 'sj', session: 'abc123' });
   });
 
+  test('round-trips Mälardalstrafik sessions', () => {
+    expect(decodeClaimToken(encodeClaimToken('malardalstrafik', 'eyJ0'))).toEqual({ provider: 'malardalstrafik', session: 'eyJ0' });
+  });
+
   test('keeps colons inside the session', () => {
     expect(decodeClaimToken('sj:a:b:c')).toEqual({ provider: 'sj', session: 'a:b:c' });
   });

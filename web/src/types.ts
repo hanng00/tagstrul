@@ -44,6 +44,8 @@ export interface Delay {
   disruptionReason?: string
   /** True if announced >72h before departure — likely a scheduled change */
   likelyScheduledChange?: boolean
+  /** Who ran the train: "sj", "malartag" or "unknown". Missing on older delays. */
+  operator?: string
 }
 
 export interface Claim {

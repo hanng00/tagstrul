@@ -8,7 +8,7 @@ import {
   ChevronDown,
   ExternalLink,
 } from "lucide-react"
-import { useState } from "react"
+import { createContext, useContext, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PersonnummerInput } from "@/components/ui-extended/personnummer-input"
@@ -27,6 +27,10 @@ import {
 } from "@/features/claims"
 import { events } from "@/lib/posthog"
 import { PageHeader } from "@/components/AppLayout"
+import { claimProviderFor, type ClaimProvider } from "@/lib/claim-provider"
+
+const ClaimProviderContext = createContext<ClaimProvider>(claimProviderFor(undefined))
+const useClaimProvider = () => useContext(ClaimProviderContext)
 
 type Step =
   | "loading"
@@ -222,6 +226,7 @@ export function ClaimPage() {
         </div>
       </PageHeader>
 
+      <ClaimProviderContext.Provider value={claimProviderFor(delay?.operator)}>
       <StepIndicator currentStep={effectiveStep} />
 
       <div className="flex flex-1 flex-col px-5 pt-4 pb-6">
@@ -282,6 +287,7 @@ export function ClaimPage() {
           />
         )}
       </div>
+      </ClaimProviderContext.Provider>
     </div>
   )
 }
@@ -317,6 +323,7 @@ function ScheduledChangeWarning({
 }: {
   disruptionReason?: string
 }) {
+  const provider = useClaimProvider()
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -340,11 +347,11 @@ function ScheduledChangeWarning({
           <p>
             {disruptionReason ? `"${disruptionReason}" — ` : ""}
             Denna ändring meddelades mer än 72 timmar i förväg, vilket enligt
-            SJ:s regler räknas som en tidtabellsändring snarare än en akut
+            {provider.possessive} regler räknas som en tidtabellsändring snarare än en akut
             försening.
           </p>
           <p>
-            Du kan fortfarande skicka in ansökan — SJ avgör slutgiltigt. Vid
+            Du kan fortfarande skicka in ansökan — {provider.name} avgör slutgiltigt. Vid
             avslag har du rätt till återbetalning av biljetten.
           </p>
         </div>
@@ -362,6 +369,7 @@ function TravelStep({
   loading: boolean
   onContinue: () => void
 }) {
+  const provider = useClaimProvider()
   return (
     <>
       {/* Warning for likely scheduled changes */}
@@ -400,7 +408,7 @@ function TravelStep({
 
       <p className="mt-4 text-xs text-muted-foreground">
         Genom att fortsätta bekräftar du att uppgifterna ovan stämmer och att du
-        vill ansöka om ersättning från SJ.
+        vill ansöka om ersättning från {provider.name}.
       </p>
 
       <div className="mt-auto pt-8">
@@ -434,6 +442,7 @@ function ContactStep({
   onContinue: () => void
   onBack: () => void
 }) {
+  const provider = useClaimProvider()
   const phoneDigits = contact.phone.replace(/\D/g, "")
   const isValid =
     contact.firstName.length > 0 &&
@@ -498,7 +507,7 @@ function ContactStep({
       </div>
 
       <p className="mt-4 text-xs text-muted-foreground">
-        Dessa uppgifter skickas till SJ för att de ska kunna kontakta dig
+        Dessa uppgifter skickas till {provider.name} för att de ska kunna kontakta dig
         angående din ersättning.
       </p>
 
@@ -632,6 +641,7 @@ function ConfirmStep({
   onConfirm: () => void
   onBack: () => void
 }) {
+  const provider = useClaimProvider()
   const [accepted, setAccepted] = useState(false)
 
   return (
@@ -707,9 +717,9 @@ function ConfirmStep({
           >
             integritetspolicyn
           </a>
-          {" "}samt att ansökan skickas till SJ enligt deras{" "}
+          {" "}samt att ansökan skickas till {provider.name} enligt deras{" "}
           <a
-            href="https://www.sj.se/om-sj/regler-och-villkor/rattigheter-vid-forsening#Ers%C3%A4ttning_vid_f%C3%B6rsening"
+            href={provider.termsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="underline"
@@ -755,6 +765,7 @@ function SuccessStep({
   delay: NonNullable<ReturnType<typeof useDelay>["delay"]>
   onDone: () => void
 }) {
+  const provider = useClaimProvider()
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       <div className="flex size-16 items-center justify-center rounded-full bg-success-surface">
@@ -766,7 +777,7 @@ function SuccessStep({
       </h2>
 
       <p className="mt-2 text-sm text-muted-foreground">
-        Din ersättningsansökan har skickats till SJ.
+        Din ersättningsansökan har skickats till {provider.name}.
       </p>
 
       <div className="mt-6 w-full rounded-xl border border-border bg-card p-4 text-left">
@@ -785,7 +796,7 @@ function SuccessStep({
       </div>
 
       <p className="mt-4 text-xs text-muted-foreground">
-        SJ behandlar vanligtvis ansökningar inom 2-4 veckor. Ersättningen
+        {provider.name} behandlar vanligtvis ansökningar inom 2-4 veckor. Ersättningen
         betalas ut via Swish.
       </p>
 
@@ -810,6 +821,7 @@ function ErrorStep({
   onRetry: () => void
   onBack: () => void
 }) {
+  const provider = useClaimProvider()
   const isRetryable = error?.retryable ?? true
   const showManualFallback = !isRetryable || error?.code === "SERVICE_UNAVAILABLE"
 
@@ -830,10 +842,10 @@ function ErrorStep({
       {showManualFallback && delay && (
         <div className="mt-6 w-full rounded-xl border border-border bg-card p-4 text-left">
           <p className="text-sm font-medium text-foreground">
-            Ansök manuellt på SJ.se
+            Ansök manuellt via {provider.manualClaimLabel}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Om problemet kvarstår kan du ansöka direkt hos SJ med dessa uppgifter:
+            Om problemet kvarstår kan du ansöka direkt hos {provider.name} med dessa uppgifter:
           </p>
           <div className="mt-3 space-y-1 text-xs text-muted-foreground">
             <p><span className="font-medium">Resa:</span> {delay.fromStation} → {delay.toStation}</p>
@@ -842,12 +854,12 @@ function ErrorStep({
             <p><span className="font-medium">Försening:</span> {delay.cancelled ? "Inställt" : `${delay.delayMinutes} min`}</p>
           </div>
           <a
-            href="https://www.sj.se/kundservice/forseningsersattning"
+            href={provider.manualClaimUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-foreground underline"
           >
-            Öppna SJ.se
+            Öppna {provider.manualClaimLabel}
             <ExternalLink className="size-3" />
           </a>
         </div>

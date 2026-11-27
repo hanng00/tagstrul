@@ -2,6 +2,13 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: Tagersattning — parent stack
 
+Parameters:
+  TrafikverketApiKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: Key for Trafikverket's open API (data.trafikverket.se). Empty turns off Mälartåg train data.
+
 Resources:
   # ========== Shared infrastructure ==========
 
@@ -96,6 +103,7 @@ Resources:
         TableName: !Ref Table
         TableArn: !GetAtt Table.Arn
         TableStreamArn: !GetAtt Table.StreamArn
+        TrafikverketApiKey: !Ref TrafikverketApiKey
 
 Outputs:
   CognitoUserPoolId: { Value: !Ref CognitoUserPool }

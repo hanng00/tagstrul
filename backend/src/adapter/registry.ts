@@ -8,20 +8,27 @@ import type { ClaimProviderId } from '../domain/claims.ts';
 import { SJTrafficInfoAdapter } from './SJTrafficInfoAdapter.ts';
 import { TrafikverketAdapter } from './TrafikverketAdapter.ts';
 import { SJClaimAdapter } from './SJClaimAdapter.ts';
+import { MalardalstrafikClaimAdapter } from './MalardalstrafikClaimAdapter.ts';
+import { CombinedTrainDataAdapter } from './CombinedTrainDataAdapter.ts';
 
+/**
+ * SJ's API covers SJ trains. With a Trafikverket key, Mälartåg trains are read from
+ * Trafikverket as well, and take precedence because Trafikverket measures delay at arrival.
+ */
 export function createTrainDataAdapter(): TrainDataPort {
-  const provider = process.env.TRAIN_DATA_PROVIDER ?? 'sj';
-  switch (provider) {
-    case 'trafikverket':
-      return new TrafikverketAdapter();
-    case 'sj':
-    default:
-      return new SJTrafficInfoAdapter();
-  }
+  const sj = new SJTrafficInfoAdapter();
+  const trafikverketKey = process.env.TRAFIKVERKET_API_KEY;
+  if (!trafikverketKey) return sj;
+
+  return new CombinedTrainDataAdapter([
+    { port: new TrafikverketAdapter(trafikverketKey), operators: ['malartag'] },
+    { port: sj },
+  ]);
 }
 
 const claimAdapters: Record<ClaimProviderId, () => ClaimPort> = {
   sj: () => new SJClaimAdapter(),
+  malardalstrafik: () => new MalardalstrafikClaimAdapter(),
 };
 
 export function claimAdapterFor(provider: ClaimProviderId): ClaimPort {

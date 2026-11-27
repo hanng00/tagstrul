@@ -9,6 +9,11 @@ Parameters:
     Type: String
   TableStreamArn:
     Type: String
+  TrafikverketApiKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: Key for Trafikverket's open API. Empty turns off Mälartåg train data.
 
 Globals:
   Function:
@@ -19,6 +24,7 @@ Globals:
     Environment:
       Variables:
         TABLE_NAME: !Ref TableName
+        TRAFIKVERKET_API_KEY: !Ref TrafikverketApiKey
         VAPID_PUBLIC_KEY: "BBIzQGbT5xiHErvmHNAPNWl7M3JhF2iPwc-rCCAoEUbuJOHsKkXVRMvPmg9GGqv0_Xmuyz6zZ9dJ3Fz4YNis9lo"
         VAPID_PRIVATE_KEY: "zg1-43GFet3GXQSJbhC40IFDogt7i4Nxk_MV9THMV1M"
 

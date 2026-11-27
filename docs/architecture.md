@@ -275,7 +275,8 @@ interface TrainDataPort {
 
 Current adapters:
 - `SJTrafficInfoAdapter` — calls SJ's public Traffic Info API for real departure data
-- `TrafikverketAdapter` — placeholder, throws "not yet implemented"
+- `TrafikverketAdapter` — Trafikverket's open API (`TrainAnnouncement`). Joins departures at the origin with arrivals at the destination and measures delay **at arrival**. Only station pairs on the Mälartåg network (`data/malartag-stations.ts`) are queried.
+- `CombinedTrainDataAdapter` — merges sources. With `TRAFIKVERKET_API_KEY` set, Mälartåg trains come from Trafikverket and everything else from SJ.
 
 The `PollTrainData` Lambda only talks to `TrainDataPort`. Swap the adapter in one line when ready.
 
@@ -287,6 +288,13 @@ Claim handlers (`StartClaim`, `SubmitContact`, `SubmitBank`, `ConfirmClaim`) nev
 
 Current claim adapters:
 - `SJClaimAdapter` — wraps SJ's delay compensation API (`SJDelayCompensationAdapter`)
+- `MalardalstrafikClaimAdapter` — Mälardalstrafik's claim form (EVF, run by Precio) for Mälartåg trains. The form files a claim in one `POST /api/Claims`, so the earlier steps collect details in the session and `confirm` sends them. Payout is Swish.
+
+Routing: `claimProviderFor('malartag')` is `malardalstrafik`; SJ and unknown operators go to `sj`.
+
+### Configuration
+
+- `TRAFIKVERKET_API_KEY` (ingestion Lambdas) — free key from data.trafikverket.se. Deployed from the `TRAFIKVERKET_API_KEY` GitHub secret through the `TrafikverketApiKey` stack parameter. Without it, only SJ data is polled.
 
 ---
 
