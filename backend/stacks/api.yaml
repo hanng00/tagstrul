@@ -517,7 +517,7 @@ Resources:
       BuildProperties:
         Sourcemap: true
 
-  # --- Admin (unauthenticated, secret-protected) ---
+  # --- Admin (Cognito auth, restricted to the "admin" user pool group) ---
 
   GetAdminStats:
     Type: AWS::Serverless::Function
@@ -535,8 +535,6 @@ Resources:
             RestApiId: !Ref Api
             Path: /admin/stats
             Method: GET
-            Auth:
-              Authorizer: NONE
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
