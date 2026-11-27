@@ -13,7 +13,7 @@ export interface SubmitBankResponse {
   step: "confirm"
 }
 
-async function submitBank(data: SubmitBankRequest): Promise<SubmitBankResponse> {
+export async function submitBank(data: SubmitBankRequest): Promise<SubmitBankResponse> {
   return request<SubmitBankResponse>("/claims/bank", {
     method: "POST",
     body: JSON.stringify(data),

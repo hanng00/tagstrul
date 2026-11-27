@@ -22,7 +22,7 @@ export interface StartClaimResponse {
   }
 }
 
-async function startClaim(delayId: string): Promise<StartClaimResponse> {
+export async function startClaim(delayId: string): Promise<StartClaimResponse> {
   return request<StartClaimResponse>("/claims/start", {
     method: "POST",
     body: JSON.stringify({ delayId }),

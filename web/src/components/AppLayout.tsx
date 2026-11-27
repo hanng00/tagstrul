@@ -30,38 +30,48 @@ export function PageHeader({ children, className }: PageHeaderProps) {
 
 export function AppLayout() {
   return (
+    <AppChrome>
+      <Outlet />
+    </AppChrome>
+  )
+}
+
+/**
+ * The app frame: page content plus the bottom tab bar.
+ * `activeTab` forces a tab to look selected, for previews outside /app.
+ */
+export function AppChrome({ children, activeTab }: { children: ReactNode; activeTab?: string }) {
+  return (
     <div className="mx-auto flex min-h-svh max-w-lg flex-col bg-background pb-20">
       <ErrorBoundary>
-        <Outlet />
+        {children}
       </ErrorBoundary>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/80 backdrop-blur-xl backdrop-saturate-150">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card pb-safe">
         <div className="mx-auto flex max-w-lg">
           {tabs.map(({ to, icon: Icon, label, end }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
-              className={({ isActive }) =>
-                `relative flex flex-1 flex-col items-center gap-0.5 py-3 text-[10px] font-medium transition-colors ${
+              className={({ isActive: routeActive }) => {
+                const isActive = activeTab ? activeTab === to : routeActive
+                return `relative flex h-16 flex-1 flex-col items-center justify-center gap-1 text-xs transition-colors ${
                   isActive
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground/70"
+                    ? "font-semibold text-primary"
+                    : "font-medium text-muted-foreground hover:text-foreground"
                 }`
-              }
+              }}
             >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <span className="absolute top-0 left-1/2 h-[2px] w-8 -translate-x-1/2 rounded-full bg-foreground" />
-                  )}
-                  <Icon
-                    className="size-5"
-                    strokeWidth={isActive ? 2 : 1.5}
-                  />
-                  <span className="tracking-wide">{label}</span>
-                </>
-              )}
+              {({ isActive: routeActive }) => {
+                const isActive = activeTab ? activeTab === to : routeActive
+                return (
+                  <>
+                    <Icon className="size-[22px]" strokeWidth={isActive ? 2.25 : 1.75} />
+                    <span>{label}</span>
+                  </>
+                )
+              }}
             </NavLink>
           ))}
         </div>
