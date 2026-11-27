@@ -2,8 +2,8 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, ScanCommand, BatchWriteCommand, QueryCommand, UpdateCommand, type BatchWriteCommandInput } from '@aws-sdk/lib-dynamodb';
 import { buildDelayUpsert, becameClaimable } from './features/ingestion/DelayRecord.ts';
 import type { UserRoute, UserDelayMatch } from './features/ingestion/UserRouteMatcher.ts';
-import type { TrainDeparture } from './adapter/TrainDataPort.ts';
-import type { MovingoCard } from './features/ingestion/CompensationCalculator.ts';
+import type { TrainDeparture } from './domain/train.ts';
+import type { MovingoCard } from './domain/compensation.ts';
 import type { PushSubscription } from './types.ts';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -129,7 +129,7 @@ export async function getActiveMovingoCards(): Promise<Map<string, MovingoCard>>
   return cards;
 }
 
-import type { StationPair } from './adapter/TrainDataPort.ts';
+import type { StationPair } from './domain/train.ts';
 
 export function uniqueRoutePairs(routes: UserRoute[]): StationPair[] {
   const seen = new Set<string>();

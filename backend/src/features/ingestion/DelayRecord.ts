@@ -40,6 +40,7 @@ export function buildDelayUpsert(table: string, m: UserDelayMatch, now: Date): U
     estimatedCompensation: m.estimatedCompensation,
     claimable: m.claimable,
     source: m.delay.source,
+    operator: m.delay.operator,
     trainDataRef: m.delay.rawRef,
     announcedAt: m.delay.announcedAt,
     disruptionReason: m.delay.disruptionReason,

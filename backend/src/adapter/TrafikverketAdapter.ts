@@ -1,4 +1,4 @@
-import type { TrainDataPort, TrainDeparture, StationPair } from './TrainDataPort.ts';
+import type { TrainDataPort, TrainDeparture, StationPair } from '../ports/TrainDataPort.ts';
 
 /**
  * Placeholder for Trafikverket integration.

@@ -1,8 +1,8 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
-import { createTrainDataAdapter } from '../../adapter/TrainDataPort.ts';
+import { createTrainDataAdapter } from '../../adapter/registry.ts';
 import { detectDelays } from '../ingestion/DelayDetector.ts';
-import { compensationTier, isClaimable, type MovingoCard } from '../ingestion/CompensationCalculator.ts';
+import { compensationTier, isClaimable, type MovingoCard } from '../../domain/compensation.ts';
 import { success, badRequest, internalServerError } from '../../utils/response.ts';
 import { getStationByName } from '../../data/stations.ts';
 

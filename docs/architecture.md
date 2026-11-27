@@ -36,10 +36,16 @@ tagersattning/
 │       ├── types.ts
 │       ├── repository.ts           # DynamoDB access (user-facing)
 │       ├── ingestion-repository.ts # DynamoDB access (ingestion)
+│       ├── domain/             # Pure rules, no I/O: compensation, movingo, operator, claims routing
+│       ├── ports/
+│       │   ├── TrainDataPort.ts    # Train data source
+│       │   └── ClaimPort.ts        # Compensation claim provider
 │       ├── adapter/
-│       │   ├── TrainDataPort.ts
+│       │   ├── registry.ts         # Composition root: picks the adapter for each port
 │       │   ├── SJTrafficInfoAdapter.ts
-│       │   └── TrafikverketAdapter.ts
+│       │   ├── TrafikverketAdapter.ts
+│       │   ├── SJClaimAdapter.ts
+│       │   └── SJDelayCompensationAdapter.ts
 │       ├── utils/
 │       │   ├── cors.ts
 │       │   └── response.ts
@@ -49,7 +55,7 @@ tagersattning/
 │           ├── claims/         # GetClaims, PostClaim
 │           ├── profile/        # GetProfile, PutProfile
 │           ├── movingo/        # GetMovingoCards, PostMovingoCard, DeleteMovingoCard
-│           └── ingestion/      # PollTrainData, DelayDetector, UserRouteMatcher, CompensationCalculator
+│           └── ingestion/      # PollTrainData, DelayDetector, UserRouteMatcher, DelayRecord
 └── web/                        # Vite SPA (React)
     ├── package.json
     ├── vite.config.ts
@@ -272,6 +278,15 @@ Current adapters:
 - `TrafikverketAdapter` — placeholder, throws "not yet implemented"
 
 The `PollTrainData` Lambda only talks to `TrainDataPort`. Swap the adapter in one line when ready.
+
+Each `TrainDeparture` also carries an `operator` (`sj`, `malartag` or `unknown`), because the operator decides which compensation rules apply and where a claim goes.
+
+### Claims (ClaimPort)
+
+Claim handlers (`StartClaim`, `SubmitContact`, `SubmitBank`, `ConfirmClaim`) never call a provider directly. `domain/claims.ts#claimProviderFor(operator)` picks the provider for a delay, and `adapter/registry.ts#claimAdapterFor(provider)` returns its `ClaimPort` adapter. The claim token the web app carries between steps is `<provider>:<provider session>`, so later steps reach the same provider. Tokens without a prefix are legacy SJ tokens.
+
+Current claim adapters:
+- `SJClaimAdapter` — wraps SJ's delay compensation API (`SJDelayCompensationAdapter`)
 
 ---
 

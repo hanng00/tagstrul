@@ -1,4 +1,5 @@
-import type { TrainDataPort, TrainDeparture, StationPair } from './TrainDataPort.ts';
+import type { TrainDataPort, TrainDeparture, StationPair } from '../ports/TrainDataPort.ts';
+import { normalizeOperator } from '../domain/operator.ts';
 import type { DepartureConnection, FilteredConnectionsResponse } from './sj-types.ts';
 
 const SJ_API_BASE = 'https://prod-api.adp.sj.se/public/trafficinfo-api/v2/rest';
@@ -20,6 +21,12 @@ function parseEditedDateToISO(editedDate: string): string | undefined {
   const [datePart, timePart] = editedDate.split(' ');
   if (!datePart || !timePart) return undefined;
   return `${datePart}T${timePart}:00`;
+}
+
+/** SJ's API names the operator in `operator`, falling back to who owns the traffic information. */
+function operatorOf(conn: DepartureConnection) {
+  const fromOperator = normalizeOperator(conn.operator);
+  return fromOperator !== 'unknown' ? fromOperator : normalizeOperator(conn.informationOwner);
 }
 
 export class SJTrafficInfoAdapter implements TrainDataPort {
@@ -64,6 +71,7 @@ export class SJTrafficInfoAdapter implements TrainDataPort {
         delayMinutes: getDelayMinutes(conn),
         cancelled: conn.cancelled,
         source: 'sj',
+        operator: operatorOf(conn),
         rawRef: JSON.stringify({
           trainNumber: conn.trainNumber,
           originalDateTime: conn.originalDateTime,

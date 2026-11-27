@@ -1,5 +1,5 @@
 import type { ScheduledEvent } from 'aws-lambda';
-import { createTrainDataAdapter } from '../../adapter/TrainDataPort.ts';
+import { createTrainDataAdapter } from '../../adapter/registry.ts';
 import { detectDelays } from './DelayDetector.ts';
 import { matchDelaysToUsers } from './UserRouteMatcher.ts';
 import { delayIdFor } from './DelayRecord.ts';

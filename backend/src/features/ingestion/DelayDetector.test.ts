@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 import { detectDelays, type DetectedDelay } from './DelayDetector.ts';
-import type { TrainDeparture } from '../../adapter/TrainDataPort.ts';
+import type { TrainDeparture } from '../../domain/train.ts';
 
 const makeDeparture = (overrides: Partial<TrainDeparture> = {}): TrainDeparture => ({
   trainId: 'SJ123',

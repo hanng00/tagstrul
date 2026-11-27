@@ -1,3 +1,5 @@
+import type { Operator } from './domain/operator.ts';
+
 export interface Route {
   routeId: string;
   fromStation: string;
@@ -38,6 +40,8 @@ export interface Delay {
   firstSeenAt?: string;
   /** Header/reason for the disruption from SJ */
   disruptionReason?: string;
+  /** Who ran the train. Missing on delays recorded before operators were tracked. */
+  operator?: Operator;
   /** True if announced >72h before departure — likely a scheduled change, not eligible for delay compensation */
   likelyScheduledChange?: boolean;
 }

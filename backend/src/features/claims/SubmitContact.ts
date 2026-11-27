@@ -1,7 +1,8 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
 import { userId, getProfile, putProfile } from '../../repository.ts';
-import { submitContactInfo } from '../../adapter/SJDelayCompensationAdapter.ts';
+import { claimAdapterFor } from '../../adapter/registry.ts';
+import { decodeClaimToken, encodeClaimToken } from './claimToken.ts';
 import { success, badRequest, structuredError } from '../../utils/response.ts';
 
 const schema = z.object({
@@ -20,11 +21,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const { claimToken, firstName, lastName, email, phone } = body.data;
 
-    const updatedToken = await submitContactInfo(claimToken, {
-      emailAddress: email,
-      mobilePhoneNumber: phone,
-      personName: { firstName, lastName },
-    });
+    const { provider, session } = decodeClaimToken(claimToken);
+    const next = await claimAdapterFor(provider).submitContact(session, { firstName, lastName, email, phone });
 
     const profile = await getProfile(uid);
 
@@ -38,7 +36,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     });
 
     return success({
-      claimToken: updatedToken,
+      claimToken: encodeClaimToken(provider, next.session),
       step: 'bank',
       bank: {
         personalNumber: profile?.personalNumber ?? '',

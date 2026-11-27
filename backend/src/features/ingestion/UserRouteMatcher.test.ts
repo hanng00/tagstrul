@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 import { matchDelaysToUsers, type UserRoute, type UserDelayMatch } from './UserRouteMatcher.ts';
 import type { DetectedDelay } from './DelayDetector.ts';
-import type { MovingoCard } from './CompensationCalculator.ts';
+import type { MovingoCard } from '../../domain/compensation.ts';
 
 const makeDelay = (overrides: Partial<DetectedDelay> = {}): DetectedDelay => ({
   trainId: 'SJ123',
