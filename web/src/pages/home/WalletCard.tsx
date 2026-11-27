@@ -28,9 +28,9 @@ export function WalletCard({
   const percent = share === null ? null : Math.round(share * 100)
 
   return (
-    <section aria-label="Tillbaka från SJ" className="rounded-2xl bg-card p-5">
+    <section aria-label="Fått tillbaka" className="rounded-2xl bg-card p-5">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-[15px] text-muted-foreground">Tillbaka från SJ</h2>
+        <h2 className="text-[15px] text-muted-foreground">Fått tillbaka</h2>
         <p className="text-2xl font-extrabold tabular-nums tracking-tight">
           {formatKr(totalReceived)}
         </p>

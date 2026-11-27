@@ -24,7 +24,7 @@ function maskPersonnummer(pnr?: string) {
 
 /**
  * Claims every open trip in one go. The user reviews the details we send
- * to SJ once, approves, and we file each claim in turn.
+ * to the train operator once, approves, and we file each claim in turn.
  */
 export function ClaimAllPage() {
   const navigate = useNavigate()
@@ -147,13 +147,13 @@ export function ClaimAllPage() {
             <p className="max-w-[20rem] text-[17px] leading-snug text-muted-foreground">
               {sent === 0
                 ? "Inget krav kom fram. Försök igen med en resa i taget nedan."
-                : `${sent === 1 ? "Ett krav" : `${countWord(sent).replace(/^./, (c) => c.toUpperCase())} krav`} på ${formatKr(sentTotal)} ligger nu hos SJ. Markera på startsidan när pengarna kommit.`}
+                : `${sent === 1 ? "Ett krav" : `${countWord(sent).replace(/^./, (c) => c.toUpperCase())} krav`} på ${formatKr(sentTotal)} ligger nu hos tågbolaget. Markera på startsidan när pengarna kommit.`}
             </p>
           </div>
         ) : (
           <>
             <h1 className="text-[34px] leading-[1.1] font-extrabold tracking-tight">
-              {phase === "sending" ? "Skickar till SJ…" : `Kräv ${countWord(trips.length)} resor`}
+              {phase === "sending" ? "Skickar krav…" : `Kräv ${countWord(trips.length)} resor`}
             </h1>
             <p className="mt-2 text-[17px] text-muted-foreground">
               Sammanlagt{" "}
@@ -172,7 +172,7 @@ export function ClaimAllPage() {
           <section aria-labelledby="details-heading" className="mt-6 rounded-2xl bg-card p-5">
             <div className="flex items-baseline justify-between">
               <h2 id="details-heading" className="text-[15px] font-semibold">
-                Det här skickar vi till SJ
+                Det här skickar vi med kraven
               </h2>
               <Link to="/app/profile" className="text-[13px] font-semibold text-primary">
                 Ändra
@@ -206,7 +206,7 @@ export function ClaimAllPage() {
               Skicka {countWord(trips.length)} krav
             </button>
             <p className="mt-2 text-center text-[13px] leading-snug text-muted-foreground">
-              Du bekräftar att uppgifterna stämmer och att du vill ansöka om ersättning från SJ för
+              Du bekräftar att uppgifterna stämmer och att du vill ansöka om ersättning för
               resorna ovan.
             </p>
           </div>

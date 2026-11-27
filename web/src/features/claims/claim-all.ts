@@ -64,7 +64,7 @@ export async function claimOneDelay(delayId: string): Promise<BatchClaimOutcome>
     return {
       ok: false,
       reason: "failed",
-      message: err instanceof ApiError ? err.message : "Något gick fel hos SJ",
+      message: err instanceof ApiError ? err.message : "Något gick fel när kravet skickades",
     }
   }
 }

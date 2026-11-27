@@ -145,7 +145,7 @@ export function HomePage() {
             </h1>
             <p className="max-w-[20rem] text-[17px] leading-snug text-muted-foreground">
               {pendingClaims.length > 0
-                ? "Dina krav ligger hos SJ. Vi säger till när ett nytt tåg blir minst 20 minuter sent."
+                ? "Dina krav ligger hos tågbolaget. Vi säger till när ett nytt tåg blir minst 20 minuter sent."
                 : "Inga sena tåg att kräva just nu. Vi bevakar dina avgångar och säger till när ett tåg blir minst 20 minuter sent."}
             </p>
           </div>
