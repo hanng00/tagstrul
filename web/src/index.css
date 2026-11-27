@@ -6,40 +6,40 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-    /* Soft and calm: neutral stone ground, white cards, one dusty red used sparingly. */
-    --background: oklch(0.968 0.004 50);
-    --foreground: oklch(0.22 0.012 15);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.22 0.012 15);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.22 0.012 15);
-    --primary: oklch(0.52 0.105 20);
-    --primary-foreground: oklch(0.99 0.004 20);
-    --primary-soft: oklch(0.95 0.022 20);
-    --secondary: oklch(0.94 0.006 40);
-    --secondary-foreground: oklch(0.30 0.012 15);
-    --muted: oklch(0.935 0.005 40);
-    --muted-foreground: oklch(0.50 0.012 15);
-    --accent: oklch(0.95 0.022 20);
-    --accent-foreground: oklch(0.40 0.09 20);
-    --destructive: oklch(0.52 0.17 30);
-    --border: oklch(0.91 0.006 40);
-    --input: oklch(0.88 0.008 40);
-    --ring: oklch(0.52 0.105 20);
-    --chart-1: oklch(0.52 0.105 20);
-    --chart-2: oklch(0.72 0.06 20);
-    --chart-3: oklch(0.50 0.012 15);
-    --chart-4: oklch(0.80 0.03 60);
-    --chart-5: oklch(0.35 0.05 20);
+    /* Soft and calm: a sage-grey ground, white cards, one forest green used sparingly. */
+    --background: #f4f5f2;
+    --foreground: #18201c;
+    --card: #ffffff;
+    --card-foreground: #18201c;
+    --popover: #ffffff;
+    --popover-foreground: #18201c;
+    --primary: #1f5d45;
+    --primary-foreground: #ffffff;
+    --primary-soft: #e3f0e8;
+    --secondary: #eceee9;
+    --secondary-foreground: #18201c;
+    --muted: #eceee9;
+    --muted-foreground: #5f6863;
+    --accent: #e3f0e8;
+    --accent-foreground: #1f5d45;
+    --destructive: #b42318;
+    --border: #e4e7e2;
+    --input: #d6dad4;
+    --ring: #1f5d45;
+    --chart-1: #1f5d45;
+    --chart-2: #7fb59a;
+    --chart-3: #5f6863;
+    --chart-4: #c9a227;
+    --chart-5: #b42318;
     --radius: 0.625rem;
-    --sidebar: oklch(1 0 0);
-    --sidebar-foreground: oklch(0.22 0.012 15);
-    --sidebar-primary: oklch(0.52 0.105 20);
-    --sidebar-primary-foreground: oklch(0.99 0.004 20);
-    --sidebar-accent: oklch(0.935 0.005 40);
-    --sidebar-accent-foreground: oklch(0.30 0.012 15);
-    --sidebar-border: oklch(0.91 0.006 40);
-    --sidebar-ring: oklch(0.52 0.105 20);
+    --sidebar: #ffffff;
+    --sidebar-foreground: #18201c;
+    --sidebar-primary: #1f5d45;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #eceee9;
+    --sidebar-accent-foreground: #18201c;
+    --sidebar-border: #e4e7e2;
+    --sidebar-ring: #1f5d45;
 }
 
 .dark {
@@ -49,9 +49,9 @@
     --card-foreground: oklch(0.95 0.005 35);
     --popover: oklch(0.14 0.015 35);
     --popover-foreground: oklch(0.95 0.005 35);
-    --primary: oklch(0.55 0.16 25);
-    --primary-foreground: oklch(0.98 0.01 35);
-    --primary-soft: oklch(0.28 0.05 20);
+    --primary: #4cae84;
+    --primary-foreground: #0d1a14;
+    --primary-soft: #1a3328;
     --secondary: oklch(0.18 0.012 35);
     --secondary-foreground: oklch(0.95 0.005 35);
     --muted: oklch(0.18 0.012 35);
@@ -61,20 +61,20 @@
     --destructive: oklch(0.60 0.18 30);
     --border: oklch(1 0 0 / 8%);
     --input: oklch(1 0 0 / 10%);
-    --ring: oklch(0.55 0.16 25);
-    --chart-1: oklch(0.55 0.16 25);
+    --ring: #4cae84;
+    --chart-1: #4cae84;
     --chart-2: oklch(0.78 0.16 75);
     --chart-3: oklch(0.55 0.1 35);
     --chart-4: oklch(0.7 0.12 75);
     --chart-5: oklch(0.45 0.08 35);
     --sidebar: oklch(0.14 0.015 35);
     --sidebar-foreground: oklch(0.95 0.005 35);
-    --sidebar-primary: oklch(0.55 0.16 25);
+    --sidebar-primary: #4cae84;
     --sidebar-primary-foreground: oklch(0.98 0.01 35);
     --sidebar-accent: oklch(0.18 0.012 35);
     --sidebar-accent-foreground: oklch(0.95 0.005 35);
     --sidebar-border: oklch(1 0 0 / 8%);
-    --sidebar-ring: oklch(0.55 0.16 25);
+    --sidebar-ring: #4cae84;
 }
 
 @theme inline {
@@ -125,7 +125,7 @@
     --color-surface-raised: oklch(0.995 0.006 35);
     --color-warn: oklch(0.78 0.16 75);
     --color-warn-surface: oklch(0.96 0.04 80);
-    --color-money: oklch(0.55 0.14 145);
+    --color-money: var(--primary);
     --color-money-surface: oklch(0.97 0.02 145);
     --color-success: oklch(0.55 0.12 75);
     --color-success-surface: oklch(0.96 0.04 75);
