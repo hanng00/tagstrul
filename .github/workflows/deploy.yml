@@ -66,4 +66,11 @@ jobs:
       - name: Deploy Stack
         if: github.event_name == 'push'
         working-directory: backend
-        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
+        env:
+          TRAFIKVERKET_API_KEY: ${{ secrets.TRAFIKVERKET_API_KEY }}
+        run: |
+          if [[ -n "$TRAFIKVERKET_API_KEY" ]]; then
+            sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "TrafikverketApiKey=${TRAFIKVERKET_API_KEY}"
+          else
+            sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
+          fi

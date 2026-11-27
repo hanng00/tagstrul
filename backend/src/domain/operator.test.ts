@@ -19,9 +19,12 @@ describe('normalizeOperator', () => {
 });
 
 describe('claimProviderFor', () => {
-  test('sends every claim to SJ until other providers are supported', () => {
+  test('sends Mälartåg trains to Mälardalstrafik', () => {
+    expect(claimProviderFor('malartag')).toBe('malardalstrafik');
+  });
+
+  test('sends SJ and unknown trains to SJ', () => {
     expect(claimProviderFor('sj')).toBe('sj');
-    expect(claimProviderFor('malartag')).toBe('sj');
     expect(claimProviderFor('unknown')).toBe('sj');
     expect(claimProviderFor(undefined)).toBe('sj');
   });

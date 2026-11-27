@@ -2,7 +2,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { z } from 'zod';
 import { userId, getDelay, getProfile, getMovingoCards } from '../../repository.ts';
 import { findCardForDate } from '../../domain/movingo.ts';
-import { claimProviderFor } from '../../domain/claims.ts';
+import { claimProviderFor, CLAIM_PROVIDER_NAMES } from '../../domain/claims.ts';
 import { claimAdapterFor } from '../../adapter/registry.ts';
 import { encodeClaimToken } from './claimToken.ts';
 import { success, badRequest, notFound, structuredError } from '../../utils/response.ts';
@@ -49,7 +49,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     );
 
     if (!eligible) {
-      return badRequest('SJ indicates this trip is not eligible for compensation');
+      return badRequest(`${CLAIM_PROVIDER_NAMES[provider]} indicates this trip is not eligible for compensation or is already claimed`);
     }
 
     return success({

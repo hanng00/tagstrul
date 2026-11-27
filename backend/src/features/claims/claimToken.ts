@@ -1,6 +1,6 @@
 import type { ClaimProviderId } from '../../domain/claims.ts';
 
-const PROVIDERS: readonly ClaimProviderId[] = ['sj'];
+const PROVIDERS: readonly ClaimProviderId[] = ['sj', 'malardalstrafik'];
 
 /**
  * The claim token the web app carries between claim steps. It wraps the provider's
