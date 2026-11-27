@@ -53,6 +53,15 @@ Resources:
       UserPoolId: !Ref CognitoUserPool
       ExplicitAuthFlows: [ALLOW_USER_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
 
+  # Members of this group can read /admin/stats. Add users with:
+  #   aws cognito-idp admin-add-user-to-group --user-pool-id <pool> --username <email> --group-name admin
+  AdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: admin
+      UserPoolId: !Ref CognitoUserPool
+      Description: Can read admin statistics
+
   Table:
     Type: AWS::DynamoDB::Table
     Properties:
