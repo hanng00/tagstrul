@@ -137,7 +137,7 @@ export function HomePage() {
       ) : (
         <div className="app-padding flex flex-1 flex-col pt-2 pb-8">
           <div className="flex flex-col items-start gap-4 pt-6 pb-8">
-            <span className="animate-scale-in flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <span className="animate-scale-in flex size-16 items-center justify-center rounded-full bg-primary-soft text-primary">
               <Check className="size-8" strokeWidth={2.75} />
             </span>
             <h1 className="text-[40px] leading-[1.05] font-extrabold tracking-tight">

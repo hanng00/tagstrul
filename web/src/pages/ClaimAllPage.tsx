@@ -131,7 +131,7 @@ export function ClaimAllPage() {
               className={cn(
                 "animate-scale-in flex size-16 items-center justify-center rounded-full",
                 sent === trips.length
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary-soft text-primary"
                   : "bg-muted text-foreground"
               )}
             >
@@ -291,7 +291,7 @@ function StatusIcon({ status }: { status?: Status }) {
   if (status.ok)
     return (
       <span
-        className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground"
+        className="flex size-5 items-center justify-center rounded-full bg-primary-soft text-primary"
         aria-label="Skickat"
       >
         <Check className="size-3.5" strokeWidth={3} />
