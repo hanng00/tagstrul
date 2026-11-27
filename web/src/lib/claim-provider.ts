@@ -22,7 +22,7 @@ const MALARDALSTRAFIK: ClaimProvider = {
   id: "malardalstrafik",
   name: "Mälardalstrafik",
   possessive: "Mälardalstrafiks",
-  termsUrl: "https://www.malardalstrafik.se/kundservice/ersattning-vid-forsening/",
+  termsUrl: "https://www.malardalstrafik.se/kundservice/ersaettning-vid-foersening/",
   manualClaimUrl: "https://evf-regionsormland.preciocloudapp.net/trains/evf",
   manualClaimLabel: "Mälardalstrafiks ansökan",
 }
