@@ -5,7 +5,7 @@ import {
   isLikelyScheduledChange,
   buildDepartureDateTime,
   type MovingoCard,
-} from './CompensationCalculator.ts';
+} from '../../domain/compensation.ts';
 
 export interface UserRoute {
   userId: string;

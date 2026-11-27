@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { findCardForDate } from './movingo.ts';
-import type { MovingoCard } from '../../types.ts';
+import type { MovingoCard } from '../types.ts';
 
 const card = (cardId: string, purchaseDate: string, expiryDate: string): MovingoCard => ({
   cardId,

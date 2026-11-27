@@ -1,5 +1,5 @@
 import type { DynamoDBStreamEvent } from 'aws-lambda';
-import { createTrainDataAdapter } from '../../adapter/TrainDataPort.ts';
+import { createTrainDataAdapter } from '../../adapter/registry.ts';
 import { detectDelays } from './DelayDetector.ts';
 import { matchDelaysToUsers } from './UserRouteMatcher.ts';
 import { getUserRoutes, getUserMovingoCard, uniqueRoutePairs, writeTrainSnapshots, writeUserDelays } from '../../ingestion-repository.ts';

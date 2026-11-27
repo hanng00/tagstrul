@@ -1,7 +1,8 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand, PutCommand, DeleteCommand, GetCommand, UpdateCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import type { Route, Delay, Claim, Profile, MovingoCard } from './types.ts';
-import { estimateCompensation, isClaimable } from './features/ingestion/CompensationCalculator.ts';
+import type { ClaimProviderId } from './domain/claims.ts';
+import { estimateCompensation, isClaimable } from './domain/compensation.ts';
 import { getUserMovingoCard } from './ingestion-repository.ts';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -98,6 +99,7 @@ export async function getDelays(uid: string): Promise<Delay[]> {
       announcedAt: item.announcedAt,
       firstSeenAt: item.firstSeenAt,
       disruptionReason: item.disruptionReason,
+      operator: item.operator,
       likelyScheduledChange: item.likelyScheduledChange ?? false,
     };
   });
@@ -139,6 +141,7 @@ export async function getDelay(uid: string, delayId: string): Promise<(Delay & {
     claimed: result.Item.claimed ?? false,
     claimDeadline: result.Item.claimDeadline,
     trainId: result.Item.trainId,
+    operator: result.Item.operator,
     announcedAt: result.Item.announcedAt,
     firstSeenAt: result.Item.firstSeenAt,
     disruptionReason: result.Item.disruptionReason,
@@ -245,13 +248,19 @@ export async function releaseClaimReservation(uid: string, delayId: string): Pro
 export async function putClaim(
   uid: string,
   claim: Claim,
-  extra: { sjConfirmationId?: string } = {},
+  extra: { provider?: ClaimProviderId; confirmationId?: string } = {},
 ): Promise<void> {
   const delayValues: Record<string, unknown> = { ':true': true, ':false': false, ':claimId': claim.claimId };
   let delaySet = 'SET claimed = :true, claimId = :claimId';
-  if (extra.sjConfirmationId) {
-    delaySet += ', sjConfirmationId = :confirmationId';
-    delayValues[':confirmationId'] = extra.sjConfirmationId;
+  if (extra.provider) {
+    delaySet += ', claimProvider = :provider';
+    delayValues[':provider'] = extra.provider;
+  }
+  if (extra.confirmationId) {
+    // SJ confirmations keep their original attribute name so existing records and readers still line up.
+    const attr = !extra.provider || extra.provider === 'sj' ? 'sjConfirmationId' : 'providerConfirmationId';
+    delaySet += `, ${attr} = :confirmationId`;
+    delayValues[':confirmationId'] = extra.confirmationId;
   }
 
   try {

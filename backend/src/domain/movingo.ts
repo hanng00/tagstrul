@@ -1,4 +1,4 @@
-import type { MovingoCard } from '../../types.ts';
+import type { MovingoCard } from '../types.ts';
 
 /**
  * Picks the Movingo card that was valid on the trip date (YYYY-MM-DD).

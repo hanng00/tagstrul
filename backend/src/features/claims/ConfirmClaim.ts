@@ -8,7 +8,8 @@ import {
   releaseClaimReservation,
   ClaimConflictError,
 } from '../../repository.ts';
-import { confirmClaim } from '../../adapter/SJDelayCompensationAdapter.ts';
+import { claimAdapterFor } from '../../adapter/registry.ts';
+import { decodeClaimToken } from './claimToken.ts';
 import { success, badRequest, notFound, conflict, structuredError } from '../../utils/response.ts';
 
 const schema = z.object({
@@ -29,12 +30,14 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     if (!delay) return notFound('Delay not found');
     if (delay.claimed) return conflict('Already claimed');
 
-    // Reserve the delay before talking to SJ so a double tap cannot file twice.
+    const { provider, session } = decodeClaimToken(claimToken);
+
+    // Reserve the delay before talking to the provider so a double tap cannot file twice.
     await reserveDelayForClaim(uid, delayId);
 
     let confirmationId: string;
     try {
-      confirmationId = await confirmClaim(claimToken, barId);
+      ({ confirmationId } = await claimAdapterFor(provider).confirm(session, barId));
     } catch (err) {
       await releaseClaimReservation(uid, delayId).catch((releaseErr) =>
         console.error('[ConfirmClaim] Failed to release reservation:', releaseErr),
@@ -59,7 +62,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         status: 'submitted',
         submittedAt: now,
       },
-      { sjConfirmationId: confirmationId },
+      { provider, confirmationId },
     );
 
     return success({
