@@ -4,6 +4,7 @@ import {
   RespondToAuthChallengeCommand,
   SignUpCommand,
   ConfirmSignUpCommand,
+  ResendConfirmationCodeCommand,
   GlobalSignOutCommand,
   type AuthenticationResultType,
 } from "@aws-sdk/client-cognito-identity-provider"
@@ -89,7 +90,14 @@ export async function signIn(email: string): Promise<AuthSession> {
         return signIn(email)
       }
       if (error.name === "UserNotConfirmedException") {
-        // Legacy: user signed up before auto-confirm was enabled
+        // Legacy: user signed up before auto-confirm was enabled. The code from
+        // the original sign-up has long expired, so send a fresh one.
+        await client.send(
+          new ResendConfirmationCodeCommand({
+            ClientId: CLIENT_ID,
+            Username: email,
+          }),
+        )
         return {
           session: "",
           email,
@@ -122,23 +130,36 @@ function generateTempPassword(): string {
   return password
 }
 
+/**
+ * Confirms a legacy unconfirmed account with the 6-digit code from
+ * ResendConfirmationCode, then starts sign-in so Cognito emails the 8-digit
+ * login code. Returns the new OTP session.
+ */
+export async function confirmAccount(
+  session: AuthSession,
+  code: string,
+): Promise<AuthSession> {
+  await client.send(
+    new ConfirmSignUpCommand({
+      ClientId: CLIENT_ID,
+      Username: session.email,
+      ConfirmationCode: code,
+    }),
+  )
+
+  const newSession = await signIn(session.email)
+  if (newSession.type !== "otp") {
+    throw new Error("Unexpected state after confirmation")
+  }
+  return newSession
+}
+
 export async function verifyOtp(
   session: AuthSession,
   otp: string,
 ): Promise<AuthTokens> {
-  if (session.type === "confirm_signup") {
-    const confirmCommand = new ConfirmSignUpCommand({
-      ClientId: CLIENT_ID,
-      Username: session.email,
-      ConfirmationCode: otp,
-    })
-    await client.send(confirmCommand)
-
-    const newSession = await signIn(session.email)
-    if (newSession.type === "otp") {
-      throw new Error("Konto bekräftat! Ange koden vi skickade till din e-post.")
-    }
-    throw new Error("Unexpected state after confirmation")
+  if (session.type !== "otp") {
+    throw new Error("Account must be confirmed before verifying a login code")
   }
 
   const command = new RespondToAuthChallengeCommand({
