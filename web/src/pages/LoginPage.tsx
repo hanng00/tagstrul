@@ -9,7 +9,7 @@ type Step = "email" | "otp"
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { signIn, verifyOtp } = useAuth()
+  const { signIn, verifyOtp, confirmAccount } = useAuth()
 
   const [step, setStep] = useState<Step>("email")
   const [email, setEmail] = useState("")
@@ -17,6 +17,7 @@ export function LoginPage() {
   const [session, setSession] = useState<AuthSession | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -43,21 +44,29 @@ export function LoginPage() {
 
     setIsLoading(true)
     setError(null)
+    setNotice(null)
+
+    if (session.type === "confirm_signup") {
+      try {
+        const otpSession = await confirmAccount(session, otp.trim())
+        setSession(otpSession)
+        setOtp("")
+        setNotice("Konto bekräftat! Vi skickade en inloggningskod till din e-post.")
+      } catch (err) {
+        setError("Fel kod. Försök igen.")
+        console.error("Account confirmation error:", err)
+      } finally {
+        setIsLoading(false)
+      }
+      return
+    }
 
     try {
       await verifyOtp(session, otp.trim())
       navigate("/app", { replace: true })
     } catch (err) {
-      const message = err instanceof Error ? err.message : ""
-      if (message.includes("Konto bekräftat")) {
-        setError("Konto bekräftat! Vi skickade en ny kod till din e-post.")
-        setOtp("")
-        const newSession = await signIn(session.email)
-        setSession(newSession)
-      } else {
-        setError("Fel kod. Försök igen.")
-        console.error("OTP verification error:", err)
-      }
+      setError("Fel kod. Försök igen.")
+      console.error("OTP verification error:", err)
     } finally {
       setIsLoading(false)
     }
@@ -68,6 +77,7 @@ export function LoginPage() {
     setOtp("")
     setSession(null)
     setError(null)
+    setNotice(null)
   }
 
   return (
@@ -159,6 +169,10 @@ export function LoginPage() {
                   className="h-12 rounded-lg border border-input bg-background px-4 text-center text-2xl font-semibold tracking-[0.3em] text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 placeholder:tracking-normal placeholder:text-base focus:border-foreground"
                 />
               </label>
+
+              {notice && (
+                <p className="text-sm text-green-600">{notice}</p>
+              )}
 
               {error && (
                 <p className="text-sm text-red-500">{error}</p>

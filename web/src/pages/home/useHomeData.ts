@@ -1,7 +1,6 @@
-import { useDelays, useClaims, useRoutes } from "@/lib/queries"
+import { useDelays, useClaims, useRoutes, useMovingoCards } from "@/lib/queries"
 import { HomeState } from "./types"
-import { useDateNavigation } from "./useDateNavigation"
-import { useDelayFilters } from "./useDelayFilters"
+import { useInbox, useActiveCard } from "./useInbox"
 import { useClaimsSummary } from "./useClaimsSummary"
 
 export function useHomeData() {
@@ -20,6 +19,7 @@ export function useHomeData() {
   } = useClaims()
 
   const { data: routes = [], isLoading: routesLoading } = useRoutes()
+  const { data: cards = [] } = useMovingoCards()
 
   const loading = delaysLoading || claimsLoading || routesLoading
   const refreshing = delaysFetching || claimsFetching
@@ -35,19 +35,15 @@ export function useHomeData() {
     refetchClaims()
   }
 
-  const dateNav = useDateNavigation(delays)
-  const delayFilters = useDelayFilters(delays, dateNav.activeDate)
-  const claimsSummary = useClaimsSummary(claims)
-
   return {
     state,
     refreshing,
     handleRefresh,
     refetchDelays,
     refetchClaims,
-    ...dateNav,
-    ...delayFilters,
-    ...claimsSummary,
+    activeCard: useActiveCard(cards),
+    ...useInbox(delays),
+    ...useClaimsSummary(claims),
   }
 }
 

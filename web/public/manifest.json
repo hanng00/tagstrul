@@ -4,8 +4,8 @@
   "description": "Få ersättning när tåget är försenat",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#f4f5f2",
+  "theme_color": "#1f5d45",
   "orientation": "portrait",
   "icons": [
     {

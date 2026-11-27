@@ -18,7 +18,7 @@ export interface SubmitContactResponse {
   }
 }
 
-async function submitContact(data: SubmitContactRequest): Promise<SubmitContactResponse> {
+export async function submitContact(data: SubmitContactRequest): Promise<SubmitContactResponse> {
   return request<SubmitContactResponse>("/claims/contact", {
     method: "POST",
     body: JSON.stringify(data),

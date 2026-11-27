@@ -1,81 +1,45 @@
 import { useState } from "react"
-import { useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { toast } from "sonner"
-import {
-  Check,
-  RefreshCw,
-  Clock,
-  ChevronDown,
-  ChevronUp,
-  ChevronLeft,
-  ChevronRight,
-  Calendar,
-  X,
-  Info,
-  MapPin,
-} from "lucide-react"
+import { Check, ChevronDown, MapPin, RefreshCw } from "lucide-react"
 import { api } from "@/lib/api"
 import type { Delay } from "@/types"
 import { cn } from "@/lib/utils"
 import { TrainLoader } from "@/components/ui/train-loader"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { PageHeader } from "@/components/AppLayout"
 
 import { useHomeData, HomeState } from "./home/useHomeData"
-import { ClaimableCard } from "./home/ClaimableCard"
-import { PendingClaimCard } from "./home/PendingClaimCard"
+import { ClaimRow } from "./home/ClaimRow"
+import { WalletCard } from "./home/WalletCard"
+import { countWord, formatDay, formatKr } from "./home/format"
 
-function formatDateFull(date: Date) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const target = new Date(date)
-  target.setHours(0, 0, 0, 0)
-
-  const diffDays = Math.round(
-    (target.getTime() - today.getTime()) / 86_400_000,
-  )
-
-  if (diffDays === 0) return "Idag"
-  if (diffDays === -1) return "Igår"
-  if (diffDays === 1) return "Imorgon"
-
-  return date.toLocaleDateString("sv-SE", {
-    weekday: "short",
+function todayLabel() {
+  const s = new Date().toLocaleDateString("sv-SE", {
+    weekday: "long",
     day: "numeric",
-    month: "short",
+    month: "long",
   })
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-function parseDateLocal(dateStr: string): Date {
-  const [year, month, day] = dateStr.split("-").map(Number)
-  return new Date(year, month - 1, day)
-}
-
+/**
+ * Home is an inbox of money owed to the user. It answers one question,
+ * "what do I need to do?", and offers one main action: claim everything.
+ */
 export function HomePage() {
   const navigate = useNavigate()
-  const [showSmallDelays, setShowSmallDelays] = useState(false)
-  const [showPending, setShowPending] = useState(false)
-  const [showDismissed, setShowDismissed] = useState(false)
-
   const {
     state,
     refreshing,
     handleRefresh,
     refetchDelays,
     refetchClaims,
-    availableDates,
-    activeDate,
-    canGoNewer,
-    canGoOlder,
-    goNewer,
-    goOlder,
-    claimable,
-    notClaimable,
-    dismissedForDate,
+    toClaim,
+    dismissed,
+    totalToClaim,
     pendingClaims,
     totalPending,
     totalReceived,
+    activeCard,
   } = useHomeData()
 
   if (state === HomeState.LOADING) {
@@ -86,276 +50,141 @@ export function HomePage() {
     )
   }
 
+  const count = toClaim.length
+  const hasWork = state === HomeState.ACTIVE && count > 0
+
+  const wallet = (
+    <WalletCard
+      totalReceived={totalReceived}
+      totalPending={totalPending}
+      pendingClaims={pendingClaims}
+      activeCard={activeCard}
+      onClaimResolved={() => refetchClaims()}
+    />
+  )
+
   return (
     <div className="flex flex-1 flex-col">
-      <PageHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">Hem</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Översikt över dina ersättningar
-            </p>
-          </div>
+      <header className="app-padding flex items-start justify-between gap-3 pt-8">
+        <p className="text-[15px] text-muted-foreground">{todayLabel()}</p>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="-mt-3 -mr-2 flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+          aria-label="Uppdatera"
+        >
+          <RefreshCw className={cn("size-[18px]", refreshing && "animate-spin")} />
+        </button>
+      </header>
+
+      {state === HomeState.NO_ROUTES ? (
+        <div className="app-padding flex flex-1 flex-col pt-2 pb-8">
+          <h1 className="text-[34px] leading-[1.1] font-extrabold tracking-tight">
+            Vilket tåg tar du?
+          </h1>
+          <p className="mt-2 text-[17px] text-muted-foreground">
+            Lägg till din pendling så letar vi upp förseningar du kan få pengar för.
+          </p>
           <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95 disabled:opacity-50"
-            aria-label="Uppdatera"
+            onClick={() => navigate("/app/routes")}
+            className="mt-6 flex h-14 items-center justify-center gap-2 rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            <RefreshCw className={cn("size-4", refreshing && "animate-spin")} />
+            <MapPin className="size-5" />
+            Lägg till pendling
           </button>
         </div>
-      </PageHeader>
-
-      <div className="flex-1 app-padding pb-8">
-        {/* Hero: Total Received with Pending - always visible */}
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-start justify-between">
-            <p className="text-sm font-medium text-muted-foreground">
-              Fått tillbaka totalt
+      ) : hasWork ? (
+        <>
+          <div className="app-padding flex flex-1 flex-col pt-2 pb-6">
+            <h1 className="text-[34px] leading-[1.1] font-extrabold tracking-tight">
+              {count === 1 ? "1 resa att kräva" : `${count} resor att kräva`}
+            </h1>
+            <p className="mt-2 text-[17px] text-muted-foreground">
+              Sammanlagt{" "}
+              <span className="font-bold text-primary tabular-nums">{formatKr(totalToClaim)}</span>{" "}
+              att hämta
             </p>
-            {totalReceived === 0 && pendingClaims.length === 0 && (
-              <button
-                className="group relative"
-                onClick={(e) => {
-                  const tooltip = e.currentTarget.querySelector('[data-tooltip]')
-                  tooltip?.classList.toggle('hidden')
-                }}
-              >
-                <Info className="size-4 text-muted-foreground/60 hover:text-muted-foreground" />
-                <div
-                  data-tooltip
-                  className="absolute right-0 top-6 z-10 hidden w-56 rounded-lg border border-border bg-popover p-3 text-left text-xs text-muted-foreground shadow-lg"
-                >
-                  Kräv ersättning för försenade resor så visas summan här
-                </div>
-              </button>
-            )}
-          </div>
-          <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-foreground">
-            {totalReceived}
-            <span className="ml-1 text-lg font-medium text-muted-foreground">kr</span>
-          </p>
 
-          {/* Pending claims row */}
-          {pendingClaims.length > 0 && (
-            <Collapsible
-              open={showPending}
-              onOpenChange={setShowPending}
-              className="mt-4 border-t border-border pt-4"
-            >
-              <CollapsibleTrigger className="flex w-full items-center justify-between text-left">
-                <div className="flex items-center gap-2">
-                  <Clock className="size-3.5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Väntar på svar</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium tabular-nums text-foreground">
-                    ~{totalPending} kr
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "size-4 text-muted-foreground transition-transform",
-                      showPending && "rotate-180"
-                    )}
-                  />
-                </div>
-              </CollapsibleTrigger>
-
-              <CollapsibleContent>
-                <ScrollArea className="mt-3 max-h-48">
-                  <div className="space-y-2 pr-3">
-                    {pendingClaims.map((claim) => (
-                      <PendingClaimCard
-                        key={claim.claimId}
-                        claim={claim}
-                        onResolved={() => refetchClaims()}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CollapsibleContent>
-            </Collapsible>
-          )}
-        </div>
-
-        {state === HomeState.NO_ROUTES ? (
-          <div className="mt-8 flex flex-col items-center justify-center py-8 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <MapPin className="size-5 text-muted-foreground" />
+            <div className="mt-6 divide-y divide-border overflow-hidden rounded-2xl bg-card">
+              {toClaim.map((delay) => (
+                <ClaimRow key={delay.delayId} delay={delay} />
+              ))}
             </div>
-            <p className="mt-4 text-sm font-medium text-foreground">
-              Du bevakar inga resor ännu
+            <p className="mt-2.5 px-1 text-[13px] text-muted-foreground">
+              Tryck på en resa för att se detaljer eller dölja den.
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Lägg till din pendling så hittar vi ersättningar åt dig automatiskt
-            </p>
-            <button
-              onClick={() => navigate("/app/routes")}
-              className="mt-4 rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
-            >
-              Lägg till pendling
-            </button>
+
+            <div className="mt-6">{wallet}</div>
+
+            <DismissedSection delays={dismissed} onRestore={() => refetchDelays()} />
           </div>
-        ) : (
-          <>
-            {/* Claimable Routes */}
-            <section className="mt-6">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-medium text-foreground">
-                  Ersättningar att kräva{claimable.length > 0 && ` (${claimable.length})`}
-                </h2>
-                {claimable.length > 0 && (
-                  <span className="text-sm font-semibold tabular-nums text-money">
-                    {claimable.reduce((s, d) => s + d.estimatedCompensation, 0)} kr
-                  </span>
-                )}
-              </div>
 
-              {claimable.length > 0 ? (
-                <div className="space-y-2">
-                  {claimable.map((delay, i) => (
-                    <ClaimableCard
-                      key={delay.delayId}
-                      delay={delay}
-                      onClick={() =>
-                        navigate(`/app/claim/${encodeURIComponent(delay.delayId)}`)
-                      }
-                      onDismiss={() => refetchDelays()}
-                      style={{ animationDelay: `${i * 50}ms` }}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-8 text-center">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-                    <Check className="size-4 text-muted-foreground" />
-                  </div>
-                  <p className="mt-3 text-sm font-medium text-muted-foreground">
-                    Inga förseningar att kräva
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Vi bevakar dina resor och meddelar dig vid förseningar
-                  </p>
-                </div>
-              )}
-            </section>
-
-            {/* Small delays - collapsed by default */}
-            {notClaimable.length > 0 && (
-              <section className="mt-6">
-                <button
-                  onClick={() => setShowSmallDelays(!showSmallDelays)}
-                  className="flex w-full items-center justify-between py-2 text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    <Clock className="size-3.5 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {notClaimable.length} mindre förseningar
-                    </span>
-                  </div>
-                  {showSmallDelays ? (
-                    <ChevronUp className="size-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="size-4 text-muted-foreground" />
-                  )}
-                </button>
-                {showSmallDelays && (
-                  <div className="mt-2 rounded-lg bg-muted/30 p-3">
-                    <p className="mb-3 text-xs text-muted-foreground">
-                      Förseningar under 20 min ger inte rätt till ersättning enligt SJ:s
-                      regler.
-                    </p>
-                    <div className="max-h-48 space-y-1 overflow-y-auto">
-                      {notClaimable.map((delay) => (
-                        <SmallDelayRow key={delay.delayId} delay={delay} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </section>
-            )}
-
-            {/* Dismissed delays */}
-            {dismissedForDate.length > 0 && (
-              <section className="mt-6">
-                <button
-                  onClick={() => setShowDismissed(!showDismissed)}
-                  className="flex w-full items-center justify-between py-2 text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    <X className="size-3.5 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {dismissedForDate.length} dolda resor
-                    </span>
-                  </div>
-                  {showDismissed ? (
-                    <ChevronUp className="size-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="size-4 text-muted-foreground" />
-                  )}
-                </button>
-                {showDismissed && (
-                  <div className="mt-2 space-y-2">
-                    {dismissedForDate.map((delay) => (
-                      <DismissedDelayRow
-                        key={delay.delayId}
-                        delay={delay}
-                        onRestore={() => refetchDelays()}
-                      />
-                    ))}
-                  </div>
-                )}
-              </section>
-            )}
-
-            {/* Date picker */}
-            {availableDates.length > 1 && (
-              <div className="mt-6 flex items-center justify-between rounded-lg bg-muted/30 px-3 py-3 sm:px-4">
-                <button
-                  onClick={goOlder}
-                  disabled={!canGoOlder}
-                  className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
-                  aria-label="Äldre"
-                >
-                  <ChevronLeft className="size-5 sm:size-4" />
-                </button>
-                <div className="flex items-center gap-2">
-                  <Calendar className="size-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">
-                    {activeDate ? formatDateFull(parseDateLocal(activeDate)) : "—"}
-                  </span>
-                </div>
-                <button
-                  onClick={goNewer}
-                  disabled={!canGoNewer}
-                  className="flex btn-icon-touch items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
-                  aria-label="Nyare"
-                >
-                  <ChevronRight className="size-5 sm:size-4" />
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          {/* The one main action, in the thumb zone, above the tab bar. */}
+          <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 bg-gradient-to-t from-background from-70% to-transparent app-padding pt-6 pb-3">
+            <Link
+              to={count === 1 ? `/app/claim/${encodeURIComponent(toClaim[0].delayId)}` : "/app/claim-all"}
+              className="flex h-14 items-center justify-center rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 active:scale-[0.99]"
+            >
+              {count === 1
+                ? `Kräv ${formatKr(totalToClaim)}`
+                : `Kräv alla ${countWord(count)}, ${formatKr(totalToClaim)}`}
+            </Link>
+            <p className="mt-2 text-center text-[13px] text-muted-foreground">
+              Vi fyller i allt. Du godkänner en gång.
+            </p>
+          </div>
+        </>
+      ) : (
+        <div className="app-padding flex flex-1 flex-col pt-2 pb-8">
+          <div className="flex flex-col items-start gap-4 pt-6 pb-8">
+            <span className="animate-scale-in flex size-16 items-center justify-center rounded-full bg-primary-soft text-primary">
+              <Check className="size-8" strokeWidth={2.75} />
+            </span>
+            <h1 className="text-[40px] leading-[1.05] font-extrabold tracking-tight">
+              Allt krävt.
+            </h1>
+            <p className="max-w-[20rem] text-[17px] leading-snug text-muted-foreground">
+              {pendingClaims.length > 0
+                ? "Dina krav ligger hos tågbolaget. Vi säger till när ett nytt tåg blir minst 20 minuter sent."
+                : "Inga sena tåg att kräva just nu. Vi bevakar dina avgångar och säger till när ett tåg blir minst 20 minuter sent."}
+            </p>
+          </div>
+          {wallet}
+          <DismissedSection delays={dismissed} onRestore={() => refetchDelays()} />
+        </div>
+      )}
     </div>
   )
 }
 
-function SmallDelayRow({ delay }: { delay: Delay }) {
+function DismissedSection({
+  delays,
+  onRestore,
+}: {
+  delays: Delay[]
+  onRestore: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  if (delays.length === 0) return null
+
   return (
-    <div className="flex items-center justify-between py-2.5 text-sm text-muted-foreground sm:py-2">
-      <div className="flex items-center gap-1.5 truncate pr-2">
-        <span className="truncate">{delay.fromStation}</span>
-        <span className="shrink-0">→</span>
-        <span className="truncate">{delay.toStation}</span>
-      </div>
-      <div className="flex shrink-0 items-center gap-2 tabular-nums">
-        <span className="text-xs">{delay.scheduledDeparture}</span>
-        <span className="text-destructive/70">+{delay.delayMinutes} min</span>
-      </div>
-    </div>
+    <section className="mt-6">
+      <button
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between rounded-lg px-1 py-2 text-left text-[15px] text-muted-foreground hover:text-foreground"
+      >
+        {delays.length === 1 ? "1 dold resa" : `${delays.length} dolda resor`}
+        <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div className="mt-1 divide-y divide-border overflow-hidden rounded-2xl bg-card">
+          {delays.map((delay) => (
+            <DismissedDelayRow key={delay.delayId} delay={delay} onRestore={onRestore} />
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -373,33 +202,29 @@ function DismissedDelayRow({
     try {
       await api.undismissDelay(delay.delayId)
       onRestore()
-      toast.success("Resan återställd")
+      toast.success("Resan är tillbaka i listan")
     } catch (err) {
       console.error(err)
-      toast.error("Kunde inte återställa resan")
+      toast.error("Kunde inte återställa resan. Försök igen.")
     } finally {
       setRestoring(false)
     }
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/30 px-3 py-3 sm:py-2">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
-          <span className="truncate">{delay.fromStation}</span>
-          <span className="shrink-0">→</span>
-          <span className="truncate">{delay.toStation}</span>
-        </div>
-        <span className="text-xs text-muted-foreground/70">
-          {delay.date} · {delay.scheduledDeparture}
+    <div className="flex items-center justify-between gap-3 px-4 py-3">
+      <div className="flex min-w-0 flex-col">
+        <span className="truncate text-[15px] font-medium">
+          {delay.scheduledDeparture} till {delay.toStation}
         </span>
+        <span className="text-[13px] text-muted-foreground">{formatDay(delay.date)}</span>
       </div>
       <button
         onClick={handleRestore}
         disabled={restoring}
-        className="shrink-0 rounded-md px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50 sm:px-2.5 sm:py-1"
+        className="h-10 shrink-0 rounded-lg px-3 text-[13px] font-semibold text-primary transition-colors hover:bg-muted disabled:opacity-50"
       >
-        {restoring ? "..." : "Återställ"}
+        {restoring ? "Återställer…" : "Återställ"}
       </button>
     </div>
   )

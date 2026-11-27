@@ -16,7 +16,10 @@ import { formatPersonnummer, validatePersonnummer } from "@/lib/personnummer"
 import { PhoneInput } from "@/components/ui-extended/phone-input"
 import { getPhoneDigits, formatPhone } from "@/components/ui-extended/phone-utils"
 import { TrainLoader } from "@/components/ui/train-loader"
-import { useDelay, useProfile } from "@/lib/queries"
+import { useDelay, useProfile, queryKeys } from "@/lib/queries"
+import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+import { api } from "@/lib/api"
 import { ApiError } from "@/lib/api-client"
 import {
   useStartClaim,
@@ -220,8 +223,8 @@ export function ClaimPage() {
           >
             <ArrowLeft className="size-5" />
           </button>
-          <h1 className="text-lg font-semibold text-foreground">
-            Begär ersättning
+          <h1 className="text-xl font-extrabold tracking-tight text-foreground">
+            Kräv ersättning
           </h1>
         </div>
       </PageHeader>
@@ -377,9 +380,10 @@ function TravelStep({
         <ScheduledChangeWarning disruptionReason={delay.disruptionReason} />
       )}
 
-      <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-          Steg 1: Bekräfta reseuppgifter
+      <div className="animate-fade-up rounded-2xl bg-card p-5">
+        <p className="text-[13px] text-muted-foreground">Steg 1 av 4</p>
+        <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
+          Bekräfta reseuppgifter
         </h2>
 
         <div className="mt-4 flex items-center gap-2 text-base font-medium text-foreground">
@@ -413,7 +417,7 @@ function TravelStep({
 
       <div className="mt-auto pt-8">
         <Button
-          className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
+          className="h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90"
           onClick={onContinue}
           disabled={loading}
         >
@@ -424,6 +428,7 @@ function TravelStep({
           )}
           Bekräfta och fortsätt
         </Button>
+        <DismissTripButton delay={delay} />
       </div>
     </>
   )
@@ -452,9 +457,10 @@ function ContactStep({
 
   return (
     <>
-      <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-          Steg 2: Kontaktuppgifter
+      <div className="animate-fade-up rounded-2xl bg-card p-5">
+        <p className="text-[13px] text-muted-foreground">Steg 2 av 4</p>
+        <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
+          Kontaktuppgifter
         </h2>
 
         <div className="mt-4 space-y-4">
@@ -521,7 +527,7 @@ function ContactStep({
           Tillbaka
         </Button>
         <Button
-          className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
+          className="h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90 sm:flex-1"
           onClick={onContinue}
           disabled={loading || !isValid}
         >
@@ -562,9 +568,10 @@ function BankStep({
 
   return (
     <>
-      <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-          Steg 3: Utbetalningsuppgifter
+      <div className="animate-fade-up rounded-2xl bg-card p-5">
+        <p className="text-[13px] text-muted-foreground">Steg 3 av 4</p>
+        <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
+          Utbetalningsuppgifter
         </h2>
 
         <div className="mt-4 space-y-4">
@@ -614,7 +621,7 @@ function BankStep({
           Tillbaka
         </Button>
         <Button
-          className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
+          className="h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90 sm:flex-1"
           onClick={onContinue}
           disabled={loading || !isValid}
         >
@@ -646,9 +653,10 @@ function ConfirmStep({
 
   return (
     <>
-      <div className="animate-fade-up rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-          Steg 4: Granska och skicka
+      <div className="animate-fade-up rounded-2xl bg-card p-5">
+        <p className="text-[13px] text-muted-foreground">Steg 4 av 4</p>
+        <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
+          Granska och skicka
         </h2>
 
         <div className="mt-4 space-y-3 text-sm">
@@ -740,7 +748,7 @@ function ConfirmStep({
           Tillbaka
         </Button>
         <Button
-          className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
+          className="h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90 sm:flex-1"
           onClick={onConfirm}
           disabled={loading || !accepted}
         >
@@ -801,7 +809,7 @@ function SuccessStep({
       </p>
 
       <Button
-        className="mt-8 h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90"
+        className="mt-8 h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90"
         onClick={onDone}
       >
         Klar
@@ -875,7 +883,7 @@ function ErrorStep({
         </Button>
         {isRetryable && (
           <Button
-            className="h-12 w-full rounded-lg bg-foreground text-[15px] font-semibold text-background hover:bg-foreground/90 sm:flex-1"
+            className="h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90 sm:flex-1"
             onClick={onRetry}
           >
             Försök igen
@@ -883,5 +891,53 @@ function ErrorStep({
         )}
       </div>
     </div>
+  )
+}
+
+function DismissTripButton({
+  delay,
+}: {
+  delay: NonNullable<ReturnType<typeof useDelay>["delay"]>
+}) {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [dismissing, setDismissing] = useState(false)
+
+  async function handleDismiss() {
+    setDismissing(true)
+    try {
+      await api.dismissDelay(delay.delayId)
+      await queryClient.invalidateQueries({ queryKey: queryKeys.delays })
+      navigate("/app")
+      toast(`${delay.scheduledDeparture} till ${delay.toStation} är dold`, {
+        action: {
+          label: "Ångra",
+          onClick: async () => {
+            try {
+              await api.undismissDelay(delay.delayId)
+              await queryClient.invalidateQueries({ queryKey: queryKeys.delays })
+            } catch (err) {
+              console.error(err)
+              toast.error("Kunde inte ångra. Hitta resan under Dolda resor.")
+            }
+          },
+        },
+        duration: 5000,
+      })
+    } catch (err) {
+      console.error(err)
+      toast.error("Kunde inte dölja resan. Försök igen.")
+      setDismissing(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleDismiss}
+      disabled={dismissing}
+      className="mt-2 h-11 w-full rounded-xl text-[15px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+    >
+      {dismissing ? "Döljer…" : "Dölj resan, jag vill inte kräva den"}
+    </button>
   )
 }

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   signIn as authSignIn,
   verifyOtp as authVerifyOtp,
+  confirmAccount as authConfirmAccount,
   signOut as authSignOut,
   refreshSession,
   getStoredTokens,
@@ -93,6 +94,16 @@ export function useAuth() {
     },
   })
 
+  const confirmAccountMutation = useMutation({
+    mutationFn: async ({
+      session,
+      code,
+    }: {
+      session: AuthSession
+      code: string
+    }) => authConfirmAccount(session, code),
+  })
+
   const signOutMutation = useMutation({
     mutationFn: authSignOut,
     onSuccess: () => {
@@ -108,6 +119,8 @@ export function useAuth() {
     signIn: signInMutation.mutateAsync,
     verifyOtp: (session: AuthSession, otp: string) =>
       verifyOtpMutation.mutateAsync({ session, otp }),
+    confirmAccount: (session: AuthSession, code: string) =>
+      confirmAccountMutation.mutateAsync({ session, code }),
     signOut: signOutMutation.mutateAsync,
   }
 }
