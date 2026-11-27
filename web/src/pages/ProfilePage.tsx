@@ -17,14 +17,27 @@ import { MOVINGO_CARD_LABELS, isValidMovingoId, getMovingoIdError } from "@/type
 import { PersonnummerInput } from "@/components/ui-extended/personnummer-input"
 import { PhoneInput } from "@/components/ui-extended/phone-input"
 import { formatPhone, getPhoneDigits } from "@/components/ui-extended/phone-utils"
-import { PageHeader } from "@/components/AppLayout"
 
-const profileFields = [
-  { key: "firstName" as const, label: "Förnamn" },
-  { key: "lastName" as const, label: "Efternamn" },
-  { key: "personalNumber" as const, label: "Personnummer" },
-  { key: "email" as const, label: "E-post" },
-  { key: "phone" as const, label: "Telefon" },
+type FieldKey = "firstName" | "lastName" | "email" | "phone" | "personalNumber" | "swishPhone"
+
+const fieldGroups: { title: string; note?: string; fields: { key: FieldKey; label: string }[] }[] = [
+  {
+    title: "Kontakt",
+    fields: [
+      { key: "firstName", label: "Förnamn" },
+      { key: "lastName", label: "Efternamn" },
+      { key: "email", label: "E-post" },
+      { key: "phone", label: "Telefon" },
+    ],
+  },
+  {
+    title: "Utbetalning",
+    note: "Pengarna betalas ut till det här Swish-numret. Personnumret behövs för kravet.",
+    fields: [
+      { key: "swishPhone", label: "Swish" },
+      { key: "personalNumber", label: "Personnummer" },
+    ],
+  },
 ]
 
 const CARD_TYPES: MovingoCardType[] = [
@@ -36,6 +49,12 @@ const CARD_TYPES: MovingoCardType[] = [
 
 function isExpired(card: MovingoCard) {
   return card.expiryDate < new Date().toISOString().slice(0, 10)
+}
+
+function daysLeft(expiry: string) {
+  const end = new Date(expiry)
+  end.setHours(23, 59, 59, 999)
+  return Math.max(0, Math.ceil((end.getTime() - Date.now()) / 86_400_000) - 1)
 }
 
 function formatDate(iso: string) {
@@ -74,6 +93,7 @@ export function ProfilePage() {
       setDraft({
         ...profile,
         phone: formatPhone(profile.phone ?? ""),
+        swishPhone: formatPhone(profile.swishPhone ?? ""),
       })
     }
     setEditing(true)
@@ -90,6 +110,7 @@ export function ProfilePage() {
       {
         ...draft,
         phone: getPhoneDigits(draft.phone ?? ""),
+        swishPhone: getPhoneDigits(draft.swishPhone ?? "") || undefined,
       },
       {
         onSuccess: () => setEditing(false),
@@ -115,116 +136,143 @@ export function ProfilePage() {
     )
   }
 
-  const displayProfile = editing && draft ? draft : profile
   const activeCards = cards.filter((c) => !isExpired(c))
   const expiredCards = cards.filter((c) => isExpired(c))
 
+  function renderField(key: FieldKey) {
+    if (editing && draft) {
+      const inputClass =
+        "h-11 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground outline-none transition-colors focus:border-primary sm:w-1/2 sm:text-right"
+      if (key === "phone" || key === "swishPhone") {
+        return (
+          <PhoneInput
+            value={draft[key] ?? ""}
+            onChange={(value) => setDraft({ ...draft, [key]: value })}
+            className={inputClass}
+          />
+        )
+      }
+      if (key === "personalNumber") {
+        return (
+          <PersonnummerInput
+            value={draft[key] ?? ""}
+            onChange={(value) => setDraft({ ...draft, [key]: value })}
+            className={inputClass}
+          />
+        )
+      }
+      return (
+        <input
+          value={draft[key] ?? ""}
+          onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}
+          className={inputClass}
+        />
+      )
+    }
+    const value = profile?.[key]
+    if (key === "personalNumber") return <FieldValue>{maskPersonnummer(value)}</FieldValue>
+    if (key === "swishPhone") {
+      return (
+        <FieldValue>
+          {value
+            ? formatPhone(value)
+            : profile?.phone
+              ? `${formatPhone(profile.phone)} (telefon)`
+              : "Saknas"}
+        </FieldValue>
+      )
+    }
+    if (key === "phone") return <FieldValue>{value ? formatPhone(value) : "Saknas"}</FieldValue>
+    return <FieldValue>{value || "Saknas"}</FieldValue>
+  }
+
+  const notificationText =
+    permission === "unsupported"
+      ? "Stöds inte i den här webbläsaren"
+      : permission === "denied"
+        ? "Blockerade i webbläsaren. Tillåt notiser i inställningarna."
+        : isSubscribed
+          ? "På. Vi säger till när ditt tåg blir minst 20 min sent."
+          : "Få en notis när ditt tåg blir sent, så missar du inga pengar."
+
   return (
     <div className="flex flex-1 flex-col">
-      <PageHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-12 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
-              {(profile.firstName?.[0] ?? "").toUpperCase()}
-              {(profile.lastName?.[0] ?? "").toUpperCase()}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-base font-semibold text-foreground">
-                {profile.firstName} {profile.lastName}
-              </p>
-              <p className="truncate text-sm text-muted-foreground">{profile.email}</p>
-            </div>
+      <header className="app-padding flex items-center justify-between gap-3 pt-8">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary-soft text-lg font-bold text-primary">
+            {(profile.firstName?.[0] ?? "").toUpperCase()}
+            {(profile.lastName?.[0] ?? "").toUpperCase()}
           </div>
-          {!editing && (
-            <button
-              onClick={startEditing}
-              className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-auto sm:px-0"
-            >
-              <Pencil className="size-3.5 sm:size-3" />
-              <span className="hidden sm:inline">Redigera</span>
-            </button>
-          )}
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-extrabold tracking-tight">
+              {[profile.firstName, profile.lastName].filter(Boolean).join(" ") || "Din profil"}
+            </h1>
+            <p className="truncate text-[15px] text-muted-foreground">{profile.email}</p>
+          </div>
         </div>
-      </PageHeader>
+      </header>
 
-      <div className="flex-1 app-padding pb-6">
-        <section className="animate-fade-up">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">Uppgifter</h2>
-            {editing && (
-              <div className="flex items-center gap-1">
+      <div className="flex-1 app-padding pt-6 pb-8">
+        {/* Notifications first: they are what brings people back to claim. */}
+        <section aria-labelledby="notif-heading" className="rounded-2xl bg-card p-4">
+          <div className="flex items-start gap-3">
+            <span
+              className={`mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full ${
+                isSubscribed ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {isSubscribed ? <Bell className="size-5" /> : <BellOff className="size-5" />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 id="notif-heading" className="text-base font-semibold">
+                Förseningsnotiser
+              </h2>
+              <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">
+                {notificationText}
+              </p>
+            </div>
+          </div>
+          {canSubscribe && (
+            <div className="mt-3 flex gap-2">
+              {isSubscribed ? (
+                <>
+                  <button
+                    onClick={sendTestNotification}
+                    className="h-11 flex-1 rounded-xl border border-border text-[15px] font-medium transition-colors hover:bg-muted"
+                  >
+                    Skicka en testnotis
+                  </button>
+                  <button
+                    onClick={unsubscribe}
+                    disabled={pushLoading}
+                    className="h-11 rounded-xl px-4 text-[15px] font-medium text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                  >
+                    Stäng av
+                  </button>
+                </>
+              ) : (
                 <button
-                  onClick={() => {
-                    setDraft(null)
-                    setEditing(false)
+                  onClick={async () => {
+                    const success = await subscribe()
+                    if (success) sendTestNotification()
                   }}
-                  className="flex btn-icon-touch items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  disabled={pushLoading}
+                  className="h-11 flex-1 rounded-xl bg-primary text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                 >
-                  <X className="size-5 sm:size-4" />
+                  {pushLoading ? "Slår på…" : "Slå på notiser"}
                 </button>
-                <button
-                  onClick={handleSave}
-                  className="flex h-10 items-center gap-1 rounded-lg bg-foreground px-4 text-xs font-medium text-background sm:h-auto sm:px-3 sm:py-1.5"
-                >
-                  <Check className="size-4 sm:size-3" />
-                  Spara
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-3 divide-y divide-border rounded-xl border border-border bg-card">
-            {profileFields.map(({ key, label }) => (
-              <div
-                key={key}
-                className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-              >
-                <span className="text-sm text-muted-foreground">{label}</span>
-                {editing && draft ? (
-                  key === "phone" ? (
-                    <PhoneInput
-                      value={draft[key] ?? ""}
-                      onChange={(value) => setDraft({ ...draft, [key]: value })}
-                      className="h-12 w-full text-base sm:h-auto sm:w-1/2 sm:text-right sm:text-sm"
-                    />
-                  ) : key === "personalNumber" ? (
-                    <PersonnummerInput
-                      value={draft[key] ?? ""}
-                      onChange={(value) => setDraft({ ...draft, [key]: value })}
-                      className="h-12 w-full text-base sm:h-auto sm:w-1/2 sm:text-right sm:text-sm"
-                    />
-                  ) : (
-                    <input
-                      value={draft[key] ?? ""}
-                      onChange={(e) =>
-                        setDraft({ ...draft, [key]: e.target.value })
-                      }
-                      className="h-12 w-full rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition-colors focus:border-foreground sm:h-auto sm:w-1/2 sm:px-2.5 sm:py-1.5 sm:text-right sm:text-sm"
-                    />
-                  )
-                ) : (
-                  <span className="text-sm font-medium text-foreground">
-                    {displayProfile[key] || "—"}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
+              )}
+            </div>
+          )}
         </section>
 
-        <section className="animate-fade-up stagger-1 mt-8">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">
-              Movingo-kort
-            </h2>
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {activeCards.length} aktiv{activeCards.length !== 1 && "a"}
-            </span>
-          </div>
-
-          <div className="mt-3 space-y-2">
+        <section aria-labelledby="card-heading" className="mt-8">
+          <h2 id="card-heading" className="px-1 text-lg font-bold tracking-tight">
+            Movingo-kort
+          </h2>
+          <div className="mt-3 space-y-3">
             {activeCards.map((card) => (
-              <MovingoCardRow
+              <MovingoCardView
                 key={card.cardId}
                 card={card}
                 onDelete={() => handleDeleteCard(card.cardId)}
@@ -232,12 +280,10 @@ export function ProfilePage() {
             ))}
 
             {activeCards.length === 0 && !showAddCard && (
-              <div className="rounded-xl border border-dashed border-destructive/30 bg-destructive/5 px-4 py-4 text-center">
-                <p className="text-sm font-medium text-destructive">
-                  Inget aktivt kort
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Lägg till för att beräkna ersättning
+              <div className="rounded-2xl bg-card px-4 py-5">
+                <p className="text-base font-semibold text-destructive">Inget aktivt kort</p>
+                <p className="mt-0.5 text-[13px] text-muted-foreground">
+                  Utan ett giltigt Movingo-kort kan vi inte kräva ersättning åt dig.
                 </p>
               </div>
             )}
@@ -250,152 +296,147 @@ export function ProfilePage() {
             ) : (
               <button
                 onClick={() => setShowAddCard(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3.5 text-sm font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card text-[15px] font-semibold transition-colors hover:bg-muted"
               >
                 <Plus className="size-4" />
-                Lägg till kort
+                {activeCards.length > 0 ? "Lägg till nytt kort" : "Lägg till kort"}
               </button>
             )}
           </div>
 
           {expiredCards.length > 0 && (
             <div className="mt-4">
-              <p className="mb-2 text-xs font-medium text-muted-foreground">
-                Utgångna
-              </p>
-              <div className="space-y-1.5">
+              <p className="mb-2 px-1 text-[13px] text-muted-foreground">Utgångna kort</p>
+              <ul className="divide-y divide-border overflow-hidden rounded-2xl bg-card">
                 {expiredCards.map((card) => (
-                  <MovingoCardRow
-                    key={card.cardId}
-                    card={card}
-                    expired
-                    onDelete={() => handleDeleteCard(card.cardId)}
-                  />
+                  <li key={card.cardId} className="flex items-center gap-3 py-1 pr-2 pl-4">
+                    <span className="min-w-0 flex-1 text-[15px] text-muted-foreground">
+                      {MOVINGO_CARD_LABELS[card.cardType]}, slutade {formatDate(card.expiryDate)}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteCard(card.cardId)}
+                      aria-label="Ta bort kortet"
+                      className="flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
         </section>
 
-        <section className="animate-fade-up stagger-2 mt-8">
-          <h2 className="text-sm font-semibold text-foreground">Notiser</h2>
-          <div className="mt-3 rounded-xl border border-border bg-card">
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-3">
-                {isSubscribed ? (
-                  <Bell className="size-4 text-foreground" />
-                ) : (
-                  <BellOff className="size-4 text-muted-foreground" />
-                )}
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    Förseningsnotiser
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {permission === "unsupported"
-                      ? "Stöds ej i denna webbläsare"
-                      : permission === "denied"
-                        ? "Blockerade i webbläsaren"
-                        : isSubscribed
-                          ? "Aktiva — du får notiser vid förseningar"
-                          : "Få notis när ditt tåg är försenat"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {isSubscribed && (
-                  <button
-                    onClick={sendTestNotification}
-                    className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    Testa
-                  </button>
-                )}
-                {canSubscribe && (
-                  <button
-                    onClick={isSubscribed ? unsubscribe : subscribe}
-                    disabled={pushLoading}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                      isSubscribed
-                        ? "bg-muted text-muted-foreground hover:bg-muted/80"
-                        : "bg-foreground text-background hover:bg-foreground/90"
-                    } disabled:opacity-50`}
-                  >
-                    {pushLoading
-                      ? "..."
-                      : isSubscribed
-                        ? "Stäng av"
-                        : "Aktivera"}
-                  </button>
-                )}
-              </div>
+        <div className="mt-8 flex items-center justify-between px-1">
+          <h2 className="text-lg font-bold tracking-tight">Dina uppgifter</h2>
+          {editing ? (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  setDraft(null)
+                  setEditing(false)
+                }}
+                className="h-10 rounded-lg px-3 text-[15px] font-medium text-muted-foreground transition-colors hover:bg-muted"
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={updateProfile.isPending}
+                className="flex h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                <Check className="size-4" />
+                Spara
+              </button>
             </div>
-            {!isSubscribed && canSubscribe && (
-              <div className="border-t border-border px-4 py-3">
-                <button
-                  onClick={async () => {
-                    const success = await subscribe()
-                    if (success) {
-                      sendTestNotification()
-                    }
-                  }}
-                  disabled={pushLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-foreground/5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/10 disabled:opacity-50"
-                >
-                  <Bell className="size-4" />
-                  Prova en testnotis
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
-
-        <div className="mt-12">
-          <button
-            onClick={handleSignOut}
-            className="flex w-full items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5"
-          >
-            <LogOut className="size-4" />
-            Logga ut
-          </button>
+          ) : (
+            <button
+              onClick={startEditing}
+              className="flex h-10 items-center gap-1.5 rounded-lg px-3 text-[15px] font-semibold text-primary transition-colors hover:bg-muted"
+            >
+              <Pencil className="size-4" />
+              Ändra
+            </button>
+          )}
         </div>
+
+        {fieldGroups.map((group) => (
+          <section key={group.title} aria-label={group.title} className="mt-3">
+            <p className="mb-1.5 px-1 text-[13px] text-muted-foreground">{group.title}</p>
+            <dl className="divide-y divide-border overflow-hidden rounded-2xl bg-card">
+              {group.fields.map(({ key, label }) => (
+                <div
+                  key={key}
+                  className={
+                    editing
+                      ? "flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                      : "flex items-center justify-between gap-4 px-4 py-3.5"
+                  }
+                >
+                  <dt className="shrink-0 text-[15px] text-muted-foreground">{label}</dt>
+                  <dd className="min-w-0">{renderField(key)}</dd>
+                </div>
+              ))}
+            </dl>
+            {group.note && (
+              <p className="mt-1.5 px-1 text-[13px] text-muted-foreground">{group.note}</p>
+            )}
+          </section>
+        ))}
+
+        <button
+          onClick={handleSignOut}
+          className="mt-10 flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-semibold text-destructive transition-colors hover:bg-destructive/5"
+        >
+          <LogOut className="size-4" />
+          Logga ut
+        </button>
       </div>
     </div>
   )
 }
 
-function MovingoCardRow({
-  card,
-  expired,
-  onDelete,
-}: {
-  card: MovingoCard
-  expired?: boolean
-  onDelete: () => void
-}) {
+function FieldValue({ children }: { children: React.ReactNode }) {
+  return <span className="block truncate text-right text-[15px] font-medium">{children}</span>
+}
+
+function maskPersonnummer(pnr?: string) {
+  const digits = (pnr ?? "").replace(/\D/g, "")
+  if (digits.length < 8) return "Saknas"
+  return `${digits.slice(0, 8)}-••••`
+}
+
+/** The active Movingo card, drawn as a card, with how long it stays valid. */
+function MovingoCardView({ card, onDelete }: { card: MovingoCard; onDelete: () => void }) {
+  const left = daysLeft(card.expiryDate)
+  const soon = left <= 5
+
   return (
-    <div
-      className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3.5 sm:py-3 ${
-        expired
-          ? "border-border/50 bg-muted/30 opacity-50"
-          : "border-border bg-card"
-      }`}
-    >
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-foreground">
-          {MOVINGO_CARD_LABELS[card.cardType]}
-        </p>
-        <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
-          {card.price} kr · {formatDate(card.purchaseDate)} —{" "}
-          {formatDate(card.expiryDate)}
-        </p>
+    <div className="relative overflow-hidden rounded-2xl bg-primary p-5 text-primary-foreground">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[15px] font-semibold">{MOVINGO_CARD_LABELS[card.cardType]}</p>
+          <p className="mt-0.5 font-mono text-[13px] tracking-wider opacity-80">{card.movingoId}</p>
+        </div>
+        <button
+          onClick={onDelete}
+          aria-label="Ta bort kortet"
+          className="-mt-2 -mr-2 flex size-11 items-center justify-center rounded-full opacity-70 transition-opacity hover:bg-white/10 hover:opacity-100"
+        >
+          <Trash2 className="size-4" />
+        </button>
       </div>
-      <button
-        onClick={onDelete}
-        className="flex btn-icon-touch shrink-0 items-center justify-center rounded-lg text-muted-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
-      >
-        <Trash2 className="size-4 sm:size-3.5" />
-      </button>
+      <p className="mt-6 text-[34px] leading-none font-extrabold tracking-tight tabular-nums">
+        {left === 0 ? "Sista dagen" : left === 1 ? "1 dag kvar" : `${left} dagar kvar`}
+      </p>
+      <p className="mt-2 text-[13px] tabular-nums opacity-80">
+        {formatDate(card.purchaseDate)} till {formatDate(card.expiryDate)}, {card.price} kr
+      </p>
+      {soon && (
+        <p className="mt-4 rounded-xl bg-white/12 px-3 py-2 text-[13px] leading-snug">
+          Lägg in ditt nya kort när du förnyar, så fortsätter vi kräva åt dig.
+        </p>
+      )}
     </div>
   )
 }
@@ -439,7 +480,7 @@ function AddMovingoCardForm({
   }
 
   return (
-    <div className="animate-fade-up rounded-xl border border-border bg-card p-4 sm:p-5">
+    <div className="animate-fade-up rounded-2xl bg-card p-4 sm:p-5">
       <div className="mb-5 flex items-center justify-between">
         <h3 className="text-base font-semibold text-foreground">Nytt kort</h3>
         <button
@@ -513,7 +554,7 @@ function AddMovingoCardForm({
         </label>
 
         <Button
-          className="input-mobile w-full rounded-lg bg-foreground font-semibold text-background hover:bg-foreground/90"
+          className="h-14 w-full rounded-2xl bg-primary text-[17px] font-bold text-primary-foreground hover:bg-primary/90"
           onClick={handleSubmit}
           disabled={!isValid}
         >
